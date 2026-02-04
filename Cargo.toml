@@ -1,0 +1,26 @@
+[workspace]
+members = ["lib/*", "servers/*"]
+resolver = "2"
+
+[workspace.package]
+edition = "2024"
+version = "0.1.0"
+
+[workspace.dependencies]
+axum = "0.8.8"
+tokio = { version = "1.49.0", features = ["full"] }
+tracing = "0.1.44"
+tracing-subscriber = "0.3.22"
+serde_json = "1.0.149"
+serde = { version = "1.0.228", features = ["derive"] }
+prost = "0.14"
+prost-types = "0.14"
+prost-build = "0.14"
+common = { path = "lib/common" }
+perlica-proto = { path = "lib/proto" }
+
+[profile.release]
+strip = true      # Automatically strip symbols from the binary.
+lto = true        # Link-time optimization.
+opt-level = 3     # Optimize for speed.
+codegen-units = 1 # Maximum size reduction optimizations.

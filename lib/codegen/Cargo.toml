@@ -1,0 +1,4 @@
+[package]
+name = "perlica-codegen"
+edition.workspace = true
+version.workspace = true
