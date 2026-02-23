@@ -6,7 +6,7 @@ pub async fn on_cs_move_object_move(
     _ctx: &mut NetContext<'_>,
     req: CsMoveObjectMove,
 ) -> ScMoveObjectMove {
-    for info in &req.move_info {
+    /*for info in &req.move_info {
         debug!(
             "Move obj {} | pos={:?} rot={:?} speed={:?} state={}",
             info.objid,
@@ -15,7 +15,7 @@ pub async fn on_cs_move_object_move(
             info.motion_info.as_ref().and_then(|m| m.speed.as_ref()),
             info.motion_info.as_ref().map(|m| m.state).unwrap_or(0),
         );
-    }
+    }*/
 
     ScMoveObjectMove {
         move_info: req.move_info,

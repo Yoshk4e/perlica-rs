@@ -1,11 +1,13 @@
 use crate::player::LoadingState;
 use crate::session::NetContext;
-use perlica_proto::{CsLogin, CsPing, ScEnterSceneNotify, ScLogin, ScPing, Vector};
+use byteorder::{LittleEndian, ReadBytesExt};
+use perlica_proto::{CsHead, CsLogin, CsMergeMsg, CsPing, ScLogin, ScPing, prost::Message};
+use std::io::{self, Cursor, Read};
 use tracing::debug;
 
 pub async fn on_login(ctx: &mut NetContext<'_>, req: CsLogin) -> ScLogin {
     ctx.player.on_login(req.uid.clone());
-    debug!("Sending ScLogin for UID {}", req.uid);
+    debug!("Player logged in: {}", req.uid);
 
     ScLogin {
         uid: req.uid,
@@ -19,48 +21,89 @@ pub async fn on_login(ctx: &mut NetContext<'_>, req: CsLogin) -> ScLogin {
     }
 }
 
-pub async fn on_csping(ctx: &mut NetContext<'_>, req: CsPing) -> ScPing {
-    if ctx.player.loading_state == LoadingState::ScLogin {
-        ctx.player.advance_state();
-
-        match crate::player::char_bag::prepare_char_bag_sync(ctx.player) {
-            Ok(sync_msg) => {
-                debug!(
-                    "Sending ScSyncCharBagInfo with {} chars, {} teams",
-                    sync_msg.char_info.len(),
-                    sync_msg.team_info.len()
-                );
-                let _ = ctx.notify(sync_msg).await;
-                let enter_msg = build_enter_scene();
-                debug!(
-                    "Sending ScEnterSceneNotify for scene {}",
-                    enter_msg.scene_name
-                );
-                let _ = ctx.notify(enter_msg).await;
-                ctx.player.advance_state();
-            }
-            Err(e) => tracing::error!("char bag sync failed: {}", e),
-        }
-    }
-
+pub async fn on_csping(_ctx: &mut NetContext<'_>, req: CsPing) -> ScPing {
     ScPing {
         client_ts: req.client_ts,
-        server_ts: std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .map(|d| d.as_millis() as u64)
-            .unwrap_or(0),
+        server_ts: now_ms(),
     }
 }
 
-fn build_enter_scene() -> ScEnterSceneNotify {
-    ScEnterSceneNotify {
-        role_id: 1,
-        scene_name: "map01_dg001".to_string(),
-        scene_id: 37,
-        position: Some(Vector {
-            x: 756.42,
-            y: 95.89,
-            z: 137.18,
-        }),
+pub(crate) async fn run_login_sequence(ctx: &mut NetContext<'_>) {
+    loop {
+        // Each arm does the work for the current state, then advances.
+        // States are named after what was JUST completed, not what's next.
+        let ok = match ctx.player.loading_state {
+            LoadingState::ScLogin => super::char_bag::send_char_bag_sync(ctx).await,
+            LoadingState::CharBagSync => super::char_bag::send_unlock_sync(ctx).await,
+            LoadingState::UnlockSync => super::scene::enter_scene_notify(ctx).await,
+            LoadingState::EnterScene | LoadingState::Complete | LoadingState::Login => break,
+        };
+        if ok {
+            ctx.player.advance_state();
+        } else {
+            break;
+        }
     }
+}
+
+fn now_ms() -> u64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_millis() as u64)
+        .unwrap_or(0)
+}
+
+pub async fn on_cs_merge_msg(ctx: &mut NetContext<'_>, req: CsMergeMsg) -> anyhow::Result<()> {
+    let data = &req.msg;
+    let mut cursor = Cursor::new(data);
+    let mut sub_count = 0u32;
+
+    loop {
+        // Check if at least 3 bytes remain for header sizes
+        let remaining = data.len() as u64 - cursor.position();
+        if remaining < 3 {
+            break;
+        }
+
+        let sub_head_size = cursor.read_u8()? as usize;
+        let sub_body_size = cursor.read_u16::<LittleEndian>()? as usize;
+
+        let needed = sub_head_size + sub_body_size;
+        let available = data.len() - cursor.position() as usize;
+
+        if sub_head_size == 0 || sub_body_size == 0 || needed > available {
+            tracing::warn!(
+                "Invalid merge sub-packet: head_size={}, body_size={}, available={}",
+                sub_head_size,
+                sub_body_size,
+                available
+            );
+            break;
+        }
+        let mut sub_head_buf = vec![0u8; sub_head_size];
+        cursor.read_exact(&mut sub_head_buf)?;
+        let mut sub_body_buf = vec![0u8; sub_body_size];
+        cursor.read_exact(&mut sub_body_buf)?;
+        let sub_head = CsHead::decode(&sub_head_buf[..])?;
+        let sub_cmd_id = sub_head.msgid;
+
+        sub_count += 1;
+        if let Err(e) = Box::pin(crate::handler::handle_command(
+            ctx,
+            sub_cmd_id,
+            sub_body_buf,
+        ))
+        .await
+        {
+            tracing::warn!("Merge sub-packet failed cmd={} : {:?}", sub_cmd_id, e);
+        }
+    }
+
+    if sub_count > 0 {
+        tracing::debug!("Processed CsMergeMsg with {} sub-packets", sub_count);
+    } else {
+        tracing::warn!("Empty CsMergeMsg received");
+    }
+
+    Ok(())
 }

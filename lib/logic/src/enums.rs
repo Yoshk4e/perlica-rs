@@ -1,0 +1,97 @@
+// Beyond.GEnums.SystemType
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[repr(i32)]
+pub enum SystemType {
+    Depot = 0,
+    DelBuilding = 1,
+    Drone = 5,
+    Equip = 7,
+    LevelBreak = 8,
+    LevelUpgrade = 9,
+    TeamSprint = 11,
+    NormalSkill = 12,
+    UltimateSkill = 13,
+    MarkTarget = 14,
+    ItemQuickStash = 16,
+    FacBus = 101,
+    FacBelt = 102,
+    FacPort = 103,
+    FacBridge = 111,
+    FacConverger = 112,
+    FacSplitter = 113,
+    FacHubButton = 120,
+    FacQuickBar = 121,
+    WorldBuildOnPoleBase = 1000,
+    WorldBuildOnMine = 1001,
+}
+
+// Beyond.GEnums.UnlockSystemType
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[repr(i32)]
+pub enum UnlockSystemType {
+    Map = 0,
+    Inventory = 1,
+    Watch = 2,
+    ValuableDepot = 3,
+    Shop = 4,
+    Gacha = 51,
+    Dungeon = 52,
+    BlocMission = 53,
+    Mail = 54,
+    Wiki = 55,
+    Prts = 56,
+    SubmitEther = 57,
+    Scan = 58,
+    CharUi = 59,
+    FacBuildingPin = 101,
+    FacCraftPin = 102,
+    FacMode = 103,
+    FacTechTree = 104,
+    FacOverview = 105,
+    FacYieldStats = 106,
+    FacConveyor = 107,
+    FacTransferPort = 108,
+    FacBridge = 109,
+    FacSplitter = 110,
+    FacMerger = 111,
+    FacBus = 112,
+    FacZone = 113,
+    FacSystem = 114,
+    ManualCraft = 201,
+    ItemUse = 202,
+    ItemQuickBar = 203,
+    Weapon = 251,
+    Equip = 252,
+    NormalAttack = 301,
+    NormalSkill = 302,
+    UltimateSkill = 303,
+    None = 10000000,
+}
+
+impl UnlockSystemType {
+    // All systems that should be unlocked by default for a new player.
+    pub fn default_unlocked() -> Vec<i32> {
+        vec![
+            Self::Map as i32,
+            Self::Inventory as i32,
+            Self::Watch as i32,
+            Self::ValuableDepot as i32,
+            Self::Shop as i32,
+            Self::Dungeon as i32,
+            Self::Mail as i32,
+            Self::Wiki as i32,
+            Self::Prts as i32,
+            Self::SubmitEther as i32,
+            Self::Scan as i32,
+            Self::CharUi as i32,
+            Self::ManualCraft as i32,
+            Self::ItemUse as i32,
+            Self::ItemQuickBar as i32,
+            Self::Weapon as i32,
+            Self::Equip as i32,
+            Self::NormalAttack as i32,
+            Self::NormalSkill as i32,
+            Self::UltimateSkill as i32,
+        ]
+    }
+}

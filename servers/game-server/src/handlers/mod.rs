@@ -1,3 +1,4 @@
+pub mod char_bag;
 pub mod character;
 pub mod login;
 pub mod movement;

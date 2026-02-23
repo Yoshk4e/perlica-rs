@@ -1,9 +1,25 @@
 use crate::session::NetContext;
 use perlica_proto::{
-    CsSceneLoadFinish, ScObjectEnterView, ScSelfSceneInfo, SceneCharacter, SceneImplEmpty,
-    SceneObjectCommonInfo, SceneObjectDetailContainer, Vector, sc_self_scene_info::SceneImpl,
+    CsSceneLoadFinish, ScEnterSceneNotify, ScObjectEnterView, ScSelfSceneInfo, SceneCharacter,
+    SceneImplEmpty, SceneObjectCommonInfo, SceneObjectDetailContainer, Vector,
+    sc_self_scene_info::SceneImpl,
 };
 use tracing::debug;
+
+pub async fn enter_scene_notify(ctx: &mut NetContext<'_>) -> bool {
+    let msg = ScEnterSceneNotify {
+        role_id: 1,
+        scene_name: "map01_dg003".to_string(),
+        scene_id: 11,
+        position: Some(Vector {
+            x: 823.0,
+            y: -30.0,
+            z: 69.0,
+        }),
+    };
+    debug!("EnterScene: {}", msg.scene_name);
+    ctx.notify(msg).await.is_ok()
+}
 
 async fn send_sc_object_enter_view(ctx: &mut NetContext<'_>, scene_name: String) {
     let enter_view = ScObjectEnterView {

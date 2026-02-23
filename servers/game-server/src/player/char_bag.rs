@@ -1,9 +1,12 @@
 use crate::player::Player;
+use crate::session::NetContext;
 use anyhow::Result;
+use perlica_logic::enums::UnlockSystemType;
 use perlica_proto::{
-    BattleInfo, CharInfo, CharTeamInfo, CharTeamMemberInfo, ScSyncCharBagInfo, SkillInfo,
-    SkillLevelInfo,
+    BattleInfo, CharInfo, CharTeamInfo, CharTeamMemberInfo, ScSyncAllUnlock, ScSyncCharBagInfo,
+    SkillInfo, SkillLevelInfo,
 };
+use tracing::debug;
 
 pub fn prepare_char_bag_sync(player: &Player) -> Result<ScSyncCharBagInfo> {
     let char_bag = &player.char_bag;

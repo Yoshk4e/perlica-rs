@@ -8,13 +8,25 @@ macro_rules! handlers {
         ) -> anyhow::Result<()> {
             use perlica_proto::*;
             use prost::Message;
+            use crate::player::LoadingState;
+            use tracing::debug;
 
             match cmd_id {
+
+                x if x == <CsMergeMsg as NetMessage>::CMD_ID => {
+                    let req = CsMergeMsg::decode(&body[..])?;
+                    debug!("Received CsMergeMsg ({} bytes)", req.msg.len());
+                    login::on_cs_merge_msg(ctx, req).await?;
+                }
+
                 $(
                     x if x == <$msg_req as NetMessage>::CMD_ID => {
                         let req = <$msg_req>::decode(&body[..])?;
                         let rsp = $handler(ctx, req).await;
                         ctx.send(rsp).await?;
+                        if ctx.player.loading_state == LoadingState::ScLogin {
+                            login::run_login_sequence(ctx).await;
+                        }
                     }
                 )*
                 _ => {

@@ -9,6 +9,7 @@ pub enum LoadingState {
     Login,
     ScLogin,
     CharBagSync,
+    UnlockSync,
     EnterScene,
     Complete,
 }
@@ -41,7 +42,8 @@ impl Player {
         self.loading_state = match self.loading_state {
             LoadingState::Login => LoadingState::ScLogin,
             LoadingState::ScLogin => LoadingState::CharBagSync,
-            LoadingState::CharBagSync => LoadingState::EnterScene,
+            LoadingState::CharBagSync => LoadingState::UnlockSync,
+            LoadingState::UnlockSync => LoadingState::EnterScene,
             LoadingState::EnterScene => LoadingState::Complete,
             LoadingState::Complete => LoadingState::Complete,
         };
