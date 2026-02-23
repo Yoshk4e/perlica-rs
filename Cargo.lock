@@ -102,6 +102,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "config"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "either"
 version = "1.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -456,12 +465,27 @@ dependencies = [
 name = "perlica-game-server"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
+ "common",
+ "config",
+ "perlica-logic",
  "perlica-proto",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
 ]
 
 [[package]]
 name = "perlica-logic"
 version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "config",
+ "perlica-proto",
+ "serde",
+]
 
 [[package]]
 name = "perlica-proto"

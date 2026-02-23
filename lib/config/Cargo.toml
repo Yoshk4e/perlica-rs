@@ -1,10 +1,10 @@
 [package]
-name = "perlica-logic"
+name = "config"
 edition.workspace = true
 version.workspace = true
 
+
 [dependencies]
-config.workspace = true
 serde.workspace = true
+serde_json.workspace = true
 anyhow.workspace = true
-perlica-proto.workspace = true

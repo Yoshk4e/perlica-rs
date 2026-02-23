@@ -74,6 +74,8 @@ pub struct CharInfo {
     pub exp: i32,
     #[prost(int32, tag = "5")]
     pub finish_break_stage: i32,
+    #[prost(map = "int32, uint64", tag = "6")]
+    pub equip_col: ::std::collections::HashMap<i32, u64>,
     #[prost(string, tag = "7")]
     pub normal_skill: ::prost::alloc::string::String,
     #[prost(bool, tag = "8")]
@@ -82,6 +84,8 @@ pub struct CharInfo {
     pub battle_info: ::core::option::Option<BattleInfo>,
     #[prost(message, optional, tag = "10")]
     pub skill_info: ::core::option::Option<SkillInfo>,
+    #[prost(map = "string, int32", tag = "11")]
+    pub equip_suit: ::std::collections::HashMap<::prost::alloc::string::String, i32>,
     #[prost(uint64, tag = "12")]
     pub weapon_id: u64,
     #[prost(int64, tag = "13")]
@@ -91,7 +95,7 @@ pub struct CharInfo {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[serde(default)]
-#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CharTeamInfo {
     #[prost(string, tag = "1")]
     pub team_name: ::prost::alloc::string::String,
@@ -99,6 +103,8 @@ pub struct CharTeamInfo {
     pub char_team: ::prost::alloc::vec::Vec<u64>,
     #[prost(uint64, tag = "3")]
     pub leaderid: u64,
+    #[prost(map = "uint64, message", tag = "4")]
+    pub member_info: ::std::collections::HashMap<u64, CharTeamMemberInfo>,
 }
 /// ref: Proto.CHAR_TEAM_MEMBER_INFO
 #[derive(serde::Serialize, serde::Deserialize)]
