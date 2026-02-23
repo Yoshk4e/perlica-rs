@@ -1,4 +1,5 @@
 mod handler;
+mod handlers;
 mod player;
 mod session;
 
@@ -10,6 +11,7 @@ use tracing::{debug, error};
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     init_tracing(tracing::Level::DEBUG);
+
     let assets = BeyondAssets::load("assets")?;
     let assets: &'static BeyondAssets = Box::leak(Box::new(assets));
 
@@ -18,11 +20,11 @@ async fn main() -> anyhow::Result<()> {
 
     loop {
         let (socket, addr) = listener.accept().await?;
-        debug!("New connection from: {}", addr);
+        debug!("New connection from {}", addr);
 
         tokio::spawn(async move {
             if let Err(e) = session::handle_connection(socket, assets).await {
-                error!("Error handling connection from {}: {}", addr, e);
+                error!("Connection error from {}: {}", addr, e);
             }
         });
     }

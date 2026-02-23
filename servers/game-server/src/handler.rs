@@ -1,7 +1,4 @@
-use crate::player::{
-    on_cs_char_set_battle_info, on_cs_move_object_move, on_csping, on_login, on_scene_load_finish,
-};
-
+use crate::handlers::{character, login, movement, scene};
 macro_rules! handlers {
     ($($msg_req:ty => $handler:path),* $(,)?) => {
         pub async fn handle_command(
@@ -29,36 +26,10 @@ macro_rules! handlers {
     };
 }
 
-#[macro_export]
-macro_rules! login_sequence {
-    ($($state:path => $handler:path),* $(,)?) => {
-        pub async fn handle_login_sequence(
-            ctx: &mut $crate::session::NetContext<'_>,
-        ) -> anyhow::Result<bool> {
-            use $crate::player::LoadingState;
-
-            if let Some(player) = ctx.player.as_mut() {
-                match player.loading_state {
-                    $(
-                        $state => {
-                            $handler(ctx, player).await?;
-                            player.advance_state();
-                            return Ok(true);
-                        }
-                    )*
-                    LoadingState::Complete => return Ok(false),
-                    _ => return Ok(false),
-                }
-            }
-            Ok(false)
-        }
-    };
-}
-
 handlers! {
-    CsLogin => on_login,
-    CsPing => on_csping,
-    CsSceneLoadFinish => on_scene_load_finish,
-    CsCharSetBattleInfo => on_cs_char_set_battle_info,
-    CsMoveObjectMove => on_cs_move_object_move,
+    CsLogin            => login::on_login,
+    CsPing             => login::on_csping,
+    CsSceneLoadFinish  => scene::on_scene_load_finish,
+    CsCharSetBattleInfo => character::on_cs_char_set_battle_info,
+    CsMoveObjectMove   => movement::on_cs_move_object_move,
 }

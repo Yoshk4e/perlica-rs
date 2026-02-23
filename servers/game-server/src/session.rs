@@ -79,7 +79,6 @@ pub async fn handle_connection(
             server_seq_id: &mut server_seq_id,
         };
 
-        // Dispatch to handlers
         crate::handler::handle_command(&mut ctx, head.msgid, body_buf).await?;
     }
 }
