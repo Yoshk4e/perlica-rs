@@ -3,7 +3,7 @@ use perlica_proto::{CsMoveObjectMove, ScMoveObjectMove};
 use tracing::debug;
 
 pub async fn on_cs_move_object_move(
-    ctx: &mut NetContext<'_>,
+    _ctx: &mut NetContext<'_>,
     req: CsMoveObjectMove,
 ) -> ScMoveObjectMove {
     for info in &req.move_info {

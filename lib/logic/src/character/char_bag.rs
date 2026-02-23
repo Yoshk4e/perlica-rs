@@ -6,7 +6,6 @@ use std::collections::HashMap;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(transparent)]
 pub struct CharIndex(u64);
-
 impl CharIndex {
     pub fn object_id(self) -> u64 {
         self.0 + 1
@@ -21,7 +20,6 @@ impl CharIndex {
         self.0 as usize
     }
 }
-
 impl Default for CharIndex {
     fn default() -> Self {
         CharIndex(0)
@@ -30,13 +28,11 @@ impl Default for CharIndex {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct WeaponIndex(u64);
-
 impl WeaponIndex {
     pub fn inst_id(self) -> u64 {
         self.0
     }
 }
-
 impl Default for WeaponIndex {
     fn default() -> Self {
         WeaponIndex(0)
@@ -48,7 +44,6 @@ pub enum TeamSlot {
     Empty,
     Occupied(CharIndex),
 }
-
 impl TeamSlot {
     pub fn char_index(&self) -> Option<CharIndex> {
         match self {
@@ -57,7 +52,6 @@ impl TeamSlot {
         }
     }
 }
-
 impl Default for TeamSlot {
     fn default() -> Self {
         TeamSlot::Empty
@@ -70,7 +64,6 @@ pub struct Team {
     pub char_team: [TeamSlot; 4],
     pub leader_index: CharIndex,
 }
-
 impl Default for Team {
     fn default() -> Self {
         Self {
@@ -80,7 +73,6 @@ impl Default for Team {
         }
     }
 }
-
 impl Team {
     pub const SLOTS_COUNT: usize = 4;
 }
@@ -150,46 +142,68 @@ impl CharBag {
     pub fn new_with_starter(assets: &BeyondAssets, _uid: &str) -> Result<Self> {
         let mut bag = Self::default();
 
-        let starter_id = "chr_0004_pelica";
-        assets
-            .characters
-            .get(starter_id)
-            .context("Starter character template not found")?;
+        const STARTER_IDS: [&str; 4] = [
+            "chr_0003_endmin",
+            "chr_0004_pelica",
+            "chr_0005_chen",
+            "chr_0006_wolfgd",
+        ];
 
-        let attrs = assets
-            .characters
-            .get_stats(starter_id, 1, 0)
-            .context("Starter attributes not found for level 1, break 0")?;
+        let mut char_indices = Vec::with_capacity(4);
 
-        let skill_levels = assets
-            .char_skills
-            .get_char_skills(starter_id)
-            .into_iter()
-            .filter_map(|b| b.entries.first())
-            .map(|e| (e.skill_id.clone(), 1u32))
-            .collect();
+        for template_id in STARTER_IDS {
+            assets.characters.get(template_id).with_context(|| {
+                format!("Starter character template not found: {}", template_id)
+            })?;
 
-        let starter = Char {
-            template_id: starter_id.to_string(),
-            level: attrs.level,
-            exp: 200,
-            break_stage: attrs.break_stage,
-            is_dead: false,
-            weapon_id: WeaponIndex::default(),
-            own_time: std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .map(|d| d.as_millis() as i64)
-                .unwrap_or(0),
-            hp: attrs.hp,
-            ultimate_sp: 0.0,
-            skill_levels,
-        };
+            let attrs = assets
+                .characters
+                .get_stats(template_id, 1, 0)
+                .with_context(|| {
+                    format!(
+                        "Starter attributes not found for {} (level 1, break 0)",
+                        template_id
+                    )
+                })?;
 
-        let char_idx = bag.add_char(starter);
+            let skill_levels: HashMap<String, u32> = assets
+                .char_skills
+                .get_char_skills(template_id)
+                .into_iter()
+                .filter_map(|b| b.entries.first())
+                .map(|e| (e.skill_id.clone(), 1u32))
+                .collect();
+
+            let starter = Char {
+                template_id: template_id.to_string(),
+                level: attrs.level,
+                exp: 200,
+                break_stage: attrs.break_stage,
+                is_dead: false,
+                weapon_id: WeaponIndex::default(),
+                own_time: std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .map(|d| d.as_millis() as i64 + (char_indices.len() as i64 * 100))
+                    .unwrap_or(0),
+                hp: attrs.hp,
+                ultimate_sp: 0.0,
+                skill_levels,
+            };
+
+            let idx = bag.add_char(starter);
+            char_indices.push(idx);
+        }
+
         let mut team = Team::default();
         team.name = "Team 1".to_string();
-        team.char_team[0] = TeamSlot::Occupied(char_idx);
-        team.leader_index = char_idx;
+
+        for (i, &idx) in char_indices.iter().enumerate() {
+            if i < Team::SLOTS_COUNT {
+                team.char_team[i] = TeamSlot::Occupied(idx);
+            }
+        }
+        team.leader_index = char_indices[0];
+
         bag.teams.push(team);
         bag.meta.curr_team_index = 0;
 
@@ -235,7 +249,6 @@ impl CharBag {
                     .filter_map(|slot| slot.char_index())
                     .map(|idx| idx.object_id())
                     .collect();
-
                 let member_skills = team
                     .char_team
                     .iter()
@@ -246,7 +259,6 @@ impl CharBag {
                         (idx.object_id(), skill)
                     })
                     .collect();
-
                 TeamSyncState {
                     name: team.name.clone(),
                     char_ids,
@@ -267,10 +279,8 @@ impl CharBag {
                     .characters
                     .get(&char.template_id)
                     .with_context(|| format!("Unknown character template: {}", char.template_id))?;
-
                 let bundles = assets.char_skills.get_char_skills(&template.char_id);
                 let normal_skill = Self::get_normal_skill(&char.template_id, assets);
-
                 let skill_levels = bundles
                     .iter()
                     .filter_map(|bundle| {
@@ -285,7 +295,6 @@ impl CharBag {
                         })
                     })
                     .collect();
-
                 Ok(CharSyncState {
                     objid,
                     template_id: char.template_id.clone(),
