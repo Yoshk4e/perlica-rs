@@ -1,7 +1,13 @@
 use anyhow::{Context, Result};
 use config::BeyondAssets;
+use perlica_proto::{
+    AttrInfo, BattleInfo, CharInfo, CharTeamInfo, CharTeamMemberInfo, ScCharSyncStatus, ScSyncAttr,
+    ScSyncCharBagInfo, SkillInfo, SkillLevelInfo,
+};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+
+use crate::enums::AttributeType;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(transparent)]
@@ -239,7 +245,7 @@ impl CharBag {
         }
     }
 
-    pub fn prepare_team_sync_states(&self, assets: &BeyondAssets) -> Vec<TeamSyncState> {
+    fn team_sync_states(&self, assets: &BeyondAssets) -> Vec<TeamSyncState> {
         self.teams
             .iter()
             .map(|team| {
@@ -269,7 +275,7 @@ impl CharBag {
             .collect()
     }
 
-    pub fn prepare_char_sync_states(&self, assets: &BeyondAssets) -> Result<Vec<CharSyncState>> {
+    fn char_sync_states(&self, assets: &BeyondAssets) -> Result<Vec<CharSyncState>> {
         self.chars
             .iter()
             .enumerate()
@@ -326,4 +332,184 @@ impl CharBag {
             })
             .unwrap_or_default()
     }
+
+    pub fn char_bag_info(&self, assets: &BeyondAssets) -> Result<ScSyncCharBagInfo> {
+        let team_states = self.team_sync_states(assets);
+        let char_states = self.char_sync_states(assets)?;
+
+        let team_info = team_states
+            .into_iter()
+            .map(|t| CharTeamInfo {
+                team_name: t.name,
+                char_team: t.char_ids,
+                leaderid: t.leader_id,
+                member_info: t
+                    .member_skills
+                    .into_iter()
+                    .map(|(id, skill)| {
+                        (
+                            id,
+                            CharTeamMemberInfo {
+                                normal_skillid: skill,
+                            },
+                        )
+                    })
+                    .collect(),
+            })
+            .collect();
+
+        let char_info = char_states
+            .into_iter()
+            .map(|c| CharInfo {
+                objid: c.objid,
+                templateid: c.template_id,
+                level: c.level,
+                exp: c.exp,
+                finish_break_stage: c.break_stage as i32,
+                equip_col: Default::default(),
+                equip_suit: Default::default(),
+                normal_skill: c.normal_skill.clone(),
+                is_dead: c.is_dead,
+                weapon_id: c.weapon_id,
+                own_time: c.own_time,
+                battle_info: Some(BattleInfo {
+                    hp: c.hp,
+                    ultimatesp: c.ultimate_sp,
+                }),
+                skill_info: Some(SkillInfo {
+                    normal_skill: c.normal_skill,
+                    level_info: c
+                        .skill_levels
+                        .into_iter()
+                        .map(|s| SkillLevelInfo {
+                            skill_id: s.skill_id,
+                            skill_level: s.skill_level,
+                            skill_max_level: s.skill_max_level,
+                        })
+                        .collect(),
+                }),
+            })
+            .collect();
+
+        Ok(ScSyncCharBagInfo {
+            char_info,
+            team_info,
+            curr_team_index: self.meta.curr_team_index as i32,
+            max_char_team_member_count: Team::SLOTS_COUNT as u32,
+        })
+    }
+
+    pub fn char_attrs(&self, assets: &BeyondAssets) -> Vec<ScSyncAttr> {
+        self.chars
+            .iter()
+            .enumerate()
+            .map(|(i, char)| {
+                let objid = CharIndex::from_usize(i).object_id();
+                let attr_list = assets
+                    .characters
+                    .get_stats(&char.template_id, char.level, char.break_stage)
+                    .map(attrs_from_stats)
+                    .unwrap_or_default();
+                ScSyncAttr {
+                    obj_id: objid,
+                    attr_list,
+                }
+            })
+            .collect()
+    }
+
+    pub fn char_status(&self) -> Vec<ScCharSyncStatus> {
+        self.chars
+            .iter()
+            .enumerate()
+            .map(|(i, char)| ScCharSyncStatus {
+                objid: CharIndex::from_usize(i).object_id(),
+                is_dead: char.is_dead,
+                battle_info: Some(BattleInfo {
+                    hp: char.hp,
+                    ultimatesp: char.ultimate_sp,
+                }),
+            })
+            .collect()
+    }
+}
+
+fn attrs_from_stats(a: &config::tables::character::Attributes) -> Vec<AttrInfo> {
+    vec![
+        AttrInfo {
+            attr_type: AttributeType::Hp as i32,
+            basic_value: a.hp,
+            value: a.hp,
+        },
+        AttrInfo {
+            attr_type: AttributeType::Atk as i32,
+            basic_value: a.atk as f64,
+            value: a.atk as f64,
+        },
+        AttrInfo {
+            attr_type: AttributeType::Def as i32,
+            basic_value: a.def as f64,
+            value: a.def as f64,
+        },
+        AttrInfo {
+            attr_type: AttributeType::PhysicalResistance as i32,
+            basic_value: a.physical_resistance as f64,
+            value: a.physical_resistance as f64,
+        },
+        AttrInfo {
+            attr_type: AttributeType::FireResistance as i32,
+            basic_value: a.fire_resistance as f64,
+            value: a.fire_resistance as f64,
+        },
+        AttrInfo {
+            attr_type: AttributeType::PulseResistance as i32,
+            basic_value: a.pulse_resistance as f64,
+            value: a.pulse_resistance as f64,
+        },
+        AttrInfo {
+            attr_type: AttributeType::CrystResistance as i32,
+            basic_value: a.cryst_resistance as f64,
+            value: a.cryst_resistance as f64,
+        },
+        AttrInfo {
+            attr_type: AttributeType::Weight as i32,
+            basic_value: a.weight as f64,
+            value: a.weight as f64,
+        },
+        AttrInfo {
+            attr_type: AttributeType::CriticalRate as i32,
+            basic_value: a.critical_rate as f64,
+            value: a.critical_rate as f64,
+        },
+        AttrInfo {
+            attr_type: AttributeType::CriticalDamage as i32,
+            basic_value: a.critical_damage as f64,
+            value: a.critical_damage as f64,
+        },
+        AttrInfo {
+            attr_type: AttributeType::Hatred as i32,
+            basic_value: a.hatred as f64,
+            value: a.hatred as f64,
+        },
+        AttrInfo {
+            attr_type: AttributeType::NormalAttackRange as i32,
+            basic_value: a.normal_attack_range as f64,
+            value: a.normal_attack_range as f64,
+        },
+        AttrInfo {
+            attr_type: AttributeType::AttackRate as i32,
+            basic_value: a.attack_rate as f64,
+            value: a.attack_rate as f64,
+        },
+        AttrInfo {
+            attr_type: AttributeType::Pen as i32,
+            basic_value: a.pen as f64,
+            value: a.pen as f64,
+        },
+        AttrInfo {
+            attr_type: AttributeType::SpawnEnergyShardEfficiency as i32,
+            basic_value: a.spawn_energy_shard_efficiency as f64,
+            value: a.spawn_energy_shard_efficiency as f64,
+        },
+    ]
 }

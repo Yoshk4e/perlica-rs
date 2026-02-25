@@ -1,5 +1,8 @@
 pub mod char_bag;
 pub mod character;
+pub mod factory;
 pub mod login;
 pub mod movement;
+pub mod ping;
 pub mod scene;
+pub mod unlock;

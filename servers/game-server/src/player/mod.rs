@@ -1,5 +1,3 @@
-pub mod char_bag;
-
 use config::BeyondAssets;
 use perlica_logic::character::char_bag::CharBag;
 use tracing::debug;
@@ -10,6 +8,7 @@ pub enum LoadingState {
     ScLogin,
     CharBagSync,
     UnlockSync,
+    FactorySync,
     EnterScene,
     Complete,
 }
@@ -24,7 +23,7 @@ pub struct Player {
 impl Player {
     pub fn new(resources: &'static BeyondAssets, uid: String) -> Self {
         Self {
-            uid: uid.to_string(),
+            uid: uid.clone(),
             loading_state: LoadingState::Login,
             char_bag: CharBag::new_with_starter(resources, &uid).unwrap_or_else(|_| CharBag::new()),
             resources,
@@ -34,19 +33,20 @@ impl Player {
     pub fn on_login(&mut self, uid: String) {
         self.uid = uid;
         self.loading_state = LoadingState::ScLogin;
-        debug!("Player logged in, state now ScLogin");
+        debug!(uid = %self.uid, "player login");
     }
 
     pub fn advance_state(&mut self) {
-        let old = self.loading_state;
+        let prev = self.loading_state;
         self.loading_state = match self.loading_state {
             LoadingState::Login => LoadingState::ScLogin,
             LoadingState::ScLogin => LoadingState::CharBagSync,
             LoadingState::CharBagSync => LoadingState::UnlockSync,
-            LoadingState::UnlockSync => LoadingState::EnterScene,
+            LoadingState::UnlockSync => LoadingState::FactorySync,
+            LoadingState::FactorySync => LoadingState::EnterScene,
             LoadingState::EnterScene => LoadingState::Complete,
             LoadingState::Complete => LoadingState::Complete,
         };
-        debug!("Loading state: {:?} -> {:?}", old, self.loading_state);
+        debug!(prev = ?prev, next = ?self.loading_state, "state");
     }
 }

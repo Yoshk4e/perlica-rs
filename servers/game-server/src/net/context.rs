@@ -1,8 +1,7 @@
 use crate::player::Player;
 use config::BeyondAssets;
 use perlica_proto::{CsHead, NetMessage, prost::Message};
-use tokio::io::{AsyncReadExt, AsyncWrite, AsyncWriteExt};
-use tokio::net::TcpStream;
+use tokio::io::{AsyncWrite, AsyncWriteExt};
 
 pub struct NetContext<'logic> {
     pub player: &'logic mut Player,
@@ -13,6 +12,22 @@ pub struct NetContext<'logic> {
 }
 
 impl<'logic> NetContext<'logic> {
+    pub fn new(
+        player: &'logic mut Player,
+        resources: &'static BeyondAssets,
+        writer: &'logic mut (dyn AsyncWrite + Unpin + Send),
+        client_seq_id: u64,
+        server_seq_id: &'logic mut u64,
+    ) -> Self {
+        Self {
+            player,
+            resources,
+            writer,
+            client_seq_id,
+            server_seq_id,
+        }
+    }
+
     pub async fn send<T: NetMessage>(&mut self, message: T) -> std::io::Result<()> {
         self.send_packet(message, true).await
     }
@@ -47,38 +62,5 @@ impl<'logic> NetContext<'logic> {
         }
 
         Ok(())
-    }
-}
-
-pub async fn handle_connection(
-    mut socket: TcpStream,
-    assets: &'static BeyondAssets,
-) -> anyhow::Result<()> {
-    let mut player = Player::new(assets, "0".to_string());
-    let mut server_seq_id = 0u64;
-
-    let (mut reader, mut writer) = socket.split();
-
-    loop {
-        let head_size = reader.read_u8().await?;
-        let body_size = reader.read_u16_le().await?;
-
-        let mut head_buf = vec![0u8; head_size as usize];
-        reader.read_exact(&mut head_buf).await?;
-
-        let mut body_buf = vec![0u8; body_size as usize];
-        reader.read_exact(&mut body_buf).await?;
-
-        let head = CsHead::decode(&head_buf[..])?;
-
-        let mut ctx = NetContext {
-            player: &mut player,
-            resources: assets,
-            writer: &mut writer,
-            client_seq_id: head.up_seqid,
-            server_seq_id: &mut server_seq_id,
-        };
-
-        crate::handler::handle_command(&mut ctx, head.msgid, body_buf).await?;
     }
 }
