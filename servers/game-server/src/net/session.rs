@@ -1,5 +1,6 @@
 use crate::net::context::NetContext;
 use crate::net::notify::{Notification, PlayerHandle};
+use crate::net::registry::SessionRegistry;
 use crate::net::router::handle_command;
 use crate::player::Player;
 use config::BeyondAssets;
@@ -14,28 +15,36 @@ pub async fn handle_connection(
     socket: TcpStream,
     addr: SocketAddr,
     assets: &'static BeyondAssets,
+    registry: &'static SessionRegistry,
 ) -> anyhow::Result<()> {
     let (reader, writer) = socket.into_split();
 
     let (outbound_tx, outbound_rx) = mpsc::channel::<Vec<u8>>(64);
     let (notify_tx, notify_rx) = mpsc::channel::<Notification>(32);
 
-    // Hand this handle out to any system that needs to reach this player.
-    let _handle = PlayerHandle::new(notify_tx);
-    // TODO: register _handle in a global session registry once that exists.
+    let handle = PlayerHandle::new(notify_tx);
 
     let write_task = tokio::spawn(write_loop(writer, outbound_rx));
 
-    let result = logic_loop(reader, outbound_tx, notify_rx, assets, addr).await;
+    let result = logic_loop(
+        reader,
+        outbound_tx,
+        notify_rx,
+        handle,
+        assets,
+        registry,
+        addr,
+    )
+    .await;
 
-    // outbound_tx dropped above, write_loop drains remaining frames then exits.
+    // outbound_tx is dropped here — write_loop drains any remaining frames then exits.
     let _ = write_task.await;
 
     result
 }
 
 // Drains the outbound channel and writes each pre-encoded frame to the socket.
-// Exits cleanly when the sender side (logic loop) is dropped.
+// Exits when the sender side (logic loop) is dropped.
 async fn write_loop(
     mut writer: tokio::net::tcp::OwnedWriteHalf,
     mut rx: mpsc::Receiver<Vec<u8>>,
@@ -46,20 +55,23 @@ async fn write_loop(
     Ok(())
 }
 
-#[instrument(skip(reader, outbound_tx, notify_rx, assets), fields(addr = %addr))]
+#[instrument(skip(reader, outbound_tx, notify_rx, handle, assets, registry), fields(addr = %addr))]
 async fn logic_loop(
     mut reader: tokio::net::tcp::OwnedReadHalf,
     outbound_tx: mpsc::Sender<Vec<u8>>,
     mut notify_rx: mpsc::Receiver<Notification>,
+    handle: PlayerHandle,
     assets: &'static BeyondAssets,
+    registry: &'static SessionRegistry,
     addr: SocketAddr,
 ) -> anyhow::Result<()> {
     let mut player = Player::new(assets, "0".to_string());
     let mut server_seq_id = 0u64;
+    let mut registered = false;
 
     info!("session started");
 
-    loop {
+    let result = loop {
         tokio::select! {
             result = read_packet(&mut reader) => {
                 match result {
@@ -73,12 +85,19 @@ async fn logic_loop(
                         if let Err(e) = handle_command(&mut ctx, cmd_id, body).await {
                             warn!(error = %e, cmd_id, "command error");
                         }
+
+                        // uid is "0" until on_login sets it; register on first non-sentinel uid.
+                        if !registered && player.uid != "0" {
+                            registry.register(player.uid.clone(), handle.clone());
+                            info!(uid = %player.uid, online = registry.online(), "player online");
+                            registered = true;
+                        }
                     }
                     Err(e) if is_clean_disconnect(&e) => {
                         debug!("disconnected");
-                        return Ok(());
+                        break Ok(());
                     }
-                    Err(e) => return Err(e.into()),
+                    Err(e) => break Err(e.into()),
                 }
             }
 
@@ -86,10 +105,18 @@ async fn logic_loop(
                 handle_notification(&mut player, &outbound_tx, &mut server_seq_id, notification).await;
             }
         }
+    };
+
+    // Runs on every exit path — clean disconnect, error, or future break.
+    if registered {
+        registry.unregister(&player.uid);
+        info!(uid = %player.uid, online = registry.online(), "player offline");
     }
+
+    result
 }
 
-// Reads one framed packet from the socket and returns (cmd_id, body, client_seq_id).
+// Reads one framed packet and returns (cmd_id, body, client_seq_id).
 async fn read_packet(
     reader: &mut tokio::net::tcp::OwnedReadHalf,
 ) -> std::io::Result<(i32, Vec<u8>, u64)> {
@@ -126,7 +153,6 @@ async fn handle_notification(
     notification: Notification,
 ) {
     match notification {
-        // Variants handled here as world systems are added.
         #[allow(unreachable_patterns)]
         _ => {}
     }
