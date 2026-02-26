@@ -5,7 +5,7 @@ use tokio::sync::mpsc;
 // (scene broadcasts, world events, GM actions, etc.) goes through here.
 #[derive(Debug, Clone)]
 pub enum Notification {
-    // Placeholder — variants are added here as world systems come online.
+    // Placeholder, variants are added here as world systems come online.
     //   BroadcastMove(Vec<MoveInfo>)
     //   SceneEvent(SceneEventPayload)
     //   Kick(String)

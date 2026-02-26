@@ -15,4 +15,6 @@ tracing-subscriber.workspace = true
 common.workspace = true
 config.workspace = true
 perlica-logic.workspace = true
+perlica-db.workspace = true
 byteorder.workspace = true
+toml.workspace = true

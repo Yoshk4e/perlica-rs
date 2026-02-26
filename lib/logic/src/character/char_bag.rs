@@ -38,6 +38,9 @@ impl WeaponIndex {
     pub fn inst_id(self) -> u64 {
         self.0
     }
+    pub fn from_raw(id: u64) -> Self {
+        Self(id)
+    }
 }
 impl Default for WeaponIndex {
     fn default() -> Self {

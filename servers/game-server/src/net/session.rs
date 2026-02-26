@@ -4,18 +4,20 @@ use crate::net::registry::SessionRegistry;
 use crate::net::router::handle_command;
 use crate::player::Player;
 use config::BeyondAssets;
+use perlica_db::PlayerDb;
 use perlica_proto::{CsHead, prost::Message};
 use std::net::SocketAddr;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
 use tokio::sync::mpsc;
-use tracing::{debug, info, instrument, warn};
+use tracing::{debug, error, info, instrument, warn};
 
 pub async fn handle_connection(
     socket: TcpStream,
     addr: SocketAddr,
     assets: &'static BeyondAssets,
     registry: &'static SessionRegistry,
+    db: &'static PlayerDb,
 ) -> anyhow::Result<()> {
     let (reader, writer) = socket.into_split();
 
@@ -33,11 +35,12 @@ pub async fn handle_connection(
         handle,
         assets,
         registry,
+        db,
         addr,
     )
     .await;
 
-    // outbound_tx is dropped here — write_loop drains any remaining frames then exits.
+    // outbound_tx dropped here, write_loop drains remaining frames then exits.
     let _ = write_task.await;
 
     result
@@ -55,7 +58,7 @@ async fn write_loop(
     Ok(())
 }
 
-#[instrument(skip(reader, outbound_tx, notify_rx, handle, assets, registry), fields(addr = %addr))]
+#[instrument(skip(reader, outbound_tx, notify_rx, handle, assets, registry, db), fields(addr = %addr))]
 async fn logic_loop(
     mut reader: tokio::net::tcp::OwnedReadHalf,
     outbound_tx: mpsc::Sender<Vec<u8>>,
@@ -63,9 +66,10 @@ async fn logic_loop(
     handle: PlayerHandle,
     assets: &'static BeyondAssets,
     registry: &'static SessionRegistry,
+    db: &'static PlayerDb,
     addr: SocketAddr,
 ) -> anyhow::Result<()> {
-    let mut player = Player::new(assets, "0".to_string());
+    let mut player = Player::new(assets);
     let mut server_seq_id = 0u64;
     let mut registered = false;
 
@@ -78,6 +82,7 @@ async fn logic_loop(
                     Ok((cmd_id, body, client_seq_id)) => {
                         let mut ctx = NetContext::new(
                             &mut player,
+                            db,
                             &outbound_tx,
                             client_seq_id,
                             &mut server_seq_id,
@@ -86,8 +91,8 @@ async fn logic_loop(
                             warn!(error = %e, cmd_id, "command error");
                         }
 
-                        // uid is "0" until on_login sets it; register on first non-sentinel uid.
-                        if !registered && player.uid != "0" {
+                        // uid is empty until on_login sets it.
+                        if !registered && !player.uid.is_empty() {
                             registry.register(player.uid.clone(), handle.clone());
                             info!(uid = %player.uid, online = registry.online(), "player online");
                             registered = true;
@@ -107,10 +112,13 @@ async fn logic_loop(
         }
     };
 
-    // Runs on every exit path — clean disconnect, error, or future break.
+    // Runs on every exit path, clean disconnect, error, or future break.
     if registered {
+        if let Err(e) = db.save(&player.uid, &player.char_bag, &player.world).await {
+            error!(uid = %player.uid, error = %e, "Save failed");
+        }
         registry.unregister(&player.uid);
-        info!(uid = %player.uid, online = registry.online(), "player offline");
+        info!(uid = %player.uid, online = registry.online(), "Player offline");
     }
 
     result

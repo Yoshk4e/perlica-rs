@@ -18,11 +18,14 @@ byteorder = "1.5"
 prost = "0.14"
 prost-types = "0.14"
 prost-build = "0.14"
+toml = "0.8"
+sqlx = { version = "0.8", features = ["runtime-tokio", "sqlite"] }
 
 common = { path = "lib/common" }
 config = { path = "lib/config" }
 perlica-proto = { path = "lib/proto" }
 perlica-logic = { path = "lib/logic" }
+perlica-db = { path = "lib/db" }
 
 
 [profile.release]

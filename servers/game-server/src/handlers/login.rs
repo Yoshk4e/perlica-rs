@@ -2,13 +2,31 @@ use crate::handlers::{char_bag, factory, scene, unlock};
 use crate::net::NetContext;
 use crate::player::LoadingState;
 use common::time::now_ms;
+use perlica_logic::character::char_bag::CharBag;
 use perlica_proto::{CsLogin, ScLogin, ScSyncBaseData};
-use tracing::{debug, instrument, warn};
+use tracing::{debug, error, instrument, warn};
 
 #[instrument(skip(ctx), fields(uid = %req.uid))]
 pub async fn on_login(ctx: &mut NetContext<'_>, req: CsLogin) -> ScLogin {
     ctx.player.on_login(req.uid.clone());
-    debug!("login");
+
+    match ctx.db.load(&ctx.player.uid).await {
+        Ok(Some(record)) => {
+            debug!("Loaded Player with UID {} from db", ctx.player.uid);
+            ctx.player.char_bag = record.char_bag;
+            ctx.player.world = record.world;
+        }
+        Ok(None) => {
+            debug!("new player, initializing");
+            ctx.player.char_bag = CharBag::new_with_starter(ctx.player.resources, &ctx.player.uid)
+                .unwrap_or_else(|_| CharBag::new());
+        }
+        Err(e) => {
+            error!(error = %e, "db load failed, falling back to starter");
+            ctx.player.char_bag = CharBag::new_with_starter(ctx.player.resources, &ctx.player.uid)
+                .unwrap_or_else(|_| CharBag::new());
+        }
+    }
 
     ScLogin {
         uid: req.uid,
@@ -22,8 +40,6 @@ pub async fn on_login(ctx: &mut NetContext<'_>, req: CsLogin) -> ScLogin {
     }
 }
 
-// Drives the post-login state machine, advancing one step per iteration until
-// the player reaches EnterScene or a step fails.
 #[instrument(skip(ctx), fields(uid = %ctx.player.uid, state = ?ctx.player.loading_state))]
 pub(crate) async fn run_login_sequence(ctx: &mut NetContext<'_>) {
     loop {
@@ -56,11 +72,11 @@ async fn push_base_data(ctx: &mut NetContext<'_>) -> bool {
     let msg = ScSyncBaseData {
         roleid: uid,
         role_name: ctx.player.uid.clone(),
-        level: 1,
-        exp: 0,
+        level: ctx.player.world.role_level as u32,
+        exp: ctx.player.world.role_exp as u32,
         server_time: now_ms() as i64,
         server_time_zone: 0,
     };
-    debug!(roleid = uid, "base data");
+    debug!(roleid = uid, level = msg.level, "base data");
     ctx.notify(msg).await.is_ok()
 }

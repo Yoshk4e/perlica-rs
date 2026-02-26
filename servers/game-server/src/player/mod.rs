@@ -1,5 +1,6 @@
 use config::BeyondAssets;
 use perlica_logic::character::char_bag::CharBag;
+use perlica_logic::player::WorldState;
 use tracing::debug;
 
 #[derive(PartialEq, Eq, PartialOrd, Ord, Debug, Clone, Copy)]
@@ -17,15 +18,17 @@ pub struct Player {
     pub uid: String,
     pub loading_state: LoadingState,
     pub char_bag: CharBag,
+    pub world: WorldState,
     pub resources: &'static BeyondAssets,
 }
 
 impl Player {
-    pub fn new(resources: &'static BeyondAssets, uid: String) -> Self {
+    pub fn new(resources: &'static BeyondAssets) -> Self {
         Self {
-            uid: uid.clone(),
+            uid: String::new(),
             loading_state: LoadingState::Login,
-            char_bag: CharBag::new_with_starter(resources, &uid).unwrap_or_else(|_| CharBag::new()),
+            char_bag: CharBag::new(),
+            world: WorldState::default(),
             resources,
         }
     }

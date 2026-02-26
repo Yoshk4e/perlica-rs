@@ -1,0 +1,12 @@
+[server]
+host = "0.0.0.0"
+port = 1337
+
+# [database]
+# SQLite:
+# path = "./data/perlica.db?mode=rwc"
+# PostgreSQL:
+# url = "postgres://user:password@localhost/perlica"
+
+[assets]
+path = "assets"

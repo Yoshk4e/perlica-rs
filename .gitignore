@@ -1,2 +1,4 @@
 target/
 *.proto
+saves/
+Config.toml

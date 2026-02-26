@@ -1,0 +1,11 @@
+[package]
+name = "perlica-db"
+edition.workspace = true
+version.workspace = true
+
+[dependencies]
+bincode = "1"
+anyhow.workspace = true
+tracing.workspace = true
+serde.workspace = true
+perlica-logic.workspace = true

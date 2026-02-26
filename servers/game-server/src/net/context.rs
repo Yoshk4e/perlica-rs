@@ -1,9 +1,11 @@
 use crate::player::Player;
+use perlica_db::PlayerDb;
 use perlica_proto::{CsHead, NetMessage, prost::Message};
 use tokio::sync::mpsc;
 
 pub struct NetContext<'a> {
     pub player: &'a mut Player,
+    pub db: &'static PlayerDb,
     pub client_seq_id: u64,
     outbound: &'a mpsc::Sender<Vec<u8>>,
     server_seq_id: &'a mut u64,
@@ -12,12 +14,14 @@ pub struct NetContext<'a> {
 impl<'a> NetContext<'a> {
     pub fn new(
         player: &'a mut Player,
+        db: &'static PlayerDb,
         outbound: &'a mpsc::Sender<Vec<u8>>,
         client_seq_id: u64,
         server_seq_id: &'a mut u64,
     ) -> Self {
         Self {
             player,
+            db,
             outbound,
             client_seq_id,
             server_seq_id,
