@@ -9,7 +9,7 @@ use tracing::instrument;
 #[derive(Serialize, Deserialize)]
 pub struct PlayerRecord {
     pub char_bag: CharBag,
-    pub world: WorldState,
+    pub world:    WorldState,
 }
 
 pub struct PlayerDb {
@@ -30,8 +30,8 @@ impl PlayerDb {
         if !path.exists() {
             return Ok(None);
         }
-        let bytes =
-            fs::read(&path).with_context(|| format!("failed to read save: {}", path.display()))?;
+        let bytes = fs::read(&path)
+            .with_context(|| format!("failed to read save: {}", path.display()))?;
         let record = bincode::deserialize(&bytes)
             .with_context(|| format!("failed to deserialize save for {uid}"))?;
         Ok(Some(record))
@@ -41,15 +41,16 @@ impl PlayerDb {
     pub async fn save(&self, uid: &str, char_bag: &CharBag, world: &WorldState) -> Result<()> {
         let bytes = bincode::serialize(&PlayerRecord {
             char_bag: char_bag.clone(),
-            world: world.clone(),
+            world:    world.clone(),
         })
         .context("failed to serialize save")?;
 
         let path = self.path(uid);
-        let tmp = path.with_extension("bin.tmp");
+        let tmp  = path.with_extension("bin.tmp");
         fs::write(&tmp, &bytes)
             .with_context(|| format!("failed to write tmp: {}", tmp.display()))?;
-        fs::rename(&tmp, &path).with_context(|| format!("failed to rename: {}", path.display()))?;
+        fs::rename(&tmp, &path)
+            .with_context(|| format!("failed to rename: {}", path.display()))?;
         Ok(())
     }
 

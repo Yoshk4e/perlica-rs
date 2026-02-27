@@ -18,12 +18,12 @@ impl Default for WorldState {
         Self {
             role_level: 1,
             role_exp: 0,
-            last_scene: "map01_dg003".to_string(),
-            pos_x: 825.11,
-            pos_y: 14.6,
-            pos_z: 421.61,
+            last_scene: "map01_lv001".to_string(),
+            pos_x: 469.0,
+            pos_y: 107.11,
+            pos_z: 217.83,
             rot_x: 0.0,
-            rot_y: -101.14,
+            rot_y: 60.00,
             rot_z: 0.0,
         }
     }
