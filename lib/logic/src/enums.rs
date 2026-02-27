@@ -97,7 +97,6 @@ impl UnlockSystemType {
 
     pub fn all() -> Vec<i32> {
         vec![
-            Self::Map as i32,
             Self::Inventory as i32,
             Self::Watch as i32,
             Self::ValuableDepot as i32,
