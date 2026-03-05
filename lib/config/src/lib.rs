@@ -1,6 +1,10 @@
 pub mod character;
 pub mod skill;
+pub mod str_to_id;
 pub mod tables;
+pub mod weapon;
+
+use crate::str_to_id::StrIdNumAssets;
 
 use anyhow::Result;
 use std::path::Path;
@@ -8,6 +12,8 @@ use std::path::Path;
 pub struct BeyondAssets {
     pub characters: character::CharacterAssets,
     pub char_skills: skill::SkillAssets,
+    pub weapons: weapon::WeaponAssets,
+    pub str_id_num: StrIdNumAssets,
 }
 
 impl BeyondAssets {
@@ -18,6 +24,8 @@ impl BeyondAssets {
         Ok(BeyondAssets {
             characters: character::CharacterAssets::load(&tables_dir)?,
             char_skills: skill::SkillAssets::load(&tables_dir)?,
+            weapons: weapon::WeaponAssets::load(&tables_dir)?,
+            str_id_num: StrIdNumAssets::load(&tables_dir)?,
         })
     }
 }

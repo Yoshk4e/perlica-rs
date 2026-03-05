@@ -1,12 +1,11 @@
-use crate::handlers::{character, login, movement, ping, scene};
+use crate::handlers::{bitset, character, login, movement, ping, scene};
 use byteorder::{LittleEndian, ReadBytesExt};
 use perlica_proto::{CsHead, CsMergeMsg, prost::Message};
 use std::io::{Cursor, Read};
-use tracing::{debug, instrument, warn};
+use tracing::{debug, warn};
 
 macro_rules! handlers {
     ($($msg_req:ty => $handler:path),* $(,)?) => {
-        #[instrument(skip(ctx, body), fields(uid = %ctx.player.uid, cmd_id))]
         pub async fn handle_command(
             ctx: &mut crate::net::NetContext<'_>,
             cmd_id: i32,
@@ -19,10 +18,9 @@ macro_rules! handlers {
             match cmd_id {
                 x if x == <CsMergeMsg as NetMessage>::CMD_ID => {
                     let req = CsMergeMsg::decode(&body[..])?;
-                    debug!(payload = req.msg.len(), "merge packet");
+                    debug!("Merge packet received");
                     handle_merge_msg(ctx, req).await?;
                 }
-
                 $(
                     x if x == <$msg_req as NetMessage>::CMD_ID => {
                         let req = <$msg_req>::decode(&body[..])?;
@@ -34,7 +32,7 @@ macro_rules! handlers {
                     }
                 )*
                 _ => {
-                    warn!(cmd_id, "unhandled command");
+                    warn!("unhandled command {cmd_id}");
                 }
             }
             Ok(())
@@ -48,10 +46,10 @@ handlers! {
     CsSceneLoadFinish   => scene::on_scene_load_finish,
     CsCharSetBattleInfo => character::on_cs_char_set_battle_info,
     CsMoveObjectMove    => movement::on_cs_move_object_move,
+    CsBitsetRemove      => bitset::on_cs_bitset_remove,
 }
 
 // Merge payload is a concatenation of multiple framed packets.
-#[instrument(skip(ctx, req), fields(uid = %ctx.player.uid, payload = req.msg.len()))]
 async fn handle_merge_msg(
     ctx: &mut crate::net::NetContext<'_>,
     req: CsMergeMsg,
@@ -88,8 +86,8 @@ async fn handle_merge_msg(
         cursor.read_exact(&mut sub_body_buf)?;
 
         let sub_head = CsHead::decode(&sub_head_buf[..])?;
-
         sub_count += 1;
+
         if let Err(e) = Box::pin(handle_command(ctx, sub_head.msgid, sub_body_buf)).await {
             warn!(cmd_id = sub_head.msgid, error = %e, "merge sub-packet failed");
         }

@@ -1,4 +1,5 @@
 use crate::player::Player;
+use config::BeyondAssets;
 use perlica_db::PlayerDb;
 use perlica_proto::{CsHead, NetMessage, prost::Message};
 use tokio::sync::mpsc;
@@ -7,6 +8,7 @@ pub struct NetContext<'a> {
     pub player: &'a mut Player,
     pub db: &'static PlayerDb,
     pub client_seq_id: u64,
+    pub assets: &'static BeyondAssets,
     outbound: &'a mpsc::Sender<Vec<u8>>,
     server_seq_id: &'a mut u64,
 }
@@ -15,6 +17,7 @@ impl<'a> NetContext<'a> {
     pub fn new(
         player: &'a mut Player,
         db: &'static PlayerDb,
+        assets: &'static BeyondAssets,
         outbound: &'a mpsc::Sender<Vec<u8>>,
         client_seq_id: u64,
         server_seq_id: &'a mut u64,
@@ -22,6 +25,7 @@ impl<'a> NetContext<'a> {
         Self {
             player,
             db,
+            assets,
             outbound,
             client_seq_id,
             server_seq_id,

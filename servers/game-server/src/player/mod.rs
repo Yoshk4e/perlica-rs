@@ -1,6 +1,6 @@
-use config::BeyondAssets;
 use perlica_logic::character::char_bag::CharBag;
 use perlica_logic::player::WorldState;
+use std::collections::{HashMap, HashSet};
 use tracing::debug;
 
 #[derive(PartialEq, Eq, PartialOrd, Ord, Debug, Clone, Copy)]
@@ -19,20 +19,22 @@ pub struct Player {
     pub loading_state: LoadingState,
     pub char_bag: CharBag,
     pub world: WorldState,
-    pub resources: &'static BeyondAssets,
+    pub bitsets: HashMap<u32, HashSet<u32>>,
 }
 
-impl Player {
-    pub fn new(resources: &'static BeyondAssets) -> Self {
+impl Default for Player {
+    fn default() -> Self {
         Self {
             uid: String::new(),
             loading_state: LoadingState::Login,
-            char_bag: CharBag::new(),
+            char_bag: CharBag::default(),
             world: WorldState::default(),
-            resources,
+            bitsets: HashMap::new(),
         }
     }
+}
 
+impl Player {
     pub fn on_login(&mut self, uid: String) {
         self.uid = uid;
         self.loading_state = LoadingState::ScLogin;

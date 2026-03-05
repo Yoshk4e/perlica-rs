@@ -1,4 +1,4 @@
-use crate::handlers::{char_bag, factory, scene, unlock};
+use crate::handlers::{bitset, char_bag, factory, scene, unlock};
 use crate::net::NetContext;
 use crate::player::LoadingState;
 use common::time::now_ms;
@@ -18,13 +18,11 @@ pub async fn on_login(ctx: &mut NetContext<'_>, req: CsLogin) -> ScLogin {
         }
         Ok(None) => {
             debug!("new player, initializing");
-            ctx.player.char_bag = CharBag::new_with_starter(ctx.player.resources, &ctx.player.uid)
-                .unwrap_or_else(|_| CharBag::new());
+            ctx.player.char_bag = CharBag::new(ctx.assets).unwrap_or_default();
         }
         Err(e) => {
             error!(error = %e, "db load failed, falling back to starter");
-            ctx.player.char_bag = CharBag::new_with_starter(ctx.player.resources, &ctx.player.uid)
-                .unwrap_or_else(|_| CharBag::new());
+            ctx.player.char_bag = CharBag::new(ctx.assets).unwrap_or_default();
         }
     }
 
@@ -40,7 +38,6 @@ pub async fn on_login(ctx: &mut NetContext<'_>, req: CsLogin) -> ScLogin {
     }
 }
 
-#[instrument(skip(ctx), fields(uid = %ctx.player.uid, state = ?ctx.player.loading_state))]
 pub(crate) async fn run_login_sequence(ctx: &mut NetContext<'_>) {
     loop {
         let ok = match ctx.player.loading_state {
@@ -52,7 +49,9 @@ pub(crate) async fn run_login_sequence(ctx: &mut NetContext<'_>) {
                     && char_bag::push_char_attrs(ctx).await
                     && char_bag::push_char_status(ctx).await
             }
-            LoadingState::UnlockSync => factory::push_factory(ctx).await,
+            LoadingState::UnlockSync => {
+                factory::push_factory(ctx).await && bitset::push_bitsets(ctx).await
+            }
             LoadingState::FactorySync => scene::notify_enter_scene(ctx).await,
             LoadingState::EnterScene | LoadingState::Complete | LoadingState::Login => break,
         };
@@ -60,7 +59,7 @@ pub(crate) async fn run_login_sequence(ctx: &mut NetContext<'_>) {
         if ok {
             ctx.player.advance_state();
         } else {
-            warn!(state = ?ctx.player.loading_state, "login sequence step failed");
+            warn!("login sequence step failed");
             break;
         }
     }

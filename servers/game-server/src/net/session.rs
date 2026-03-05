@@ -1,16 +1,27 @@
-use crate::net::context::NetContext;
-use crate::net::notify::{Notification, PlayerHandle};
-use crate::net::registry::SessionRegistry;
-use crate::net::router::handle_command;
+use crate::net::{
+    context::NetContext,
+    notify::{Notification, PlayerHandle},
+    registry::SessionRegistry,
+    router::handle_command,
+};
 use crate::player::Player;
 use config::BeyondAssets;
 use perlica_db::PlayerDb;
 use perlica_proto::{CsHead, prost::Message};
 use std::net::SocketAddr;
-use tokio::io::{AsyncReadExt, AsyncWriteExt};
-use tokio::net::TcpStream;
-use tokio::sync::mpsc;
+use tokio::{
+    io::{AsyncReadExt, AsyncWriteExt},
+    net::TcpStream,
+    sync::mpsc,
+};
 use tracing::{debug, error, info, instrument, warn};
+
+pub struct SessionContext {
+    pub assets: &'static BeyondAssets,
+    pub registry: &'static SessionRegistry,
+    pub db: &'static PlayerDb,
+    pub addr: SocketAddr,
+}
 
 pub async fn handle_connection(
     socket: TcpStream,
@@ -28,17 +39,14 @@ pub async fn handle_connection(
 
     let write_task = tokio::spawn(write_loop(writer, outbound_rx));
 
-    let result = logic_loop(
-        reader,
-        outbound_tx,
-        notify_rx,
-        handle,
+    let ctx = SessionContext {
         assets,
         registry,
         db,
         addr,
-    )
-    .await;
+    };
+
+    let result = logic_loop(reader, outbound_tx, notify_rx, handle, ctx).await;
 
     // outbound_tx dropped here, write_loop drains remaining frames then exits.
     let _ = write_task.await;
@@ -58,18 +66,15 @@ async fn write_loop(
     Ok(())
 }
 
-#[instrument(skip(reader, outbound_tx, notify_rx, handle, assets, registry, db), fields(addr = %addr))]
+#[instrument(skip(reader, outbound_tx, notify_rx, handle, ctx), fields(addr = %ctx.addr))]
 async fn logic_loop(
     mut reader: tokio::net::tcp::OwnedReadHalf,
     outbound_tx: mpsc::Sender<Vec<u8>>,
     mut notify_rx: mpsc::Receiver<Notification>,
     handle: PlayerHandle,
-    assets: &'static BeyondAssets,
-    registry: &'static SessionRegistry,
-    db: &'static PlayerDb,
-    addr: SocketAddr,
+    ctx: SessionContext,
 ) -> anyhow::Result<()> {
-    let mut player = Player::new(assets);
+    let mut player = Player::default();
     let mut server_seq_id = 0u64;
     let mut registered = false;
 
@@ -80,21 +85,22 @@ async fn logic_loop(
             result = read_packet(&mut reader) => {
                 match result {
                     Ok((cmd_id, body, client_seq_id)) => {
-                        let mut ctx = NetContext::new(
+                        let mut net_ctx = NetContext::new(
                             &mut player,
-                            db,
+                            ctx.db,
+                            ctx.assets,
                             &outbound_tx,
                             client_seq_id,
                             &mut server_seq_id,
                         );
-                        if let Err(e) = handle_command(&mut ctx, cmd_id, body).await {
+                        if let Err(e) = handle_command(&mut net_ctx, cmd_id, body).await {
                             warn!(error = %e, cmd_id, "command error");
                         }
 
                         // uid is empty until on_login sets it.
                         if !registered && !player.uid.is_empty() {
-                            registry.register(player.uid.clone(), handle.clone());
-                            info!(uid = %player.uid, online = registry.online(), "player online");
+                            ctx.registry.register(player.uid.clone(), handle.clone());
+                            info!(uid = %player.uid, online = ctx.registry.online(), "player online");
                             registered = true;
                         }
                     }
@@ -107,18 +113,30 @@ async fn logic_loop(
             }
 
             Some(notification) = notify_rx.recv() => {
-                handle_notification(&mut player, &outbound_tx, &mut server_seq_id, notification).await;
+                let mut net_ctx = NetContext::new(
+                    &mut player,
+                    ctx.db,
+                    ctx.assets,
+                    &outbound_tx,
+                    0,
+                    &mut server_seq_id,
+                );
+                handle_notification(&mut net_ctx, notification).await;
             }
         }
     };
 
     // Runs on every exit path, clean disconnect, error, or future break.
     if registered {
-        if let Err(e) = db.save(&player.uid, &player.char_bag, &player.world).await {
+        if let Err(e) = ctx
+            .db
+            .save(&player.uid, &player.char_bag, &player.world)
+            .await
+        {
             error!(uid = %player.uid, error = %e, "Save failed");
         }
-        registry.unregister(&player.uid);
-        info!(uid = %player.uid, online = registry.online(), "Player offline");
+        ctx.registry.unregister(&player.uid);
+        info!(uid = %player.uid, online = ctx.registry.online(), "Player offline");
     }
 
     result
@@ -154,12 +172,7 @@ fn is_clean_disconnect(e: &std::io::Error) -> bool {
 
 // Dispatches an inbound server notification into the player's session.
 // Each Notification variant maps to the logic that produces outbound frames.
-async fn handle_notification(
-    _player: &mut Player,
-    _outbound: &mpsc::Sender<Vec<u8>>,
-    _server_seq_id: &mut u64,
-    notification: Notification,
-) {
+async fn handle_notification(ctx: &mut NetContext<'_>, notification: Notification) {
     match notification {
         #[allow(unreachable_patterns)]
         _ => {}

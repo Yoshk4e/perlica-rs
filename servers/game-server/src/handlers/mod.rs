@@ -1,3 +1,4 @@
+pub mod bitset;
 pub mod char_bag;
 pub mod character;
 pub mod factory;

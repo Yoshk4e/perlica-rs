@@ -3,7 +3,7 @@ use tracing::{debug, error, instrument};
 
 #[instrument(skip(ctx), fields(uid = %ctx.player.uid))]
 pub async fn push_char_bag(ctx: &mut NetContext<'_>) -> bool {
-    match ctx.player.char_bag.char_bag_info(ctx.player.resources) {
+    match ctx.player.char_bag.char_bag_info(ctx.assets) {
         Ok(msg) => {
             debug!(
                 chars = msg.char_info.len(),
@@ -25,7 +25,7 @@ pub async fn push_char_bag(ctx: &mut NetContext<'_>) -> bool {
 
 #[instrument(skip(ctx), fields(uid = %ctx.player.uid))]
 pub async fn push_char_attrs(ctx: &mut NetContext<'_>) -> bool {
-    let msgs = ctx.player.char_bag.char_attrs(ctx.player.resources);
+    let msgs = ctx.player.char_bag.char_attrs(ctx.assets);
     debug!(count = msgs.len(), "char attrs");
 
     for msg in msgs {

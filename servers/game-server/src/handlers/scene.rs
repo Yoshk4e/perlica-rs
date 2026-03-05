@@ -6,12 +6,15 @@ use perlica_proto::{
 };
 use tracing::{debug, error, instrument};
 
-#[instrument(skip(ctx), fields(uid = %ctx.player.uid))]
 pub async fn notify_enter_scene(ctx: &mut NetContext<'_>) -> bool {
     let msg = ScEnterSceneNotify {
         role_id: 1,
         scene_name: ctx.player.world.last_scene.clone(),
-        scene_id: 11,
+        scene_id: ctx
+            .assets
+            .str_id_num
+            .get_scene_id(&ctx.player.world.last_scene)
+            .unwrap_or(0),
         position: Some(Vector {
             x: ctx.player.world.pos_x,
             y: ctx.player.world.pos_y,
@@ -34,7 +37,7 @@ pub async fn notify_object_enter_view(
 ) -> bool {
     let msg = ScObjectEnterView {
         scene_name: scene_name.clone(),
-        scene_id: 11,
+        scene_id: ctx.assets.str_id_num.get_scene_id(&scene_name).unwrap_or(0),
         detail: Some(SceneObjectDetailContainer {
             char_list,
             ..Default::default()
@@ -65,8 +68,12 @@ pub async fn on_scene_load_finish(
     }
 
     ScSelfSceneInfo {
-        scene_name: req.scene_name,
-        scene_id: 11,
+        scene_name: req.scene_name.clone(),
+        scene_id: ctx
+            .assets
+            .str_id_num
+            .get_scene_id(&req.scene_name)
+            .unwrap_or(0),
         self_info_reason: 1,
         scene_impl: Some(SceneImpl::Empty(SceneImplEmpty {})),
         detail: Some(SceneObjectDetailContainer {

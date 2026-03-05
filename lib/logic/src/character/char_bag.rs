@@ -6,12 +6,14 @@ use perlica_proto::{
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use tracing::{debug, info};
 
 use crate::enums::AttributeType;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
 #[repr(transparent)]
 pub struct CharIndex(u64);
+
 impl CharIndex {
     pub fn object_id(self) -> u64 {
         self.0 + 1
@@ -26,14 +28,10 @@ impl CharIndex {
         self.0 as usize
     }
 }
-impl Default for CharIndex {
-    fn default() -> Self {
-        CharIndex(0)
-    }
-}
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
 pub struct WeaponIndex(u64);
+
 impl WeaponIndex {
     pub fn inst_id(self) -> u64 {
         self.0
@@ -42,17 +40,14 @@ impl WeaponIndex {
         Self(id)
     }
 }
-impl Default for WeaponIndex {
-    fn default() -> Self {
-        WeaponIndex(0)
-    }
-}
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub enum TeamSlot {
+    #[default]
     Empty,
     Occupied(CharIndex),
 }
+
 impl TeamSlot {
     pub fn char_index(&self) -> Option<CharIndex> {
         match self {
@@ -61,27 +56,14 @@ impl TeamSlot {
         }
     }
 }
-impl Default for TeamSlot {
-    fn default() -> Self {
-        TeamSlot::Empty
-    }
-}
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Team {
     pub name: String,
     pub char_team: [TeamSlot; 4],
     pub leader_index: CharIndex,
 }
-impl Default for Team {
-    fn default() -> Self {
-        Self {
-            name: String::new(),
-            char_team: [TeamSlot::default(); 4],
-            leader_index: CharIndex::default(),
-        }
-    }
-}
+
 impl Team {
     pub const SLOTS_COUNT: usize = 4;
 }
@@ -144,36 +126,33 @@ pub struct CharBag {
 }
 
 impl CharBag {
-    pub fn new() -> Self {
-        Self::default()
-    }
-
-    pub fn new_with_starter(assets: &BeyondAssets, _uid: &str) -> Result<Self> {
+    /// Creates a fully initialized bag for a new player, populating all chars from assets.
+    pub fn new(assets: &BeyondAssets) -> Result<Self> {
         let mut bag = Self::default();
-
-        const STARTER_IDS: [&str; 4] = [
+        const DEFAULT_TEAM: [&str; 4] = [
             "chr_0003_endmin",
             "chr_0004_pelica",
             "chr_0005_chen",
             "chr_0006_wolfgd",
         ];
 
-        let mut char_indices = Vec::with_capacity(4);
+        let mut index_map: HashMap<String, CharIndex> = HashMap::new();
 
-        for template_id in STARTER_IDS {
-            assets.characters.get(template_id).with_context(|| {
-                format!("Starter character template not found: {}", template_id)
-            })?;
+        info!("Starting charbag population with all characters");
 
-            let attrs = assets
-                .characters
-                .get_stats(template_id, 1, 0)
-                .with_context(|| {
-                    format!(
-                        "Starter attributes not found for {} (level 1, break 0)",
-                        template_id
-                    )
-                })?;
+        for (template_id, char_data) in assets.characters.iter() {
+            if assets.char_skills.get_char_skills(template_id).is_empty() {
+                debug!("Skipping placeholder char: {}", template_id);
+                continue;
+            }
+
+            let attrs = match assets.characters.get_stats(template_id, 1, 0) {
+                Some(a) => a,
+                None => {
+                    debug!("No level 1 stats for char: {}", template_id);
+                    continue;
+                }
+            };
 
             let skill_levels: HashMap<String, u32> = assets
                 .char_skills
@@ -183,38 +162,70 @@ impl CharBag {
                 .map(|e| (e.skill_id.clone(), 1u32))
                 .collect();
 
-            let starter = Char {
-                template_id: template_id.to_string(),
+            let weapon = assets
+                .weapons
+                .get_best_for_char(char_data.weapon_type)
+                .or_else(|| {
+                    assets
+                        .weapons
+                        .get_by_type(char_data.weapon_type)
+                        .first()
+                        .copied()
+                })
+                .unwrap_or_else(|| assets.weapons.get("wpn_0002").unwrap());
+
+            let numeric_id = assets
+                .str_id_num
+                .get_weapon_id(&weapon.weapon_id)
+                .unwrap_or(char_data.weapon_type as u32);
+
+            debug!(
+                "Creating char: template_id={}, weapon_type={}, assigned_weapon_id={} (numeric: {}), rarity={}",
+                template_id, char_data.weapon_type, weapon.weapon_id, numeric_id, weapon.rarity
+            );
+
+            let char = Char {
+                template_id: template_id.clone(),
                 level: attrs.level,
-                exp: 200,
+                exp: 0,
                 break_stage: attrs.break_stage,
                 is_dead: false,
-                weapon_id: WeaponIndex::default(),
+                weapon_id: WeaponIndex::from_raw(numeric_id as u64),
                 own_time: std::time::SystemTime::now()
                     .duration_since(std::time::UNIX_EPOCH)
-                    .map(|d| d.as_millis() as i64 + (char_indices.len() as i64 * 100))
+                    .map(|d| d.as_millis() as i64)
                     .unwrap_or(0),
                 hp: attrs.hp,
                 ultimate_sp: 0.0,
                 skill_levels,
             };
 
-            let idx = bag.add_char(starter);
-            char_indices.push(idx);
+            let idx = bag.add_char(char);
+            index_map.insert(template_id.clone(), idx);
         }
+
+        debug!("Populated {} characters in charbag", index_map.len());
 
         let mut team = Team::default();
         team.name = "Team 1".to_string();
-
-        for (i, &idx) in char_indices.iter().enumerate() {
-            if i < Team::SLOTS_COUNT {
-                team.char_team[i] = TeamSlot::Occupied(idx);
+        let mut slot = 0;
+        let mut leader = None;
+        for template_id in DEFAULT_TEAM {
+            if let Some(&idx) = index_map.get(template_id) {
+                if slot < Team::SLOTS_COUNT {
+                    team.char_team[slot] = TeamSlot::Occupied(idx);
+                    if leader.is_none() {
+                        leader = Some(idx);
+                    }
+                    slot += 1;
+                }
             }
         }
-        team.leader_index = char_indices[0];
-
-        bag.teams.push(team);
+        team.leader_index = leader.unwrap_or_default();
+        bag.teams.push(team.clone());
         bag.meta.curr_team_index = 0;
+
+        debug!("Default team created with leader: {:?}", team.leader_index);
 
         Ok(bag)
     }
@@ -438,81 +449,36 @@ impl CharBag {
 }
 
 fn attrs_from_stats(a: &config::tables::character::Attributes) -> Vec<AttrInfo> {
+    let attr = |attr_type: AttributeType, value: f64| AttrInfo {
+        attr_type: attr_type as i32,
+        basic_value: value,
+        value,
+    };
+
     vec![
-        AttrInfo {
-            attr_type: AttributeType::Hp as i32,
-            basic_value: a.hp,
-            value: a.hp,
-        },
-        AttrInfo {
-            attr_type: AttributeType::Atk as i32,
-            basic_value: a.atk as f64,
-            value: a.atk as f64,
-        },
-        AttrInfo {
-            attr_type: AttributeType::Def as i32,
-            basic_value: a.def as f64,
-            value: a.def as f64,
-        },
-        AttrInfo {
-            attr_type: AttributeType::PhysicalResistance as i32,
-            basic_value: a.physical_resistance as f64,
-            value: a.physical_resistance as f64,
-        },
-        AttrInfo {
-            attr_type: AttributeType::FireResistance as i32,
-            basic_value: a.fire_resistance as f64,
-            value: a.fire_resistance as f64,
-        },
-        AttrInfo {
-            attr_type: AttributeType::PulseResistance as i32,
-            basic_value: a.pulse_resistance as f64,
-            value: a.pulse_resistance as f64,
-        },
-        AttrInfo {
-            attr_type: AttributeType::CrystResistance as i32,
-            basic_value: a.cryst_resistance as f64,
-            value: a.cryst_resistance as f64,
-        },
-        AttrInfo {
-            attr_type: AttributeType::Weight as i32,
-            basic_value: a.weight as f64,
-            value: a.weight as f64,
-        },
-        AttrInfo {
-            attr_type: AttributeType::CriticalRate as i32,
-            basic_value: a.critical_rate as f64,
-            value: a.critical_rate as f64,
-        },
-        AttrInfo {
-            attr_type: AttributeType::CriticalDamage as i32,
-            basic_value: a.critical_damage as f64,
-            value: a.critical_damage as f64,
-        },
-        AttrInfo {
-            attr_type: AttributeType::Hatred as i32,
-            basic_value: a.hatred as f64,
-            value: a.hatred as f64,
-        },
-        AttrInfo {
-            attr_type: AttributeType::NormalAttackRange as i32,
-            basic_value: a.normal_attack_range as f64,
-            value: a.normal_attack_range as f64,
-        },
-        AttrInfo {
-            attr_type: AttributeType::AttackRate as i32,
-            basic_value: a.attack_rate as f64,
-            value: a.attack_rate as f64,
-        },
-        AttrInfo {
-            attr_type: AttributeType::Pen as i32,
-            basic_value: a.pen as f64,
-            value: a.pen as f64,
-        },
-        AttrInfo {
-            attr_type: AttributeType::SpawnEnergyShardEfficiency as i32,
-            basic_value: a.spawn_energy_shard_efficiency as f64,
-            value: a.spawn_energy_shard_efficiency as f64,
-        },
+        attr(AttributeType::Hp, a.hp),
+        attr(AttributeType::Atk, a.atk as f64),
+        attr(AttributeType::Def, a.def as f64),
+        attr(
+            AttributeType::PhysicalResistance,
+            a.physical_resistance as f64,
+        ),
+        attr(AttributeType::FireResistance, a.fire_resistance as f64),
+        attr(AttributeType::PulseResistance, a.pulse_resistance as f64),
+        attr(AttributeType::CrystResistance, a.cryst_resistance as f64),
+        attr(AttributeType::Weight, a.weight as f64),
+        attr(AttributeType::CriticalRate, a.critical_rate as f64),
+        attr(AttributeType::CriticalDamage, a.critical_damage as f64),
+        attr(AttributeType::Hatred, a.hatred as f64),
+        attr(
+            AttributeType::NormalAttackRange,
+            a.normal_attack_range as f64,
+        ),
+        attr(AttributeType::AttackRate, a.attack_rate as f64),
+        attr(AttributeType::Pen, a.pen as f64),
+        attr(
+            AttributeType::SpawnEnergyShardEfficiency,
+            a.spawn_energy_shard_efficiency as f64,
+        ),
     ]
 }
