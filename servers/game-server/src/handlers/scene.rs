@@ -101,7 +101,7 @@ fn pack_scene_monsters(ctx: &NetContext<'_>, scene_name: String) -> Vec<SceneMon
 		for enemy in data{
 			let en = SceneMonster {
 					common_info: Some(SceneObjectCommonInfo {
-						id: ind + 100,
+						id: ind + 1000,
 						templateid: enemy.template_id.to_string(),
 						position: Some(Vector {
 							x: enemy.position.x,
