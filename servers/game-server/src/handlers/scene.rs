@@ -1,7 +1,7 @@
 use crate::net::NetContext;
 use perlica_proto::{
     CsSceneKillChar, CsSceneLoadFinish, LeaveObjectInfo, ScEnterSceneNotify, ScObjectEnterView,
-    ScObjectLeaveView, ScSelfSceneInfo, SceneCharacter, SceneImplEmpty, SceneObjectCommonInfo,
+    ScObjectLeaveView, ScSelfSceneInfo, SceneCharacter, SceneMonster, SceneImplEmpty, SceneObjectCommonInfo,
     SceneObjectDetailContainer, Vector, sc_self_scene_info::SceneImpl,
 };
 use tracing::{debug, error, instrument};
@@ -29,17 +29,19 @@ pub async fn notify_enter_scene(ctx: &mut NetContext<'_>) -> bool {
     true
 }
 
-#[instrument(skip(ctx, char_list), fields(uid = %ctx.player.uid, scene = %scene_name, chars = char_list.len()))]
+#[instrument(skip(ctx, char_list, monster_list), fields(uid = %ctx.player.uid, scene = %scene_name, chars = char_list.len()))]
 pub async fn notify_object_enter_view(
     ctx: &mut NetContext<'_>,
     scene_name: String,
     char_list: Vec<SceneCharacter>,
+	monster_list: Vec<SceneMonster>,
 ) -> bool {
     let msg = ScObjectEnterView {
         scene_name: scene_name.clone(),
         scene_id: ctx.assets.str_id_num.get_scene_id(&scene_name).unwrap_or(0),
         detail: Some(SceneObjectDetailContainer {
             char_list,
+			monster_list,
             ..Default::default()
         }),
         ..Default::default()
@@ -59,8 +61,9 @@ pub async fn on_scene_load_finish(
     ctx.player.world.last_scene = req.scene_name.clone();
 
     let char_list = pack_scene_chars(ctx);
+	let monster_list = pack_scene_monsters(ctx, req.scene_name.clone());
 
-    if !notify_object_enter_view(ctx, req.scene_name.clone(), char_list.clone()).await {
+    if !notify_object_enter_view(ctx, req.scene_name.clone(), char_list.clone(), monster_list.clone()).await {
         error!("object enter view failed");
     }
     if !post_load_sync(ctx).await {
@@ -83,6 +86,46 @@ pub async fn on_scene_load_finish(
         level_scripts: vec![],
         ..Default::default()
     }
+}
+
+fn pack_scene_monsters(ctx: &NetContext<'_>, scene_name: String) -> Vec<SceneMonster> {
+	let enemy_spawns = &ctx.assets.enemy_spawns;
+
+	let scene_enemy_data = enemy_spawns.get(&scene_name);
+	
+	let mut ind: u64 = 0;
+	
+	let mut monsters: Vec<SceneMonster> = Vec::new();
+	
+	if let Some(data) = scene_enemy_data {
+		for enemy in data{
+			let en = SceneMonster {
+					common_info: Some(SceneObjectCommonInfo {
+						id: ind + 100,
+						templateid: enemy.template_id.to_string(),
+						position: Some(Vector {
+							x: enemy.position.x,
+							y: enemy.position.y,
+							z: enemy.position.z,
+						}),
+						rotation: Some(Vector {
+							x: enemy.rotation.x,
+							y: enemy.rotation.y,
+							z: enemy.rotation.z,
+						}),
+					belong_level_script_id: 0,
+                    r#type: 16,
+                }),
+				origin_id: 0,
+                level: 5,
+				};
+		ind += 1;
+		monsters.push(en);
+		};
+	};
+
+    debug!(count = monsters.len(), "scene monsters packed");
+    monsters
 }
 
 fn pack_scene_chars(ctx: &NetContext<'_>) -> Vec<SceneCharacter> {

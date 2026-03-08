@@ -1,0 +1,5329 @@
+{
+  "enemySpawnsTable": {
+	"map01_lv002": [
+	{
+      "levelLogicId": 87,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0029_lbmob",
+      "defaultHide": false,
+      "position": {
+        "x": 153.928619,
+        "y": 30.3071213,
+        "z": 217.079453
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 323.184479,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 2,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": true,
+        "bornPositionWaitDuration": 0.0,
+        "actions": [
+          {
+            "actionType": 1,
+            "position": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 4,
+                "duration": 0.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          }
+        ],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": true,
+      "level": 13,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 88,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0029_lbmob",
+      "defaultHide": false,
+      "position": {
+        "x": 151.3234,
+        "y": 30.4612446,
+        "z": 216.884933
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 45.4139748,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 2,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": true,
+        "bornPositionWaitDuration": 0.0,
+        "actions": [
+          {
+            "actionType": 1,
+            "position": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 4,
+                "duration": 0.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          }
+        ],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": true,
+      "level": 13,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 92,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0029_lbmob",
+      "defaultHide": false,
+      "position": {
+        "x": 139.5026,
+        "y": 30.2111626,
+        "z": 211.264069
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 136.9343,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 2,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": true,
+        "bornPositionWaitDuration": 2.0,
+        "actions": [],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": true,
+      "level": 13,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 93,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0029_lbmob",
+      "defaultHide": false,
+      "position": {
+        "x": 158.137634,
+        "y": 28.8261623,
+        "z": 202.825134
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 112.021194,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 2,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": true,
+        "bornPositionWaitDuration": 2.0,
+        "actions": [
+          {
+            "actionType": 1,
+            "position": {
+              "x": 10.4828644,
+              "y": -1.01213264,
+              "z": -1.00137329
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 1,
+                "duration": 2.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          },
+          {
+            "actionType": 1,
+            "position": {
+              "x": 12.5073853,
+              "y": -1.09920311,
+              "z": -4.182953
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 1,
+                "duration": 2.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          }
+        ],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": true,
+      "level": 13,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 97,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0021_agmelee",
+      "defaultHide": false,
+      "position": {
+        "x": 100.359756,
+        "y": 31.7284412,
+        "z": 143.724228
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 350.987732,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 1,
+        "snap": 1,
+        "inLocalSpace": false,
+        "addBornPositionAsCheckpoint": true,
+        "bornPositionWaitDuration": 2.0,
+        "actions": [],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": true,
+      "level": 13,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 128,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0021_agmelee",
+      "defaultHide": false,
+      "position": {
+        "x": 151.423447,
+        "y": 32.5741844,
+        "z": 117.714653
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 109.145195,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 1,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": false,
+        "bornPositionWaitDuration": 2.0,
+        "actions": [
+          {
+            "actionType": 1,
+            "position": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 4,
+                "duration": 0.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          }
+        ],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": true,
+      "level": 11,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 258,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0029_lbmob",
+      "defaultHide": false,
+      "position": {
+        "x": 247.2578,
+        "y": 33.2676468,
+        "z": 129.135574
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 123.419716,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 0,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": true,
+        "bornPositionWaitDuration": 0.0,
+        "actions": [
+          {
+            "actionType": 1,
+            "position": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 4,
+                "duration": 0.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          }
+        ],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": false,
+      "level": 11,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 277,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0025_agrange",
+      "defaultHide": false,
+      "position": {
+        "x": 185.806168,
+        "y": 31.0001,
+        "z": 85.33931
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 34.47416,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 0,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": true,
+        "bornPositionWaitDuration": 0.0,
+        "actions": [
+          {
+            "actionType": 1,
+            "position": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 4,
+                "duration": 0.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 1,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          }
+        ],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": true,
+      "level": 11,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 278,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0021_agmelee",
+      "defaultHide": false,
+      "position": {
+        "x": 179.1528,
+        "y": 32.7458725,
+        "z": 120.744217
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 327.502319,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 2,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": true,
+        "bornPositionWaitDuration": 2.0,
+        "actions": [
+          {
+            "actionType": 1,
+            "position": {
+              "x": -1.30331421,
+              "y": -0.716556549,
+              "z": 7.07014465
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 1,
+                "duration": 2.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          },
+          {
+            "actionType": 1,
+            "position": {
+              "x": 2.177719,
+              "y": -3.08485413,
+              "z": 19.4878235
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 1,
+                "duration": 2.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          }
+        ],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": true,
+      "level": 11,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 387,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0007_mimicw",
+      "defaultHide": false,
+      "position": {
+        "x": 97.98921,
+        "y": 31.72,
+        "z": 144.370468
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 30.7275944,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 0,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": true,
+        "bornPositionWaitDuration": 0.0,
+        "actions": [
+          {
+            "actionType": 1,
+            "position": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 4,
+                "duration": 0.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          }
+        ],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": true,
+      "level": 13,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 482,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0033_lbhunt",
+      "defaultHide": false,
+      "position": {
+        "x": 138.22699,
+        "y": 36.9697037,
+        "z": 247.654541
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 230.725739,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 2,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": false,
+        "bornPositionWaitDuration": 0.0,
+        "actions": [
+          {
+            "actionType": 1,
+            "position": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 4,
+                "duration": 0.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          }
+        ],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": true,
+      "level": 17,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 551,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0021_agmelee",
+      "defaultHide": false,
+      "position": {
+        "x": 286.2128,
+        "y": 33.2676544,
+        "z": 170.2963
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 152.927917,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 0,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": true,
+        "bornPositionWaitDuration": 0.0,
+        "actions": [
+          {
+            "actionType": 1,
+            "position": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 4,
+                "duration": 0.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          }
+        ],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": true,
+      "level": 11,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 552,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0021_agmelee",
+      "defaultHide": false,
+      "position": {
+        "x": 283.4212,
+        "y": 33.26766,
+        "z": 168.454269
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 260.170959,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 0,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": true,
+        "bornPositionWaitDuration": 0.0,
+        "actions": [
+          {
+            "actionType": 1,
+            "position": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 4,
+                "duration": 0.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          }
+        ],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": true,
+      "level": 11,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 559,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0021_agmelee",
+      "defaultHide": false,
+      "position": {
+        "x": 289.049164,
+        "y": 33.2699623,
+        "z": 170.844025
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 176.674225,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 2,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": true,
+        "bornPositionWaitDuration": 2.0,
+        "actions": [],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": true,
+      "level": 11,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 560,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0029_lbmob",
+      "defaultHide": false,
+      "position": {
+        "x": 249.8308,
+        "y": 33.49208,
+        "z": 129.569519
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 146.044174,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 2,
+        "snap": 1,
+        "inLocalSpace": false,
+        "addBornPositionAsCheckpoint": true,
+        "bornPositionWaitDuration": 2.0,
+        "actions": [
+          {
+            "actionType": 1,
+            "position": {
+              "x": 248.476929,
+              "y": 33.2676544,
+              "z": 126.8913
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 1,
+                "duration": 2.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          },
+          {
+            "actionType": 1,
+            "position": {
+              "x": 251.489227,
+              "y": 33.2676544,
+              "z": 125.250336
+            },
+            "subPositions": [],
+            "subActions": []
+          },
+          {
+            "actionType": 1,
+            "position": {
+              "x": 252.639343,
+              "y": 33.2676544,
+              "z": 128.162
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 1,
+                "duration": 2.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          }
+        ],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": false,
+      "level": 11,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 561,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0023_aghornb",
+      "defaultHide": false,
+      "position": {
+        "x": 182.201431,
+        "y": 30.9715176,
+        "z": 87.51061
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 55.306057,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 0,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": false,
+        "bornPositionWaitDuration": 0.0,
+        "actions": [
+          {
+            "actionType": 1,
+            "position": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 4,
+                "duration": 0.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          }
+        ],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": false,
+      "level": 11,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 568,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0007_mimicw",
+      "defaultHide": false,
+      "position": {
+        "x": 206.912033,
+        "y": 30.1112118,
+        "z": 170.756012
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 149.820557,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 0,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": true,
+        "bornPositionWaitDuration": 0.0,
+        "actions": [
+          {
+            "actionType": 1,
+            "position": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 4,
+                "duration": 0.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          }
+        ],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": true,
+      "level": 12,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 569,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0021_agmelee",
+      "defaultHide": false,
+      "position": {
+        "x": 177.905365,
+        "y": 32.7865753,
+        "z": 119.56517
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 322.2615,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 2,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": true,
+        "bornPositionWaitDuration": 2.0,
+        "actions": [
+          {
+            "actionType": 1,
+            "position": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 1,
+                "duration": 2.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          },
+          {
+            "actionType": 1,
+            "position": {
+              "x": -0.915374756,
+              "y": -0.6403351,
+              "z": 7.552887
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 1,
+                "duration": 2.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          },
+          {
+            "actionType": 1,
+            "position": {
+              "x": 2.57164,
+              "y": -3.082615,
+              "z": 20.6103058
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 1,
+                "duration": 2.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          }
+        ],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": true,
+      "level": 11,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 570,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0023_aghornb",
+      "defaultHide": false,
+      "position": {
+        "x": 182.24,
+        "y": 29.3353672,
+        "z": 149.69
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 298.7401,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 1,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": true,
+        "bornPositionWaitDuration": 0.0,
+        "actions": [
+          {
+            "actionType": 1,
+            "position": {
+              "x": -3.6497345,
+              "y": -1.446661,
+              "z": 9.400162
+            },
+            "subPositions": [],
+            "subActions": []
+          },
+          {
+            "actionType": 1,
+            "position": {
+              "x": 0.7767792,
+              "y": -2.7514267,
+              "z": 18.72194
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 1,
+                "duration": 2.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          },
+          {
+            "actionType": 1,
+            "position": {
+              "x": 9.844299,
+              "y": -3.113823,
+              "z": 18.1453247
+            },
+            "subPositions": [],
+            "subActions": []
+          },
+          {
+            "actionType": 1,
+            "position": {
+              "x": 16.2873688,
+              "y": -2.16964722,
+              "z": 8.3237
+            },
+            "subPositions": [],
+            "subActions": []
+          },
+          {
+            "actionType": 1,
+            "position": {
+              "x": 13.1882477,
+              "y": -1.42465973,
+              "z": 0.937088
+            },
+            "subPositions": [],
+            "subActions": []
+          },
+          {
+            "actionType": 1,
+            "position": {
+              "x": 6.115799,
+              "y": -1.12762833,
+              "z": -0.6383362
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 1,
+                "duration": 2.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          }
+        ],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": false,
+      "level": 11,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 571,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0023_aghornb",
+      "defaultHide": false,
+      "position": {
+        "x": 149.955612,
+        "y": 32.63929,
+        "z": 113.708031
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 74.999855,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 0,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": false,
+        "bornPositionWaitDuration": 0.0,
+        "actions": [
+          {
+            "actionType": 1,
+            "position": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 4,
+                "duration": 0.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          }
+        ],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": true,
+      "level": 11,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 572,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0021_agmelee",
+      "defaultHide": false,
+      "position": {
+        "x": 151.03981,
+        "y": 33.00991,
+        "z": 111.035973
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 52.0587425,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 1,
+        "snap": 1,
+        "inLocalSpace": false,
+        "addBornPositionAsCheckpoint": true,
+        "bornPositionWaitDuration": 2.0,
+        "actions": [
+          {
+            "actionType": 1,
+            "position": {
+              "x": 155.393341,
+              "y": 32.4938736,
+              "z": 115.518982
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 1,
+                "duration": 2.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          },
+          {
+            "actionType": 1,
+            "position": {
+              "x": 157.768219,
+              "y": 32.5018463,
+              "z": 114.240494
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 1,
+                "duration": 2.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          }
+        ],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": true,
+      "level": 11,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 573,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0029_lbmob",
+      "defaultHide": false,
+      "position": {
+        "x": 147.869659,
+        "y": 30.7762527,
+        "z": 219.87825
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 124.139862,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 2,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": true,
+        "bornPositionWaitDuration": 0.0,
+        "actions": [
+          {
+            "actionType": 1,
+            "position": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 4,
+                "duration": 0.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          }
+        ],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": true,
+      "level": 13,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 575,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0021_agmelee",
+      "defaultHide": false,
+      "position": {
+        "x": 95.88261,
+        "y": 31.55704,
+        "z": 149.823563
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 79.29829,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 1,
+        "snap": 1,
+        "inLocalSpace": false,
+        "addBornPositionAsCheckpoint": true,
+        "bornPositionWaitDuration": 2.0,
+        "actions": [],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": true,
+      "level": 13,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 578,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0021_agmelee",
+      "defaultHide": false,
+      "position": {
+        "x": 132.554565,
+        "y": 28.5741634,
+        "z": 145.791656
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 300.000122,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 0,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": false,
+        "bornPositionWaitDuration": 0.0,
+        "actions": [
+          {
+            "actionType": 1,
+            "position": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 4,
+                "duration": 0.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          }
+        ],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": false,
+      "level": 13,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 579,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0021_agmelee",
+      "defaultHide": false,
+      "position": {
+        "x": 135.221939,
+        "y": 29.6762714,
+        "z": 168.437027
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 187.005661,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": null,
+      "respawnable": true,
+      "level": 13,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 580,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0021_agmelee",
+      "defaultHide": false,
+      "position": {
+        "x": 129.796722,
+        "y": 28.64119,
+        "z": 145.314377
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 300.000122,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 0,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": false,
+        "bornPositionWaitDuration": 0.0,
+        "actions": [
+          {
+            "actionType": 1,
+            "position": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 4,
+                "duration": 0.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          }
+        ],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": false,
+      "level": 13,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 582,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0021_agmelee",
+      "defaultHide": false,
+      "position": {
+        "x": 128.25531,
+        "y": 28.9074574,
+        "z": 142.1585
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 300.000122,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 0,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": false,
+        "bornPositionWaitDuration": 0.0,
+        "actions": [
+          {
+            "actionType": 1,
+            "position": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 4,
+                "duration": 0.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          }
+        ],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": false,
+      "level": 13,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 583,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0021_agmelee",
+      "defaultHide": false,
+      "position": {
+        "x": 129.739868,
+        "y": 29.1863747,
+        "z": 139.981445
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 300.000122,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 0,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": false,
+        "bornPositionWaitDuration": 0.0,
+        "actions": [
+          {
+            "actionType": 1,
+            "position": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 4,
+                "duration": 0.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          }
+        ],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": false,
+      "level": 13,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 584,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0025_agrange",
+      "defaultHide": false,
+      "position": {
+        "x": 128.91658,
+        "y": 28.6653519,
+        "z": 143.5909
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 297.3778,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 2,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": true,
+        "bornPositionWaitDuration": 2.0,
+        "actions": [],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": false,
+      "level": 13,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 587,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0029_lbmob",
+      "defaultHide": false,
+      "position": {
+        "x": 121.68,
+        "y": 41.71796,
+        "z": 168.0
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": null,
+      "respawnable": true,
+      "level": 14,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 588,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0033_lbhunt",
+      "defaultHide": false,
+      "position": {
+        "x": 115.620995,
+        "y": 41.71796,
+        "z": 173.617188
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 179.999741,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 0,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": false,
+        "bornPositionWaitDuration": 0.0,
+        "actions": [
+          {
+            "actionType": 1,
+            "position": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 4,
+                "duration": 0.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          }
+        ],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": true,
+      "level": 14,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 589,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0029_lbmob",
+      "defaultHide": false,
+      "position": {
+        "x": 116.5,
+        "y": 41.71796,
+        "z": 170.69
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 53.10501,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 2,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": false,
+        "bornPositionWaitDuration": 0.0,
+        "actions": [],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": true,
+      "level": 14,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 951,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0030_lbmob2",
+      "defaultHide": false,
+      "position": {
+        "x": 82.34199,
+        "y": 39.0657425,
+        "z": 190.937088
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 166.060135,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 2,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": true,
+        "bornPositionWaitDuration": 2.0,
+        "actions": [],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": true,
+      "level": 14,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 952,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0034_lbhunt2",
+      "defaultHide": false,
+      "position": {
+        "x": 86.2246552,
+        "y": 39.0669327,
+        "z": 190.0538
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 198.289383,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 2,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": true,
+        "bornPositionWaitDuration": 2.0,
+        "actions": [],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": true,
+      "level": 14,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 956,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0033_lbhunt",
+      "defaultHide": false,
+      "position": {
+        "x": 135.541733,
+        "y": 29.5923767,
+        "z": 193.254852
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 53.1461754,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 2,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": true,
+        "bornPositionWaitDuration": 0.0,
+        "actions": [
+          {
+            "actionType": 1,
+            "position": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 4,
+                "duration": 0.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          }
+        ],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": false,
+      "level": 13,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 958,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0029_lbmob",
+      "defaultHide": false,
+      "position": {
+        "x": 136.585983,
+        "y": 29.0823479,
+        "z": 197.914627
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 75.861145,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 2,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": true,
+        "bornPositionWaitDuration": 0.0,
+        "actions": [
+          {
+            "actionType": 1,
+            "position": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 4,
+                "duration": 0.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          }
+        ],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": false,
+      "level": 13,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 959,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0029_lbmob",
+      "defaultHide": false,
+      "position": {
+        "x": 127.3585,
+        "y": 36.9085,
+        "z": 244.203659
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 263.264282,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 2,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": true,
+        "bornPositionWaitDuration": 0.0,
+        "actions": [],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": true,
+      "level": 17,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 960,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0029_lbmob",
+      "defaultHide": false,
+      "position": {
+        "x": 128.594879,
+        "y": 36.9085,
+        "z": 246.566422
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 233.981537,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 2,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": true,
+        "bornPositionWaitDuration": 0.0,
+        "actions": [],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": true,
+      "level": 17,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 964,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0033_lbhunt",
+      "defaultHide": false,
+      "position": {
+        "x": 138.235168,
+        "y": 37.13341,
+        "z": 243.039612
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 275.09726,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 2,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": true,
+        "bornPositionWaitDuration": 0.0,
+        "actions": [],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": true,
+      "level": 17,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 965,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0030_lbmob2",
+      "defaultHide": false,
+      "position": {
+        "x": 121.110031,
+        "y": 36.9085045,
+        "z": 249.04393
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 136.347748,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 2,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": false,
+        "bornPositionWaitDuration": 0.0,
+        "actions": [
+          {
+            "actionType": 1,
+            "position": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 4,
+                "duration": 0.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          }
+        ],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": true,
+      "level": 17,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 975,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0017_dexasco",
+      "defaultHide": false,
+      "position": {
+        "x": 244.27623,
+        "y": 45.6746635,
+        "z": 275.02652
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 265.076721,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": null,
+      "respawnable": false,
+      "level": 20,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 1050,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0025_agrange",
+      "defaultHide": false,
+      "position": {
+        "x": 186.91188,
+        "y": 30.8537064,
+        "z": 95.18618
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 89.85114,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": null,
+      "respawnable": true,
+      "level": 11,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 1051,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0025_agrange",
+      "defaultHide": false,
+      "position": {
+        "x": 192.51622,
+        "y": 31.57157,
+        "z": 88.31596
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 261.6693,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 0,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": false,
+        "bornPositionWaitDuration": 0.0,
+        "actions": [
+          {
+            "actionType": 1,
+            "position": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 4,
+                "duration": 0.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          }
+        ],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": true,
+      "level": 11,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 1077,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0015_mimicw2",
+      "defaultHide": false,
+      "position": {
+        "x": 84.98154,
+        "y": 29.704937,
+        "z": 296.188568
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 140.111038,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": null,
+      "respawnable": false,
+      "level": 30,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 1157,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0033_lbhunt",
+      "defaultHide": false,
+      "position": {
+        "x": 158.8009,
+        "y": 28.9151459,
+        "z": 205.122772
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 119.433372,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 2,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": true,
+        "bornPositionWaitDuration": 2.0,
+        "actions": [
+          {
+            "actionType": 1,
+            "position": {
+              "x": 10.6427917,
+              "y": -0.748312,
+              "z": -1.3949585
+            },
+            "subPositions": [],
+            "subActions": []
+          },
+          {
+            "actionType": 1,
+            "position": {
+              "x": 12.7349243,
+              "y": -1.14984512,
+              "z": -4.989563
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 1,
+                "duration": 2.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          }
+        ],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": true,
+      "level": 13,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 1158,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0029_lbmob",
+      "defaultHide": false,
+      "position": {
+        "x": 140.99,
+        "y": 41.71796,
+        "z": 184.66
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 149.981323,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 0,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": false,
+        "bornPositionWaitDuration": 0.0,
+        "actions": [
+          {
+            "actionType": 1,
+            "position": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 4,
+                "duration": 0.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          }
+        ],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": true,
+      "level": 14,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 1160,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0025_agrange",
+      "defaultHide": false,
+      "position": {
+        "x": 136.567719,
+        "y": 30.0010014,
+        "z": 170.066513
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 356.407959,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 2,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": false,
+        "bornPositionWaitDuration": 2.0,
+        "actions": [
+          {
+            "actionType": 1,
+            "position": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 4,
+                "duration": 0.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          }
+        ],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": false,
+      "level": 13,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    }],
+	"map01_lv001": [
+	{
+      "levelLogicId": 70307,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0021_agmelee",
+      "defaultHide": false,
+      "position": {
+        "x": 461.12,
+        "y": 113.496,
+        "z": 288.38
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 359.434448,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": null,
+      "respawnable": false,
+      "level": 25,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 70308,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0021_agmelee",
+      "defaultHide": false,
+      "position": {
+        "x": 465.74,
+        "y": 113.496,
+        "z": 289.36
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 322.336578,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 1,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": true,
+        "bornPositionWaitDuration": 2.0,
+        "actions": [
+          {
+            "actionType": 1,
+            "position": {
+              "x": 0.539520264,
+              "y": -7.62939453E-06,
+              "z": -6.07354736
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 1,
+                "duration": 2.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          },
+          {
+            "actionType": 1,
+            "position": {
+              "x": 4.554352,
+              "y": -7.62939453E-06,
+              "z": -3.90078735
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 1,
+                "duration": 2.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          }
+        ],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": false,
+      "level": 25,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 70328,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0021_agmelee",
+      "defaultHide": false,
+      "position": {
+        "x": 244.065323,
+        "y": 102.710037,
+        "z": 309.384277
+      },
+      "rotation": {
+        "x": 359.3093,
+        "y": 177.277878,
+        "z": 359.777618
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 0,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": false,
+        "bornPositionWaitDuration": 0.0,
+        "actions": [
+          {
+            "actionType": 1,
+            "position": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 4,
+                "duration": 0.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          }
+        ],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": true,
+      "level": 6,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 70329,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0033_lbhunt",
+      "defaultHide": false,
+      "position": {
+        "x": 281.822052,
+        "y": 99.95003,
+        "z": 275.884552
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 72.11984,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 2,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": false,
+        "bornPositionWaitDuration": 0.0,
+        "actions": [
+          {
+            "actionType": 1,
+            "position": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 4,
+                "duration": 0.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          }
+        ],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": true,
+      "level": 6,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 70330,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0025_agrange",
+      "defaultHide": false,
+      "position": {
+        "x": 241.56,
+        "y": 102.563957,
+        "z": 308.37
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 191.4835,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 0,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": false,
+        "bornPositionWaitDuration": 2.0,
+        "actions": [
+          {
+            "actionType": 1,
+            "position": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 4,
+                "duration": 0.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          }
+        ],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": true,
+      "level": 6,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 70331,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0025_agrange",
+      "defaultHide": false,
+      "position": {
+        "x": 239.5413,
+        "y": 110.862061,
+        "z": 378.7751
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 146.767258,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 1,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": false,
+        "bornPositionWaitDuration": 0.0,
+        "actions": [
+          {
+            "actionType": 1,
+            "position": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 4,
+                "duration": 0.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          }
+        ],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": true,
+      "level": 6,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 70333,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0021_agmelee",
+      "defaultHide": false,
+      "position": {
+        "x": 314.964478,
+        "y": 105.142624,
+        "z": 317.755463
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 50.5966034,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 1,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": false,
+        "bornPositionWaitDuration": 2.0,
+        "actions": [
+          {
+            "actionType": 1,
+            "position": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 4,
+                "duration": 0.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          }
+        ],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": true,
+      "level": 6,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 70335,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0021_agmelee",
+      "defaultHide": false,
+      "position": {
+        "x": 243.848175,
+        "y": 103.002739,
+        "z": 322.7349
+      },
+      "rotation": {
+        "x": 359.3093,
+        "y": 153.558289,
+        "z": 359.777618
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 1,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": true,
+        "bornPositionWaitDuration": 0.0,
+        "actions": [],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": true,
+      "level": 6,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 70337,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0021_agmelee",
+      "defaultHide": false,
+      "position": {
+        "x": 237.582031,
+        "y": 111.188606,
+        "z": 376.15863
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 104.498787,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 1,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": true,
+        "bornPositionWaitDuration": 0.0,
+        "actions": [],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": true,
+      "level": 6,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 70338,
+      "dependencyGroupId": 70013,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0029_lbmob",
+      "defaultHide": false,
+      "position": {
+        "x": 142.6939,
+        "y": 108.701714,
+        "z": 321.286346
+      },
+      "rotation": {
+        "x": 5.0128293,
+        "y": 32.3815,
+        "z": 1.07131449E-07
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 2,
+        "snap": 1,
+        "inLocalSpace": false,
+        "addBornPositionAsCheckpoint": true,
+        "bornPositionWaitDuration": 2.0,
+        "actions": [],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": true,
+      "level": 6,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 70001
+    },
+    {
+      "levelLogicId": 70339,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0033_lbhunt",
+      "defaultHide": false,
+      "position": {
+        "x": 214.988434,
+        "y": 114.926567,
+        "z": 398.403
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 192.515442,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 2,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": true,
+        "bornPositionWaitDuration": 2.0,
+        "actions": [
+          {
+            "actionType": 1,
+            "position": {
+              "x": -0.08216858,
+              "y": -0.018013,
+              "z": 0.002532959
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 1,
+                "duration": 2.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          },
+          {
+            "actionType": 1,
+            "position": {
+              "x": -0.35357666,
+              "y": -0.5971756,
+              "z": -5.524048
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 1,
+                "duration": 2.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          },
+          {
+            "actionType": 1,
+            "position": {
+              "x": 0.1591034,
+              "y": -0.826141357,
+              "z": -9.48941
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 1,
+                "duration": 2.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          }
+        ],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": false,
+      "level": 6,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 70340,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0033_lbhunt",
+      "defaultHide": false,
+      "position": {
+        "x": 217.303665,
+        "y": 115.142433,
+        "z": 397.3377
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 199.404358,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 2,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": true,
+        "bornPositionWaitDuration": 2.0,
+        "actions": [
+          {
+            "actionType": 1,
+            "position": {
+              "x": -0.6560669,
+              "y": -0.5226364,
+              "z": -4.811676
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 1,
+                "duration": 2.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          },
+          {
+            "actionType": 1,
+            "position": {
+              "x": 0.317764282,
+              "y": -0.9566269,
+              "z": -8.518005
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 1,
+                "duration": 2.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          }
+        ],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": false,
+      "level": 6,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 70343,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0021_agmelee",
+      "defaultHide": false,
+      "position": {
+        "x": 312.216431,
+        "y": 104.565437,
+        "z": 314.514221
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 193.0521,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 1,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": false,
+        "bornPositionWaitDuration": 2.0,
+        "actions": [
+          {
+            "actionType": 1,
+            "position": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 4,
+                "duration": 0.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          }
+        ],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": true,
+      "level": 6,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 70345,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0021_agmelee",
+      "defaultHide": false,
+      "position": {
+        "x": 354.6317,
+        "y": 111.878021,
+        "z": 335.103363
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 83.726326,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 2,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": true,
+        "bornPositionWaitDuration": 2.0,
+        "actions": [
+          {
+            "actionType": 1,
+            "position": {
+              "x": 7.13250732,
+              "y": -0.0820922852,
+              "z": -0.2897644
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 1,
+                "duration": 2.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          },
+          {
+            "actionType": 1,
+            "position": {
+              "x": 13.5898438,
+              "y": 0.252044678,
+              "z": 2.56982422
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 1,
+                "duration": 2.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          }
+        ],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": false,
+      "level": 6,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 70346,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0021_agmelee",
+      "defaultHide": false,
+      "position": {
+        "x": 248.648315,
+        "y": 102.800674,
+        "z": 308.0399
+      },
+      "rotation": {
+        "x": 359.3093,
+        "y": 44.14989,
+        "z": 359.777618
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 1,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": true,
+        "bornPositionWaitDuration": 0.0,
+        "actions": [],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": true,
+      "level": 6,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 70347,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0029_lbmob",
+      "defaultHide": false,
+      "position": {
+        "x": 224.5146,
+        "y": 115.412796,
+        "z": 405.922272
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 37.1795921,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 2,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": false,
+        "bornPositionWaitDuration": 0.0,
+        "actions": [
+          {
+            "actionType": 1,
+            "position": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 4,
+                "duration": 0.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          }
+        ],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": true,
+      "level": 6,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 70349,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0025_agrange",
+      "defaultHide": false,
+      "position": {
+        "x": 359.138428,
+        "y": 111.938126,
+        "z": 331.118347
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 58.1388931,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 0,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": false,
+        "bornPositionWaitDuration": 2.0,
+        "actions": [
+          {
+            "actionType": 1,
+            "position": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 4,
+                "duration": 0.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          }
+        ],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": false,
+      "level": 6,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 70351,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0025_agrange",
+      "defaultHide": false,
+      "position": {
+        "x": 181.931488,
+        "y": 106.952263,
+        "z": 284.489441
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 84.7382,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 1,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": false,
+        "bornPositionWaitDuration": 0.0,
+        "actions": [
+          {
+            "actionType": 1,
+            "position": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 4,
+                "duration": 0.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          },
+          {
+            "actionType": 1,
+            "position": {
+              "x": 5.713135,
+              "y": -1.325386,
+              "z": -0.422973633
+            },
+            "subPositions": [],
+            "subActions": []
+          },
+          {
+            "actionType": 1,
+            "position": {
+              "x": 11.9283905,
+              "y": -2.251709,
+              "z": 4.04354858
+            },
+            "subPositions": [],
+            "subActions": []
+          }
+        ],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": true,
+      "level": 6,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 70359,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0025_agrange",
+      "defaultHide": false,
+      "position": {
+        "x": 183.435425,
+        "y": 106.839165,
+        "z": 280.205627
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 51.2905045,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 1,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": true,
+        "bornPositionWaitDuration": 0.0,
+        "actions": [
+          {
+            "actionType": 1,
+            "position": {
+              "x": 5.097534,
+              "y": -1.57901764,
+              "z": -1.898346
+            },
+            "subPositions": [],
+            "subActions": []
+          },
+          {
+            "actionType": 1,
+            "position": {
+              "x": 12.3811646,
+              "y": -2.64662933,
+              "z": 5.20462036
+            },
+            "subPositions": [],
+            "subActions": []
+          }
+        ],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": true,
+      "level": 6,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 70365,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0021_agmelee",
+      "defaultHide": false,
+      "position": {
+        "x": 237.663361,
+        "y": 111.35672,
+        "z": 373.000458
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 75.14131,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": null,
+      "respawnable": true,
+      "level": 6,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 70366,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0021_agmelee",
+      "defaultHide": false,
+      "position": {
+        "x": 314.874573,
+        "y": 104.40535,
+        "z": 311.9193
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 87.287384,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 2,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": true,
+        "bornPositionWaitDuration": 2.0,
+        "actions": [
+          {
+            "actionType": 1,
+            "position": {
+              "x": 7.36236572,
+              "y": -0.10358429,
+              "z": 0.6218872
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 1,
+                "duration": 2.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          },
+          {
+            "actionType": 1,
+            "position": {
+              "x": 19.7106323,
+              "y": 3.504387,
+              "z": 10.0059509
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 1,
+                "duration": 2.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          }
+        ],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": true,
+      "level": 6,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 70367,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0029_lbmob",
+      "defaultHide": false,
+      "position": {
+        "x": 221.647552,
+        "y": 115.235489,
+        "z": 407.499939
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 16.2309933,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 0,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": false,
+        "bornPositionWaitDuration": 0.0,
+        "actions": [
+          {
+            "actionType": 1,
+            "position": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 4,
+                "duration": 0.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          }
+        ],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": true,
+      "level": 6,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 70368,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0021_agmelee",
+      "defaultHide": false,
+      "position": {
+        "x": 184.661163,
+        "y": 106.512932,
+        "z": 283.279083
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 73.66553,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 1,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": false,
+        "bornPositionWaitDuration": 0.0,
+        "actions": [
+          {
+            "actionType": 1,
+            "position": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 4,
+                "duration": 0.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          }
+        ],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": true,
+      "level": 6,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 70582,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0025_agrange",
+      "defaultHide": false,
+      "position": {
+        "x": 386.77,
+        "y": 124.585716,
+        "z": 404.42
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 284.221527,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 0,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": false,
+        "bornPositionWaitDuration": 0.0,
+        "actions": [
+          {
+            "actionType": 1,
+            "position": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 4,
+                "duration": 0.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          }
+        ],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": false,
+      "level": 6,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 70583,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0025_agrange",
+      "defaultHide": false,
+      "position": {
+        "x": 375.148071,
+        "y": 117.650658,
+        "z": 388.306152
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 199.281036,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": null,
+      "respawnable": true,
+      "level": 6,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 70584,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0025_agrange",
+      "defaultHide": false,
+      "position": {
+        "x": 391.89,
+        "y": 124.585716,
+        "z": 401.87
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 72.6682739,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 0,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": false,
+        "bornPositionWaitDuration": 0.0,
+        "actions": [
+          {
+            "actionType": 1,
+            "position": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 4,
+                "duration": 0.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          }
+        ],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": false,
+      "level": 6,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 70593,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0025_agrange",
+      "defaultHide": false,
+      "position": {
+        "x": 349.505219,
+        "y": 125.204155,
+        "z": 455.94516
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 158.211349,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 2,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": false,
+        "bornPositionWaitDuration": 0.0,
+        "actions": [
+          {
+            "actionType": 1,
+            "position": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 4,
+                "duration": 0.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          }
+        ],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": true,
+      "level": 6,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 70595,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0025_agrange",
+      "defaultHide": false,
+      "position": {
+        "x": 351.7213,
+        "y": 125.543083,
+        "z": 459.523132
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 68.27886,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 2,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": false,
+        "bornPositionWaitDuration": 0.0,
+        "actions": [
+          {
+            "actionType": 1,
+            "position": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 4,
+                "duration": 0.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          }
+        ],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": true,
+      "level": 6,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 70596,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0021_agmelee",
+      "defaultHide": false,
+      "position": {
+        "x": 372.057617,
+        "y": 117.28688,
+        "z": 391.447662
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 231.935181,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": null,
+      "respawnable": true,
+      "level": 6,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 70597,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0021_agmelee",
+      "defaultHide": false,
+      "position": {
+        "x": 372.972931,
+        "y": 117.29451,
+        "z": 388.68
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 191.8587,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": null,
+      "respawnable": true,
+      "level": 6,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 70598,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0021_agmelee",
+      "defaultHide": false,
+      "position": {
+        "x": 385.7578,
+        "y": 124.7385,
+        "z": 399.876617
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 304.457062,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 1,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": false,
+        "bornPositionWaitDuration": 0.0,
+        "actions": [
+          {
+            "actionType": 1,
+            "position": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 4,
+                "duration": 0.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          }
+        ],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": false,
+      "level": 6,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 70602,
+      "dependencyGroupId": 70013,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0029_lbmob",
+      "defaultHide": false,
+      "position": {
+        "x": 139.315887,
+        "y": 108.701714,
+        "z": 323.4286
+      },
+      "rotation": {
+        "x": 5.0128293,
+        "y": 32.3815,
+        "z": 1.07131449E-07
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 2,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": false,
+        "bornPositionWaitDuration": 0.0,
+        "actions": [],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": true,
+      "level": 6,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 70001
+    },
+    {
+      "levelLogicId": 70609,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0021_agmelee",
+      "defaultHide": false,
+      "position": {
+        "x": 361.627075,
+        "y": 111.718842,
+        "z": 330.772278
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 20.6599369,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": {
+        "id": 0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "loop": 2,
+        "snap": 1,
+        "inLocalSpace": true,
+        "addBornPositionAsCheckpoint": false,
+        "bornPositionWaitDuration": 2.0,
+        "actions": [
+          {
+            "actionType": 1,
+            "position": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "subPositions": [],
+            "subActions": [
+              {
+                "type": 4,
+                "duration": 0.0,
+                "rotationY": 0.0,
+                "animName": "",
+                "animKeyTag": {
+                  "subTags": [],
+                  "tagId": 0
+                },
+                "animMaskType": 0,
+                "actionEndType": 0,
+                "waitTime": 0.0,
+                "subActionData": null
+              }
+            ]
+          }
+        ],
+        "lead": false,
+        "waitDistance": 0.0,
+        "runningRadius": 0.0,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "moveStyleWithoutLead": 0,
+        "isUseCatmull": false
+      },
+      "respawnable": false,
+      "level": 6,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    },
+    {
+      "levelLogicId": 70610,
+      "entityType": 16,
+      "entityDataIdKey": "eny_0021_agmelee",
+      "defaultHide": false,
+      "position": {
+        "x": 413.793182,
+        "y": 106.04,
+        "z": 187.154984
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 243.440445,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "patrolData": null,
+      "respawnable": false,
+      "level": 1,
+      "overrideAIConfig": "",
+      "aiBlackboard": null,
+      "enemyGroupId": 0
+    }]
+  }
+}
