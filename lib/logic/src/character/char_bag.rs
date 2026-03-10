@@ -1,8 +1,9 @@
 use anyhow::{Context, Result};
 use config::BeyondAssets;
 use perlica_proto::{
-    AttrInfo, BattleInfo, CharInfo, CharTeamInfo, CharTeamMemberInfo, ScCharSyncStatus, ScSyncAttr,
-    ScSyncCharBagInfo, SkillInfo, SkillLevelInfo,
+    AttrInfo, BattleInfo, CharInfo, CharTeamInfo, CharTeamMemberInfo, ItemInst, ScCharSyncStatus,
+    ScItemBagSync, ScSyncAttr, ScSyncCharBagInfo, ScdItemDepot, ScdItemGrid, SkillInfo,
+    SkillLevelInfo, WeaponData, item_inst::InstImpl,
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -78,6 +79,7 @@ pub struct Char {
     pub hp: f64,
     pub ultimate_sp: f32,
     pub weapon_id: WeaponIndex,
+    pub weapon_template_id: String,
     pub own_time: i64,
     pub skill_levels: HashMap<String, u32>,
 }
@@ -174,10 +176,13 @@ impl CharBag {
                 })
                 .unwrap_or_else(|| assets.weapons.get("wpn_0002").unwrap());
 
-            let numeric_id = assets
-                .str_id_num
-                .get_weapon_id(&weapon.weapon_id)
-                .unwrap_or(char_data.weapon_type as u32);
+            let Some(numeric_id) = assets.str_id_num.get_weapon_id(&weapon.weapon_id) else {
+                debug!(
+                    "Skipping char {} — no numeric id for weapon {}",
+                    template_id, weapon.weapon_id
+                );
+                continue;
+            };
 
             debug!(
                 "Creating char: template_id={}, weapon_type={}, assigned_weapon_id={} (numeric: {}), rarity={}",
@@ -191,6 +196,7 @@ impl CharBag {
                 break_stage: attrs.break_stage,
                 is_dead: false,
                 weapon_id: WeaponIndex::from_raw(numeric_id as u64),
+                weapon_template_id: weapon.weapon_id.clone(),
                 own_time: std::time::SystemTime::now()
                     .duration_since(std::time::UNIX_EPOCH)
                     .map(|d| d.as_millis() as i64)
@@ -200,7 +206,7 @@ impl CharBag {
                 skill_levels,
             };
 
-            let idx = bag.add_char(char);
+            let idx = bag.add_char(char, assets);
             index_map.insert(template_id.clone(), idx);
         }
 
@@ -230,7 +236,30 @@ impl CharBag {
         Ok(bag)
     }
 
-    pub fn add_char(&mut self, char: Char) -> CharIndex {
+    pub fn add_char(&mut self, mut char: Char, assets: &BeyondAssets) -> CharIndex {
+        // Ensure weapon is always assigned
+        if char.weapon_template_id.is_empty() {
+            if let Some(template) = assets.characters.get(&char.template_id) {
+                let weapon = assets
+                    .weapons
+                    .get_best_for_char(template.weapon_type)
+                    .or_else(|| {
+                        assets
+                            .weapons
+                            .get_by_type(template.weapon_type)
+                            .first()
+                            .copied()
+                    })
+                    .unwrap_or_else(|| assets.weapons.get("wpn_0002").unwrap());
+                char.weapon_template_id = weapon.weapon_id.clone();
+                char.weapon_id = WeaponIndex::from_raw(
+                    assets
+                        .str_id_num
+                        .get_weapon_id(&weapon.weapon_id)
+                        .unwrap_or(template.weapon_type as u32) as u64,
+                );
+            }
+        }
         let idx = CharIndex::from_usize(self.chars.len());
         self.chars.push(char);
         idx
@@ -315,6 +344,11 @@ impl CharBag {
                         })
                     })
                     .collect();
+                let weapon_inst_id = if !char.weapon_template_id.is_empty() {
+                    objid
+                } else {
+                    0
+                };
                 Ok(CharSyncState {
                     objid,
                     template_id: char.template_id.clone(),
@@ -323,7 +357,7 @@ impl CharBag {
                     break_stage: char.break_stage,
                     hp: char.hp,
                     ultimate_sp: char.ultimate_sp,
-                    weapon_id: char.weapon_id.inst_id(),
+                    weapon_id: weapon_inst_id,
                     own_time: char.own_time,
                     is_dead: char.is_dead,
                     normal_skill,
@@ -445,6 +479,49 @@ impl CharBag {
                 }),
             })
             .collect()
+    }
+    pub fn item_bag_sync(&self, assets: &BeyondAssets) -> ScItemBagSync {
+        let inst_list = self
+            .chars
+            .iter()
+            .enumerate()
+            .filter(|(_, c)| !c.weapon_template_id.is_empty())
+            .map(|(i, char)| {
+                let inst_id = CharIndex::from_usize(i).object_id();
+                let template_id = char.weapon_template_id.clone();
+                let equip_char_id = inst_id;
+                ScdItemGrid {
+                    grid_index: 0,
+                    id: template_id.clone(),
+                    count: 1,
+                    inst: Some(ItemInst {
+                        inst_id,
+                        is_lock: false,
+                        is_new: false,
+                        inst_impl: Some(InstImpl::Weapon(WeaponData {
+                            inst_id,
+                            template_id,
+                            exp: 0,
+                            weapon_lv: 1,
+                            refine_lv: 0,
+                            breakthrough_lv: 1,
+                            equip_char_id,
+                            attach_gem_id: 0,
+                        })),
+                    }),
+                }
+            })
+            .collect();
+        let mut depot = std::collections::HashMap::new();
+        depot.insert(1, ScdItemDepot { inst_list });
+
+        ScItemBagSync {
+            depot,
+            bag: None,
+            factory_depot: None,
+            cannot_destroy: std::collections::HashMap::new(),
+            use_blackboard: None,
+        }
     }
 }
 

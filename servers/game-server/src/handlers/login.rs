@@ -42,7 +42,9 @@ pub(crate) async fn run_login_sequence(ctx: &mut NetContext<'_>) {
     loop {
         let ok = match ctx.player.loading_state {
             LoadingState::ScLogin => {
-                push_base_data(ctx).await && char_bag::push_char_bag(ctx).await
+                push_base_data(ctx).await
+                    && char_bag::push_item_bag_sync(ctx).await
+                    && char_bag::push_char_bag(ctx).await
             }
             LoadingState::CharBagSync => {
                 unlock::push_unlocks(ctx).await

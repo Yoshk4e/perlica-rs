@@ -3588,10 +3588,17 @@ pub struct ScItemBagSetQuickBarPos {
 #[serde(default)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ScItemBagSync {
+    #[prost(map = "int32, message", tag = "1")]
+    pub depot: ::std::collections::HashMap<i32, ScdItemDepot>,
     #[prost(message, optional, tag = "2")]
     pub bag: ::core::option::Option<ScdItemBag>,
     #[prost(message, optional, tag = "3")]
     pub factory_depot: ::core::option::Option<ScdItemDepot>,
+    #[prost(map = "string, bool", tag = "4")]
+    pub cannot_destroy: ::std::collections::HashMap<
+        ::prost::alloc::string::String,
+        bool,
+    >,
     #[prost(message, optional, tag = "11")]
     pub use_blackboard: ::core::option::Option<ScdItemUseBlackboard>,
 }

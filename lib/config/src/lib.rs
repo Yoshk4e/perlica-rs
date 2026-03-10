@@ -1,11 +1,12 @@
 pub mod character;
+pub mod id_to_str;
 pub mod skill;
 pub mod str_to_id;
 pub mod tables;
 pub mod weapon;
-
 pub mod enemy_spawn;
 
+use crate::id_to_str::NumIdStrAssets;
 use crate::str_to_id::StrIdNumAssets;
 
 use anyhow::Result;
@@ -16,7 +17,7 @@ pub struct BeyondAssets {
     pub char_skills: skill::SkillAssets,
     pub weapons: weapon::WeaponAssets,
     pub str_id_num: StrIdNumAssets,
-	
+    pub num_id_str: NumIdStrAssets,
 	pub enemy_spawns: enemy_spawn::EnemySpawnAssets,
 }
 
@@ -30,7 +31,7 @@ impl BeyondAssets {
             char_skills: skill::SkillAssets::load(&tables_dir)?,
             weapons: weapon::WeaponAssets::load(&tables_dir)?,
             str_id_num: StrIdNumAssets::load(&tables_dir)?,
-			
+            num_id_str: NumIdStrAssets::load(&tables_dir)?,
 			enemy_spawns: enemy_spawn::EnemySpawnAssets::load(&tables_dir)?,
         })
     }
