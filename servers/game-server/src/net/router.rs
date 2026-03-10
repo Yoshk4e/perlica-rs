@@ -47,7 +47,7 @@ handlers! {
     CsCharSetBattleInfo => character::on_cs_char_set_battle_info,
     CsMoveObjectMove    => movement::on_cs_move_object_move,
     CsBitsetRemove      => bitset::on_cs_bitset_remove,
-    CsSceneKillChar     => scene::on_cs_scene_kill_char,
+    CsSceneKillMonster     => scene::on_cs_scene_kill_monster,
 }
 
 // Merge payload is a concatenation of multiple framed packets.

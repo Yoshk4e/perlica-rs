@@ -1,6 +1,6 @@
 use crate::net::NetContext;
 use perlica_proto::{
-    CsSceneKillChar, CsSceneLoadFinish, LeaveObjectInfo, ScEnterSceneNotify, ScObjectEnterView,
+    CsSceneKillMonster, CsSceneLoadFinish, LeaveObjectInfo, ScEnterSceneNotify, ScObjectEnterView,
     ScObjectLeaveView, ScSelfSceneInfo, SceneCharacter, SceneMonster, SceneImplEmpty, SceneObjectCommonInfo,
     SceneObjectDetailContainer, Vector, sc_self_scene_info::SceneImpl,
 };
@@ -169,9 +169,9 @@ fn pack_scene_chars(ctx: &NetContext<'_>) -> Vec<SceneCharacter> {
     chars
 }
 
-pub async fn on_cs_scene_kill_char(
+pub async fn on_cs_scene_kill_monster(
     ctx: &mut NetContext<'_>,
-    req: CsSceneKillChar,
+    req: CsSceneKillMonster,
 ) -> ScObjectLeaveView {
     ScObjectLeaveView {
         scene_name: ctx.player.world.last_scene.clone(),
@@ -181,7 +181,7 @@ pub async fn on_cs_scene_kill_char(
             .get_scene_id(&ctx.player.world.last_scene)
             .unwrap_or(0),
         obj_list: vec![LeaveObjectInfo {
-            obj_type: 0,
+            obj_type: 16,
             obj_id: req.id,
         }],
     }
