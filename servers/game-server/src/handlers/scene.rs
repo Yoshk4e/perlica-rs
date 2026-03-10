@@ -2,8 +2,8 @@ use crate::net::NetContext;
 use perlica_proto::{
     CsSceneKillChar, CsSceneKillMonster, CsSceneLoadFinish, LeaveObjectInfo,
     ScCharBagSetTeamLeader, ScEnterSceneNotify, ScObjectEnterView, ScObjectLeaveView,
-    ScSelfSceneInfo, SceneCharacter, SceneImplEmpty, SceneMonster, SceneObjectCommonInfo,
-    SceneObjectDetailContainer, Vector, sc_self_scene_info::SceneImpl,
+    ScSceneDestroyEntity, ScSelfSceneInfo, SceneCharacter, SceneImplEmpty, SceneMonster,
+    SceneObjectCommonInfo, SceneObjectDetailContainer, Vector, sc_self_scene_info::SceneImpl,
 };
 use tracing::{debug, error, instrument};
 
@@ -15,6 +15,12 @@ pub enum SelfInfoReason {
     ChangeTeam = 3,
     ReviveByItem = 4,
     ResetDungeon = 5,
+}
+
+#[repr(i32)]
+pub enum EntityDestroyReason {
+    Immediately = 0,
+    Dead = 1,
 }
 
 pub async fn notify_enter_scene(ctx: &mut NetContext<'_>) -> bool {
@@ -206,58 +212,15 @@ pub async fn on_cs_scene_kill_monster(
 }
 
 pub async fn on_cs_scene_kill_char(ctx: &mut NetContext<'_>, req: CsSceneKillChar) {
-    let char_bag = &mut ctx.player.char_bag;
-    let team_idx = char_bag.meta.curr_team_index as usize;
-
-    if let Some(char) = char_bag.get_char_by_objid_mut(req.id) {
+    if let Some(char) = ctx.player.char_bag.get_char_by_objid_mut(req.id) {
         char.is_dead = true;
     }
 
-    let current_leader = char_bag.teams[team_idx].leader_index.object_id();
-    debug!(
-        killed = req.id,
-        leader = current_leader,
-        "kill char received"
-    );
-
-    if current_leader != req.id {
-        debug!("dead char is not leader, no switch needed");
-        return;
-    }
-
-    let new_leader = char_bag.teams[team_idx]
-        .char_team
-        .iter()
-        .filter_map(|slot| slot.char_index())
-        .find(|idx| !char_bag.chars[idx.as_usize()].is_dead);
-
-    debug!(new_leader = ?new_leader, "switching leader");
-
-    if let Some(idx) = new_leader {
-        char_bag.teams[team_idx].leader_index = idx;
-        let result = ctx
-            .notify(ScCharBagSetTeamLeader {
-                team_index: team_idx as i32,
-                leaderid: idx.object_id(),
-            })
-            .await;
-        debug!(result = ?result, "leader switch notify sent");
-    }
-
-    let scene_name = ctx.player.world.last_scene.clone();
-    let scene_id = ctx.assets.str_id_num.get_scene_id(&scene_name).unwrap_or(0);
-    let char_list = pack_scene_chars(ctx);
     let _ = ctx
-        .notify(ScSelfSceneInfo {
-            scene_name,
-            scene_id,
-            self_info_reason: SelfInfoReason::ChangeTeam as i32,
-            scene_impl: Some(SceneImpl::Empty(SceneImplEmpty {})),
-            detail: Some(SceneObjectDetailContainer {
-                char_list,
-                ..Default::default()
-            }),
-            ..Default::default()
+        .notify(ScSceneDestroyEntity {
+            scene_name: ctx.player.world.last_scene.clone(),
+            id: req.id,
+            reason: EntityDestroyReason::Dead as i32,
         })
         .await;
 }
