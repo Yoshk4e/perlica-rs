@@ -1,7 +1,8 @@
 use crate::net::NetContext;
 use perlica_proto::{
-    CsSceneKillMonster, CsSceneLoadFinish, LeaveObjectInfo, ScEnterSceneNotify, ScObjectEnterView,
-    ScObjectLeaveView, ScSelfSceneInfo, SceneCharacter, SceneMonster, SceneImplEmpty, SceneObjectCommonInfo,
+    CsSceneKillChar, CsSceneKillMonster, CsSceneLoadFinish, LeaveObjectInfo,
+    ScCharBagSetTeamLeader, ScEnterSceneNotify, ScObjectEnterView, ScObjectLeaveView,
+    ScSelfSceneInfo, SceneCharacter, SceneImplEmpty, SceneMonster, SceneObjectCommonInfo,
     SceneObjectDetailContainer, Vector, sc_self_scene_info::SceneImpl,
 };
 use tracing::{debug, error, instrument};
@@ -44,14 +45,14 @@ pub async fn notify_object_enter_view(
     ctx: &mut NetContext<'_>,
     scene_name: String,
     char_list: Vec<SceneCharacter>,
-	monster_list: Vec<SceneMonster>,
+    monster_list: Vec<SceneMonster>,
 ) -> bool {
     let msg = ScObjectEnterView {
         scene_name: scene_name.clone(),
         scene_id: ctx.assets.str_id_num.get_scene_id(&scene_name).unwrap_or(0),
         detail: Some(SceneObjectDetailContainer {
             char_list,
-			monster_list,
+            monster_list,
             ..Default::default()
         }),
         ..Default::default()
@@ -71,9 +72,16 @@ pub async fn on_scene_load_finish(
     ctx.player.world.last_scene = req.scene_name.clone();
 
     let char_list = pack_scene_chars(ctx);
-	let monster_list = pack_scene_monsters(ctx, req.scene_name.clone());
+    let monster_list = pack_scene_monsters(ctx, req.scene_name.clone());
 
-    if !notify_object_enter_view(ctx, req.scene_name.clone(), char_list.clone(), monster_list.clone()).await {
+    if !notify_object_enter_view(
+        ctx,
+        req.scene_name.clone(),
+        char_list.clone(),
+        monster_list.clone(),
+    )
+    .await
+    {
         error!("object enter view failed");
     }
     if !post_load_sync(ctx).await {
@@ -99,40 +107,40 @@ pub async fn on_scene_load_finish(
 }
 
 fn pack_scene_monsters(ctx: &NetContext<'_>, scene_name: String) -> Vec<SceneMonster> {
-	let enemy_spawns = &ctx.assets.enemy_spawns;
+    let enemy_spawns = &ctx.assets.enemy_spawns;
 
-	let scene_enemy_data = enemy_spawns.get(&scene_name);
-	
-	let mut ind: u64 = 0;
-	
-	let mut monsters: Vec<SceneMonster> = Vec::new();
-	
-	if let Some(data) = scene_enemy_data {
-		for enemy in data{
-			let en = SceneMonster {
-					common_info: Some(SceneObjectCommonInfo {
-						id: ind + 1000,
-						templateid: enemy.template_id.to_string(),
-						position: Some(Vector {
-							x: enemy.position.x,
-							y: enemy.position.y,
-							z: enemy.position.z,
-						}),
-						rotation: Some(Vector {
-							x: enemy.rotation.x,
-							y: enemy.rotation.y,
-							z: enemy.rotation.z,
-						}),
-					belong_level_script_id: 0,
+    let scene_enemy_data = enemy_spawns.get(&scene_name);
+
+    let mut ind: u64 = 0;
+
+    let mut monsters: Vec<SceneMonster> = Vec::new();
+
+    if let Some(data) = scene_enemy_data {
+        for enemy in data {
+            let en = SceneMonster {
+                common_info: Some(SceneObjectCommonInfo {
+                    id: ind + 1000,
+                    templateid: enemy.template_id.to_string(),
+                    position: Some(Vector {
+                        x: enemy.position.x,
+                        y: enemy.position.y,
+                        z: enemy.position.z,
+                    }),
+                    rotation: Some(Vector {
+                        x: enemy.rotation.x,
+                        y: enemy.rotation.y,
+                        z: enemy.rotation.z,
+                    }),
+                    belong_level_script_id: 0,
                     r#type: 16,
                 }),
-				origin_id: 0,
+                origin_id: 0,
                 level: 5,
-				};
-		ind += 1;
-		monsters.push(en);
-		};
-	};
+            };
+            ind += 1;
+            monsters.push(en);
+        }
+    };
 
     debug!(count = monsters.len(), "scene monsters packed");
     monsters
@@ -179,7 +187,6 @@ fn pack_scene_chars(ctx: &NetContext<'_>) -> Vec<SceneCharacter> {
     chars
 }
 
-
 pub async fn on_cs_scene_kill_monster(
     ctx: &mut NetContext<'_>,
     req: CsSceneKillMonster,
@@ -195,14 +202,64 @@ pub async fn on_cs_scene_kill_monster(
             obj_type: 16,
             obj_id: req.id,
         }],
-	}
+    }
 }
 
 pub async fn on_cs_scene_kill_char(ctx: &mut NetContext<'_>, req: CsSceneKillChar) {
-    if let Some(char) = ctx.player.char_bag.get_char_by_objid_mut(req.id) {
-        char.is_dead = true;
+    let char_bag = &mut ctx.player.char_bag;
+    let team_idx = char_bag.meta.curr_team_index as usize;
 
+    if let Some(char) = char_bag.get_char_by_objid_mut(req.id) {
+        char.is_dead = true;
     }
+
+    let current_leader = char_bag.teams[team_idx].leader_index.object_id();
+    debug!(
+        killed = req.id,
+        leader = current_leader,
+        "kill char received"
+    );
+
+    if current_leader != req.id {
+        debug!("dead char is not leader, no switch needed");
+        return;
+    }
+
+    let new_leader = char_bag.teams[team_idx]
+        .char_team
+        .iter()
+        .filter_map(|slot| slot.char_index())
+        .find(|idx| !char_bag.chars[idx.as_usize()].is_dead);
+
+    debug!(new_leader = ?new_leader, "switching leader");
+
+    if let Some(idx) = new_leader {
+        char_bag.teams[team_idx].leader_index = idx;
+        let result = ctx
+            .notify(ScCharBagSetTeamLeader {
+                team_index: team_idx as i32,
+                leaderid: idx.object_id(),
+            })
+            .await;
+        debug!(result = ?result, "leader switch notify sent");
+    }
+
+    let scene_name = ctx.player.world.last_scene.clone();
+    let scene_id = ctx.assets.str_id_num.get_scene_id(&scene_name).unwrap_or(0);
+    let char_list = pack_scene_chars(ctx);
+    let _ = ctx
+        .notify(ScSelfSceneInfo {
+            scene_name,
+            scene_id,
+            self_info_reason: SelfInfoReason::ChangeTeam as i32,
+            scene_impl: Some(SceneImpl::Empty(SceneImplEmpty {})),
+            detail: Some(SceneObjectDetailContainer {
+                char_list,
+                ..Default::default()
+            }),
+            ..Default::default()
+        })
+        .await;
 }
 
 #[instrument(skip(ctx), fields(uid = %ctx.player.uid))]
