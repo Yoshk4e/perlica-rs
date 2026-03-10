@@ -2,10 +2,14 @@ use crate::handlers::{bitset, character, login, movement, ping, scene};
 use byteorder::{LittleEndian, ReadBytesExt};
 use perlica_proto::{CsHead, CsMergeMsg, prost::Message};
 use std::io::{Cursor, Read};
-use tracing::{debug, warn};
+use tracing::{debug, instrument, warn};
 
 macro_rules! handlers {
-    ($($msg_req:ty => $handler:path),* $(,)?) => {
+    (
+        reply    { $($msg_req:ty => $handler:path),* $(,)? }
+        no_reply { $($nr_req:ty  => $nr_handler:path),* $(,)? }
+    ) => {
+        #[instrument(skip(ctx, body), fields(uid = %ctx.player.uid, cmd_id))]
         pub async fn handle_command(
             ctx: &mut crate::net::NetContext<'_>,
             cmd_id: i32,
@@ -18,9 +22,10 @@ macro_rules! handlers {
             match cmd_id {
                 x if x == <CsMergeMsg as NetMessage>::CMD_ID => {
                     let req = CsMergeMsg::decode(&body[..])?;
-                    debug!("Merge packet received");
+                    debug!(payload = req.msg.len(), "merge packet");
                     handle_merge_msg(ctx, req).await?;
                 }
+
                 $(
                     x if x == <$msg_req as NetMessage>::CMD_ID => {
                         let req = <$msg_req>::decode(&body[..])?;
@@ -31,8 +36,16 @@ macro_rules! handlers {
                         }
                     }
                 )*
+
+                $(
+                    x if x == <$nr_req as NetMessage>::CMD_ID => {
+                        let req = <$nr_req>::decode(&body[..])?;
+                        $nr_handler(ctx, req).await;
+                    }
+                )*
+
                 _ => {
-                    warn!("unhandled command {cmd_id}");
+                    warn!(cmd_id, "unhandled command");
                 }
             }
             Ok(())
@@ -41,13 +54,17 @@ macro_rules! handlers {
 }
 
 handlers! {
-    CsLogin             => login::on_login,
-    CsPing              => ping::on_csping,
-    CsSceneLoadFinish   => scene::on_scene_load_finish,
-    CsCharSetBattleInfo => character::on_cs_char_set_battle_info,
-    CsMoveObjectMove    => movement::on_cs_move_object_move,
-    CsBitsetRemove      => bitset::on_cs_bitset_remove,
-    CsSceneKillChar     => scene::on_cs_scene_kill_char,
+    reply {
+        CsLogin             => login::on_login,
+        CsPing              => ping::on_csping,
+        CsSceneLoadFinish   => scene::on_scene_load_finish,
+        CsMoveObjectMove    => movement::on_cs_move_object_move,
+        CsBitsetRemove      => bitset::on_cs_bitset_remove,
+    }
+    no_reply {
+        CsCharSetBattleInfo => character::on_cs_char_set_battle_info,
+        CsSceneKillChar     => scene::on_cs_scene_kill_char,
+    }
 }
 
 // Merge payload is a concatenation of multiple framed packets.
@@ -87,8 +104,8 @@ async fn handle_merge_msg(
         cursor.read_exact(&mut sub_body_buf)?;
 
         let sub_head = CsHead::decode(&sub_head_buf[..])?;
-        sub_count += 1;
 
+        sub_count += 1;
         if let Err(e) = Box::pin(handle_command(ctx, sub_head.msgid, sub_body_buf)).await {
             warn!(cmd_id = sub_head.msgid, error = %e, "merge sub-packet failed");
         }
