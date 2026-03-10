@@ -1,8 +1,8 @@
 use crate::net::NetContext;
 use perlica_proto::{
     CsSceneKillChar, CsSceneLoadFinish, LeaveObjectInfo, ScEnterSceneNotify, ScObjectEnterView,
-    ScObjectLeaveView, ScSelfSceneInfo, SceneCharacter, SceneImplEmpty, SceneObjectCommonInfo,
-    SceneObjectDetailContainer, Vector, sc_self_scene_info::SceneImpl,
+    ScObjectLeaveView, ScSceneDestroyEntity, ScSelfSceneInfo, SceneCharacter, SceneImplEmpty,
+    SceneObjectCommonInfo, SceneObjectDetailContainer, Vector, sc_self_scene_info::SceneImpl,
 };
 use tracing::{debug, error, instrument};
 
@@ -14,6 +14,12 @@ pub enum SelfInfoReason {
     ChangeTeam = 3,
     ReviveByItem = 4,
     ResetDungeon = 5,
+}
+
+#[repr(i32)]
+pub enum EntityDestroyReason {
+    Immediately = 0,
+    Dead = 1,
 }
 
 pub async fn notify_enter_scene(ctx: &mut NetContext<'_>) -> bool {
@@ -140,6 +146,14 @@ pub async fn on_cs_scene_kill_char(ctx: &mut NetContext<'_>, req: CsSceneKillCha
     if let Some(char) = ctx.player.char_bag.get_char_by_objid_mut(req.id) {
         char.is_dead = true;
     }
+
+    let _ = ctx
+        .notify(ScSceneDestroyEntity {
+            scene_name: ctx.player.world.last_scene.clone(),
+            id: req.id,
+            reason: EntityDestroyReason::Dead as i32,
+        })
+        .await;
 }
 
 #[instrument(skip(ctx), fields(uid = %ctx.player.uid))]

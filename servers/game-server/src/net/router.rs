@@ -60,6 +60,7 @@ handlers! {
         CsSceneLoadFinish   => scene::on_scene_load_finish,
         CsMoveObjectMove    => movement::on_cs_move_object_move,
         CsBitsetRemove      => bitset::on_cs_bitset_remove,
+        CsCharBagSetTeamLeader => character::on_cs_char_bag_set_team_leader,
     }
     no_reply {
         CsCharSetBattleInfo => character::on_cs_char_set_battle_info,
