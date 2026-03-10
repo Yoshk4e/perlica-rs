@@ -1,10 +1,11 @@
-use crate::tables::weapon::{Weapon, WeaponTable};
+use crate::tables::weapon::{BreakthroughTemplate, Weapon, WeaponTable};
 use anyhow::{Context, Result};
 use std::collections::HashMap;
 use std::path::Path;
 
 pub struct WeaponAssets {
     data: HashMap<String, Weapon>,
+    breakthrough: HashMap<String, BreakthroughTemplate>,
 }
 
 impl WeaponAssets {
@@ -18,10 +19,10 @@ impl WeaponAssets {
 
         Ok(Self {
             data: table.weapon_basic_table,
+            breakthrough: table.weapon_break_through_template_table,
         })
     }
 
-    // Get a single weapon by its ID (e.g. "wpn_0002")
     pub fn get(&self, weapon_id: &str) -> Option<&Weapon> {
         self.data.get(weapon_id)
     }
@@ -43,7 +44,6 @@ impl WeaponAssets {
             .max_by_key(|w| w.rarity)
     }
 
-    // Get weapons by rarity (e.g. 6 = 6★ / SSR)
     pub fn get_by_rarity(&self, rarity: u32) -> Vec<&Weapon> {
         self.data.values().filter(|w| w.rarity == rarity).collect()
     }
@@ -55,17 +55,29 @@ impl WeaponAssets {
             .collect()
     }
 
-    // Get all 6★ (signature / limited) weapons for a given weapon_type
     pub fn get_signature_weapons_for_type(&self, weapon_type: u32) -> Vec<&Weapon> {
         self.get_by_rarity_and_type(6, weapon_type)
     }
 
-    // Get premium weapons (rarity 5★ and 6★) for a type
     pub fn get_premium_weapons_for_type(&self, weapon_type: u32) -> Vec<&Weapon> {
         self.get_by_type(weapon_type)
             .into_iter()
             .filter(|w| w.rarity >= 5)
             .collect()
+    }
+
+    pub fn get_max_breakthrough_lv(&self, weapon_id: &str) -> u64 {
+        let Some(weapon) = self.data.get(weapon_id) else {
+            return 0;
+        };
+        let Some(template) = self.breakthrough.get(&weapon.breakthrough_template_id) else {
+            return 0;
+        };
+        template
+            .list
+            .last()
+            .map(|e| e.breakthrough_lv as u64)
+            .unwrap_or(0)
     }
 
     pub fn contains(&self, weapon_id: &str) -> bool {
@@ -84,7 +96,6 @@ impl WeaponAssets {
         self.data.len()
     }
 
-    // How many weapons exist for each weapon_type
     pub fn count_by_type(&self) -> HashMap<u32, usize> {
         let mut map = HashMap::new();
         for w in self.data.values() {

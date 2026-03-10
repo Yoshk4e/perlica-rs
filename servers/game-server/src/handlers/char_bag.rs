@@ -24,10 +24,27 @@ pub async fn push_char_bag(ctx: &mut NetContext<'_>) -> bool {
 }
 
 #[instrument(skip(ctx), fields(uid = %ctx.player.uid))]
+pub async fn push_item_bag_sync(ctx: &mut NetContext<'_>) -> bool {
+    let msg = ctx.player.char_bag.item_bag_sync(ctx.assets);
+    debug!(
+        weapons = msg
+            .factory_depot
+            .as_ref()
+            .map(|d| d.inst_list.len())
+            .unwrap_or(0),
+        "item bag sync"
+    );
+    if let Err(e) = ctx.notify(msg).await {
+        error!(error = %e, "item bag sync push failed");
+        return false;
+    }
+    true
+}
+
+#[instrument(skip(ctx), fields(uid = %ctx.player.uid))]
 pub async fn push_char_attrs(ctx: &mut NetContext<'_>) -> bool {
     let msgs = ctx.player.char_bag.char_attrs(ctx.assets);
     debug!(count = msgs.len(), "char attrs");
-
     for msg in msgs {
         if let Err(e) = ctx.notify(msg).await {
             error!(error = %e, "char attrs push failed");
@@ -41,7 +58,6 @@ pub async fn push_char_attrs(ctx: &mut NetContext<'_>) -> bool {
 pub async fn push_char_status(ctx: &mut NetContext<'_>) -> bool {
     let msgs = ctx.player.char_bag.char_status();
     debug!(count = msgs.len(), "char status");
-
     for msg in msgs {
         if let Err(e) = ctx.notify(msg).await {
             error!(error = %e, "char status push failed");
