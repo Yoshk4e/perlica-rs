@@ -6,6 +6,16 @@ use perlica_proto::{
 };
 use tracing::{debug, error, instrument};
 
+#[repr(i32)]
+pub enum SelfInfoReason {
+    EnterScene = 0,
+    ReviveDead = 1,
+    ReviveRest = 2,
+    ChangeTeam = 3,
+    ReviveByItem = 4,
+    ResetDungeon = 5,
+}
+
 pub async fn notify_enter_scene(ctx: &mut NetContext<'_>) -> bool {
     let msg = ScEnterSceneNotify {
         role_id: 1,
@@ -77,7 +87,7 @@ pub async fn on_scene_load_finish(
             .str_id_num
             .get_scene_id(&req.scene_name)
             .unwrap_or(0),
-        self_info_reason: 1,
+        self_info_reason: SelfInfoReason::EnterScene as i32,
         scene_impl: Some(SceneImpl::Empty(SceneImplEmpty {})),
         detail: Some(SceneObjectDetailContainer {
             char_list,
@@ -169,6 +179,7 @@ fn pack_scene_chars(ctx: &NetContext<'_>) -> Vec<SceneCharacter> {
     chars
 }
 
+
 pub async fn on_cs_scene_kill_monster(
     ctx: &mut NetContext<'_>,
     req: CsSceneKillMonster,
@@ -184,6 +195,13 @@ pub async fn on_cs_scene_kill_monster(
             obj_type: 16,
             obj_id: req.id,
         }],
+	}
+}
+
+pub async fn on_cs_scene_kill_char(ctx: &mut NetContext<'_>, req: CsSceneKillChar) {
+    if let Some(char) = ctx.player.char_bag.get_char_by_objid_mut(req.id) {
+        char.is_dead = true;
+
     }
 }
 
