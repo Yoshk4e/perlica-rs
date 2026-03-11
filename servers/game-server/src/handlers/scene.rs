@@ -249,6 +249,7 @@ pub async fn on_cs_scene_revival(ctx: &mut NetContext<'_>, _req: CsSceneRevival)
     let scene_name = ctx.player.world.last_scene.clone();
     let scene_id = ctx.assets.str_id_num.get_scene_id(&scene_name).unwrap_or(0);
     let char_list = pack_scene_chars(ctx);
+    let monster_list = pack_scene_monsters(ctx, &scene_name);
     let _ = ctx
         .notify(ScSelfSceneInfo {
             scene_name,
@@ -258,6 +259,7 @@ pub async fn on_cs_scene_revival(ctx: &mut NetContext<'_>, _req: CsSceneRevival)
             scene_impl: Some(SceneImpl::Empty(SceneImplEmpty {})),
             detail: Some(SceneObjectDetailContainer {
                 char_list,
+                monster_list,
                 ..Default::default()
             }),
             ..Default::default()
