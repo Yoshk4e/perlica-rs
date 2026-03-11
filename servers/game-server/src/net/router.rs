@@ -2,14 +2,13 @@ use crate::handlers::{bitset, character, login, movement, ping, scene};
 use byteorder::{LittleEndian, ReadBytesExt};
 use perlica_proto::{CsHead, CsMergeMsg, prost::Message};
 use std::io::{Cursor, Read};
-use tracing::{debug, instrument, warn};
+use tracing::{debug, warn};
 
 macro_rules! handlers {
     (
         reply    { $($msg_req:ty => $handler:path),* $(,)? }
         no_reply { $($nr_req:ty  => $nr_handler:path),* $(,)? }
     ) => {
-        #[instrument(skip(ctx, body), fields(uid = %ctx.player.uid, cmd_id))]
         pub async fn handle_command(
             ctx: &mut crate::net::NetContext<'_>,
             cmd_id: i32,
@@ -26,17 +25,19 @@ macro_rules! handlers {
                     handle_merge_msg(ctx, req).await?;
                 }
 
+                // Handlers that send a response back to the client.
                 $(
                     x if x == <$msg_req as NetMessage>::CMD_ID => {
                         let req = <$msg_req>::decode(&body[..])?;
                         let rsp = $handler(ctx, req).await;
                         ctx.send(rsp).await?;
-                        if ctx.player.loading_state == LoadingState::ScLogin {
+                        if ctx.player.loading_state == LoadingState::Pending {
                             login::run_login_sequence(ctx).await;
                         }
                     }
                 )*
 
+                // Fire-and-forget handlers
                 $(
                     x if x == <$nr_req as NetMessage>::CMD_ID => {
                         let req = <$nr_req>::decode(&body[..])?;
@@ -55,17 +56,19 @@ macro_rules! handlers {
 
 handlers! {
     reply {
-        CsLogin             => login::on_login,
-        CsPing              => ping::on_csping,
-        CsSceneLoadFinish   => scene::on_scene_load_finish,
-        CsMoveObjectMove    => movement::on_cs_move_object_move,
-        CsBitsetRemove      => bitset::on_cs_bitset_remove,
+        CsLogin                => login::on_login,
+        CsPing                 => ping::on_csping,
+        CsSceneLoadFinish      => scene::on_scene_load_finish,
+        CsMoveObjectMove       => movement::on_cs_move_object_move,
+        CsBitsetRemove         => bitset::on_cs_bitset_remove,
+        CsSceneKillMonster     => scene::on_cs_scene_kill_monster,
         CsCharBagSetTeamLeader => character::on_cs_char_bag_set_team_leader,
+        CsSceneRevival         => scene::on_cs_scene_revival,
     }
     no_reply {
         CsCharSetBattleInfo => character::on_cs_char_set_battle_info,
         CsSceneKillChar     => scene::on_cs_scene_kill_char,
-		CsSceneKillMonster  => scene::on_cs_scene_kill_monster,
+        CsSceneKillMonster  => scene::on_cs_scene_kill_monster,
     }
 }
 
