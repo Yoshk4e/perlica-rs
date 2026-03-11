@@ -1,6 +1,6 @@
 use crate::net::NetContext;
 use perlica_proto::{BitsetData, CsBitsetRemove, ScBitsetRemove, ScSyncAllBitset};
-use tracing::{debug, instrument, warn};
+use tracing::{debug, warn};
 
 // Beyond.GEnums.BitsetType
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -56,7 +56,6 @@ impl BitsetType {
     }
 }
 
-#[instrument(skip(ctx), fields(uid = %ctx.player.uid))]
 pub async fn on_cs_bitset_remove(ctx: &mut NetContext<'_>, req: CsBitsetRemove) -> ScBitsetRemove {
     let name = match BitsetType::from_i32(req.r#type) {
         Some(t) => format!("{:?}", t),

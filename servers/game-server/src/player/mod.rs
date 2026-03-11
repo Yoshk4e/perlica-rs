@@ -1,16 +1,10 @@
 use perlica_logic::character::char_bag::CharBag;
 use perlica_logic::player::WorldState;
 use std::collections::{HashMap, HashSet};
-use tracing::debug;
 
-#[derive(PartialEq, Eq, PartialOrd, Ord, Debug, Clone, Copy)]
+#[derive(PartialEq, Eq, Debug, Clone, Copy)]
 pub enum LoadingState {
-    Login,
-    ScLogin,
-    CharBagSync,
-    UnlockSync,
-    FactorySync,
-    EnterScene,
+    Pending,
     Complete,
 }
 
@@ -26,7 +20,7 @@ impl Default for Player {
     fn default() -> Self {
         Self {
             uid: String::new(),
-            loading_state: LoadingState::Login,
+            loading_state: LoadingState::Pending,
             char_bag: CharBag::default(),
             world: WorldState::default(),
             bitsets: HashMap::new(),
@@ -37,21 +31,5 @@ impl Default for Player {
 impl Player {
     pub fn on_login(&mut self, uid: String) {
         self.uid = uid;
-        self.loading_state = LoadingState::ScLogin;
-        debug!(uid = %self.uid, "player login");
-    }
-
-    pub fn advance_state(&mut self) {
-        let prev = self.loading_state;
-        self.loading_state = match self.loading_state {
-            LoadingState::Login => LoadingState::ScLogin,
-            LoadingState::ScLogin => LoadingState::CharBagSync,
-            LoadingState::CharBagSync => LoadingState::UnlockSync,
-            LoadingState::UnlockSync => LoadingState::FactorySync,
-            LoadingState::FactorySync => LoadingState::EnterScene,
-            LoadingState::EnterScene => LoadingState::Complete,
-            LoadingState::Complete => LoadingState::Complete,
-        };
-        debug!(prev = ?prev, next = ?self.loading_state, "state");
     }
 }
