@@ -61,7 +61,6 @@ handlers! {
         CsSceneLoadFinish      => scene::on_scene_load_finish,
         CsMoveObjectMove       => movement::on_cs_move_object_move,
         CsBitsetRemove         => bitset::on_cs_bitset_remove,
-        CsSceneKillMonster     => scene::on_cs_scene_kill_monster,
         CsCharBagSetTeamLeader => character::on_cs_char_bag_set_team_leader,
         CsSceneRevival         => scene::on_cs_scene_revival,
     }

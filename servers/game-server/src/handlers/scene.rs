@@ -185,22 +185,14 @@ pub async fn post_load_sync(ctx: &mut NetContext<'_>) -> bool {
     ok_attrs && ok_status
 }
 
-pub async fn on_cs_scene_kill_monster(
-    ctx: &mut NetContext<'_>,
-    req: CsSceneKillMonster,
-) -> ScObjectLeaveView {
-    ScObjectLeaveView {
-        scene_name: ctx.player.world.last_scene.clone(),
-        scene_id: ctx
-            .assets
-            .str_id_num
-            .get_scene_id(&ctx.player.world.last_scene)
-            .unwrap_or(0),
-        obj_list: vec![LeaveObjectInfo {
-            obj_type: 16,
-            obj_id: req.id,
-        }],
-    }
+pub async fn on_cs_scene_kill_monster(ctx: &mut NetContext<'_>, req: CsSceneKillMonster) {
+    let _ = ctx
+        .notify(ScSceneDestroyEntity {
+            scene_name: ctx.player.world.last_scene.clone(),
+            id: req.id,
+            reason: EntityDestroyReason::Dead as i32,
+        })
+        .await;
 }
 
 pub async fn on_cs_scene_kill_char(ctx: &mut NetContext<'_>, req: CsSceneKillChar) {
