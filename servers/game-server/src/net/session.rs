@@ -14,7 +14,7 @@ use tokio::{
     net::TcpStream,
     sync::mpsc,
 };
-use tracing::{debug, error, info, instrument, warn};
+use tracing::{debug, error, info, warn};
 
 pub struct SessionContext {
     pub assets: &'static BeyondAssets,
@@ -66,7 +66,6 @@ async fn write_loop(
     Ok(())
 }
 
-#[instrument(skip(reader, outbound_tx, notify_rx, handle, ctx), fields(addr = %ctx.addr))]
 async fn logic_loop(
     mut reader: tokio::net::tcp::OwnedReadHalf,
     outbound_tx: mpsc::Sender<Vec<u8>>,

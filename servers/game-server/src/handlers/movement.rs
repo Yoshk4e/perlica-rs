@@ -1,8 +1,7 @@
 use crate::net::NetContext;
 use perlica_proto::{CsMoveObjectMove, ScMoveObjectMove};
-use tracing::{debug, instrument};
+use tracing::debug;
 
-#[instrument(skip(ctx), fields(uid = %ctx.player.uid, move_count = req.move_info.len()))]
 pub async fn on_cs_move_object_move(
     ctx: &mut NetContext<'_>,
     req: CsMoveObjectMove,

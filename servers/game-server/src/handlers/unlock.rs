@@ -1,9 +1,8 @@
 use crate::net::NetContext;
 use perlica_logic::enums::UnlockSystemType;
 use perlica_proto::ScSyncAllUnlock;
-use tracing::{debug, error, instrument};
+use tracing::{debug, error};
 
-#[instrument(skip(ctx), fields(uid = %ctx.player.uid))]
 pub async fn push_unlocks(ctx: &mut NetContext<'_>) -> bool {
     let msg = ScSyncAllUnlock {
         unlock_systems: UnlockSystemType::all(),

@@ -1,11 +1,13 @@
 use crate::net::NetContext;
+use perlica_logic::character::char_bag::CharIndex;
 use perlica_proto::{
-    CsSceneKillChar, CsSceneKillMonster, CsSceneLoadFinish, LeaveObjectInfo,
-    ScCharBagSetTeamLeader, ScEnterSceneNotify, ScObjectEnterView, ScObjectLeaveView,
-    ScSceneDestroyEntity, ScSelfSceneInfo, SceneCharacter, SceneImplEmpty, SceneMonster,
-    SceneObjectCommonInfo, SceneObjectDetailContainer, Vector, sc_self_scene_info::SceneImpl,
+    BattleInfo, CsSceneKillChar, CsSceneKillMonster, CsSceneLoadFinish, CsSceneRevival,
+    LeaveObjectInfo, ScCharSyncStatus, ScEnterSceneNotify, ScObjectEnterView, ScObjectLeaveView,
+    ScSceneDestroyEntity, ScSceneRevival, ScSelfSceneInfo, SceneCharacter, SceneImplEmpty,
+    SceneMonster, SceneObjectCommonInfo, SceneObjectDetailContainer, Vector,
+    sc_self_scene_info::SceneImpl,
 };
-use tracing::{debug, error, instrument};
+use tracing::{debug, error};
 
 #[repr(i32)]
 pub enum SelfInfoReason {
@@ -46,7 +48,6 @@ pub async fn notify_enter_scene(ctx: &mut NetContext<'_>) -> bool {
     true
 }
 
-#[instrument(skip(ctx, char_list, monster_list), fields(uid = %ctx.player.uid, scene = %scene_name, chars = char_list.len()))]
 pub async fn notify_object_enter_view(
     ctx: &mut NetContext<'_>,
     scene_name: String,
@@ -70,7 +71,6 @@ pub async fn notify_object_enter_view(
     true
 }
 
-#[instrument(skip(ctx), fields(uid = %ctx.player.uid, scene = %req.scene_name))]
 pub async fn on_scene_load_finish(
     ctx: &mut NetContext<'_>,
     req: CsSceneLoadFinish,
@@ -78,15 +78,9 @@ pub async fn on_scene_load_finish(
     ctx.player.world.last_scene = req.scene_name.clone();
 
     let char_list = pack_scene_chars(ctx);
-    let monster_list = pack_scene_monsters(ctx, req.scene_name.clone());
+    let monster_list = pack_scene_monsters(ctx, &req.scene_name);
 
-    if !notify_object_enter_view(
-        ctx,
-        req.scene_name.clone(),
-        char_list.clone(),
-        monster_list.clone(),
-    )
-    .await
+    if !notify_object_enter_view(ctx, req.scene_name.clone(), char_list.clone(), monster_list).await
     {
         error!("object enter view failed");
     }
@@ -112,51 +106,10 @@ pub async fn on_scene_load_finish(
     }
 }
 
-fn pack_scene_monsters(ctx: &NetContext<'_>, scene_name: String) -> Vec<SceneMonster> {
-    let enemy_spawns = &ctx.assets.enemy_spawns;
-
-    let scene_enemy_data = enemy_spawns.get(&scene_name);
-
-    let mut ind: u64 = 0;
-
-    let mut monsters: Vec<SceneMonster> = Vec::new();
-
-    if let Some(data) = scene_enemy_data {
-        for enemy in data {
-            let en = SceneMonster {
-                common_info: Some(SceneObjectCommonInfo {
-                    id: ind + 1000,
-                    templateid: enemy.template_id.to_string(),
-                    position: Some(Vector {
-                        x: enemy.position.x,
-                        y: enemy.position.y,
-                        z: enemy.position.z,
-                    }),
-                    rotation: Some(Vector {
-                        x: enemy.rotation.x,
-                        y: enemy.rotation.y,
-                        z: enemy.rotation.z,
-                    }),
-                    belong_level_script_id: 0,
-                    r#type: 16,
-                }),
-                origin_id: 0,
-                level: 5,
-            };
-            ind += 1;
-            monsters.push(en);
-        }
-    };
-
-    debug!(count = monsters.len(), "scene monsters packed");
-    monsters
-}
-
 fn pack_scene_chars(ctx: &NetContext<'_>) -> Vec<SceneCharacter> {
     let char_bag = &ctx.player.char_bag;
     let team = &char_bag.teams[char_bag.meta.curr_team_index as usize];
 
-    // Use last known position from world state.
     let spawn_pos = Vector {
         x: ctx.player.world.pos_x,
         y: ctx.player.world.pos_y,
@@ -168,7 +121,7 @@ fn pack_scene_chars(ctx: &NetContext<'_>) -> Vec<SceneCharacter> {
         z: ctx.player.world.rot_z,
     };
 
-    let chars: Vec<SceneCharacter> = team
+    let chars = team
         .char_team
         .iter()
         .filter_map(|slot| slot.char_index())
@@ -187,10 +140,49 @@ fn pack_scene_chars(ctx: &NetContext<'_>) -> Vec<SceneCharacter> {
                 name: "Yoshk4e".to_string(),
             }
         })
-        .collect();
+        .collect::<Vec<_>>();
 
     debug!(count = chars.len(), "scene chars packed");
     chars
+}
+
+fn pack_scene_monsters(ctx: &NetContext<'_>, scene_name: &str) -> Vec<SceneMonster> {
+    let Some(spawns) = ctx.assets.enemy_spawns.get(scene_name) else {
+        return vec![];
+    };
+    let monsters = spawns
+        .iter()
+        .enumerate()
+        .map(|(i, enemy)| SceneMonster {
+            common_info: Some(SceneObjectCommonInfo {
+                id: 1000 + i as u64,
+                templateid: enemy.template_id.clone(),
+                position: Some(Vector {
+                    x: enemy.position.x,
+                    y: enemy.position.y,
+                    z: enemy.position.z,
+                }),
+                rotation: Some(Vector {
+                    x: enemy.rotation.x,
+                    y: enemy.rotation.y,
+                    z: enemy.rotation.z,
+                }),
+                belong_level_script_id: 0,
+                r#type: 16,
+            }),
+            origin_id: 0,
+            level: enemy.level as i32,
+        })
+        .collect::<Vec<_>>();
+
+    debug!(count = monsters.len(), "scene monsters packed");
+    monsters
+}
+
+pub async fn post_load_sync(ctx: &mut NetContext<'_>) -> bool {
+    let ok_attrs = super::char_bag::push_char_attrs(ctx).await;
+    let ok_status = super::char_bag::push_char_status(ctx).await;
+    ok_attrs && ok_status
 }
 
 pub async fn on_cs_scene_kill_monster(
@@ -215,7 +207,6 @@ pub async fn on_cs_scene_kill_char(ctx: &mut NetContext<'_>, req: CsSceneKillCha
     if let Some(char) = ctx.player.char_bag.get_char_by_objid_mut(req.id) {
         char.is_dead = true;
     }
-
     let _ = ctx
         .notify(ScSceneDestroyEntity {
             scene_name: ctx.player.world.last_scene.clone(),
@@ -225,9 +216,61 @@ pub async fn on_cs_scene_kill_char(ctx: &mut NetContext<'_>, req: CsSceneKillCha
         .await;
 }
 
-#[instrument(skip(ctx), fields(uid = %ctx.player.uid))]
-pub async fn post_load_sync(ctx: &mut NetContext<'_>) -> bool {
-    let ok_attrs = super::char_bag::push_char_attrs(ctx).await;
-    let ok_status = super::char_bag::push_char_status(ctx).await;
-    ok_attrs && ok_status
+pub async fn on_cs_scene_revival(ctx: &mut NetContext<'_>, _req: CsSceneRevival) -> ScSceneRevival {
+    let revive_chars: Vec<u64> = ctx
+        .player
+        .char_bag
+        .chars
+        .iter()
+        .enumerate()
+        .filter(|(_, c)| c.is_dead)
+        .map(|(i, _)| CharIndex::from_usize(i).object_id())
+        .collect();
+
+    for &objid in &revive_chars {
+        if let Some(char) = ctx.player.char_bag.get_char_by_objid_mut(objid) {
+            char.is_dead = false;
+            char.hp = ctx
+                .assets
+                .characters
+                .get_stats(&char.template_id.clone(), char.level, char.break_stage)
+                .map(|a| a.hp / 2.0)
+                .unwrap_or(50.0);
+        }
+    }
+
+    for &objid in &revive_chars {
+        if let Some(char) = ctx.player.char_bag.get_char_by_objid_mut(objid) {
+            let hp = char.hp;
+            let sp = char.ultimate_sp;
+            drop(char);
+            let _ = ctx
+                .notify(ScCharSyncStatus {
+                    objid,
+                    is_dead: false,
+                    battle_info: Some(BattleInfo { hp, ultimatesp: sp }),
+                })
+                .await;
+        }
+    }
+
+    let scene_name = ctx.player.world.last_scene.clone();
+    let scene_id = ctx.assets.str_id_num.get_scene_id(&scene_name).unwrap_or(0);
+    let char_list = pack_scene_chars(ctx);
+    let _ = ctx
+        .notify(ScSelfSceneInfo {
+            scene_name,
+            scene_id,
+            self_info_reason: SelfInfoReason::ReviveDead as i32,
+            revive_chars,
+            scene_impl: Some(SceneImpl::Empty(SceneImplEmpty {})),
+            detail: Some(SceneObjectDetailContainer {
+                char_list,
+                ..Default::default()
+            }),
+            ..Default::default()
+        })
+        .await;
+
+    ScSceneRevival {}
 }

@@ -4,7 +4,6 @@ use perlica_logic::player::WorldState;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Path, PathBuf};
-use tracing::instrument;
 
 #[derive(Serialize, Deserialize)]
 pub struct PlayerRecord {
@@ -24,7 +23,6 @@ impl PlayerDb {
         Ok(Self { dir })
     }
 
-    #[instrument(skip(self), fields(uid))]
     pub async fn load(&self, uid: &str) -> Result<Option<PlayerRecord>> {
         let path = self.path(uid);
         if !path.exists() {
@@ -37,7 +35,6 @@ impl PlayerDb {
         Ok(Some(record))
     }
 
-    #[instrument(skip(self, char_bag, world), fields(uid))]
     pub async fn save(&self, uid: &str, char_bag: &CharBag, world: &WorldState) -> Result<()> {
         let bytes = bincode::serialize(&PlayerRecord {
             char_bag: char_bag.clone(),
