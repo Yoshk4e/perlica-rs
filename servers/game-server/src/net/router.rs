@@ -25,7 +25,6 @@ macro_rules! handlers {
                     handle_merge_msg(ctx, req).await?;
                 }
 
-                // Handlers that send a response back to the client.
                 $(
                     x if x == <$msg_req as NetMessage>::CMD_ID => {
                         let req = <$msg_req>::decode(&body[..])?;
@@ -37,7 +36,6 @@ macro_rules! handlers {
                     }
                 )*
 
-                // Fire-and-forget handlers
                 $(
                     x if x == <$nr_req as NetMessage>::CMD_ID => {
                         let req = <$nr_req>::decode(&body[..])?;
@@ -56,14 +54,6 @@ macro_rules! handlers {
 
 handlers! {
     reply {
-<<<<<<< HEAD
-        CsLogin             => login::on_login,
-        CsPing              => ping::on_csping,
-        CsSceneLoadFinish   => scene::on_scene_load_finish,
-        CsMoveObjectMove    => movement::on_cs_move_object_move,
-        CsBitsetRemove      => bitset::on_cs_bitset_remove,
-        CsCharBagSetTeamLeader => character::on_cs_char_bag_set_team_leader,
-=======
         CsLogin                => login::on_login,
         CsPing                 => ping::on_csping,
         CsSceneLoadFinish      => scene::on_scene_load_finish,
@@ -72,7 +62,6 @@ handlers! {
         CsSceneKillMonster     => scene::on_cs_scene_kill_monster,
         CsCharBagSetTeamLeader => character::on_cs_char_bag_set_team_leader,
         CsSceneRevival         => scene::on_cs_scene_revival,
->>>>>>> inkursion-branch
     }
     no_reply {
         CsCharSetBattleInfo => character::on_cs_char_set_battle_info,
