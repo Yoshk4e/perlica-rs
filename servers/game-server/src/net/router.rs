@@ -25,6 +25,7 @@ macro_rules! handlers {
                     handle_merge_msg(ctx, req).await?;
                 }
 
+                // Handlers that send a response back to the client.
                 $(
                     x if x == <$msg_req as NetMessage>::CMD_ID => {
                         let req = <$msg_req>::decode(&body[..])?;
@@ -36,6 +37,7 @@ macro_rules! handlers {
                     }
                 )*
 
+                // Fire-and-forget handlers
                 $(
                     x if x == <$nr_req as NetMessage>::CMD_ID => {
                         let req = <$nr_req>::decode(&body[..])?;
@@ -66,6 +68,7 @@ handlers! {
     no_reply {
         CsCharSetBattleInfo => character::on_cs_char_set_battle_info,
         CsSceneKillChar     => scene::on_cs_scene_kill_char,
+        CsSceneKillMonster  => scene::on_cs_scene_kill_monster,
     }
 }
 

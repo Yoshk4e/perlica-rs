@@ -207,7 +207,6 @@ pub async fn on_cs_scene_kill_char(ctx: &mut NetContext<'_>, req: CsSceneKillCha
     if let Some(char) = ctx.player.char_bag.get_char_by_objid_mut(req.id) {
         char.is_dead = true;
     }
-
     let _ = ctx
         .notify(ScSceneDestroyEntity {
             scene_name: ctx.player.world.last_scene.clone(),
