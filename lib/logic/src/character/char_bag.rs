@@ -129,14 +129,9 @@ pub struct CharBag {
 
 impl CharBag {
     /// Creates a fully initialized bag for a new player, populating all chars from assets.
-    pub fn new(assets: &BeyondAssets) -> Result<Self> {
+    pub fn new(assets: &BeyondAssets, default_team: &[String; 4]) -> Result<Self> {
         let mut bag = Self::default();
-        const DEFAULT_TEAM: [&str; 4] = [
-            "chr_0003_endmin",
-            "chr_0004_pelica",
-            "chr_0005_chen",
-            "chr_0006_wolfgd",
-        ];
+        let DEFAULT_TEAM: &[String; 4] = &default_team;
 
         let mut index_map: HashMap<String, CharIndex> = HashMap::new();
 
