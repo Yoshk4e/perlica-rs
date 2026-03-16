@@ -10,3 +10,32 @@ port = 1337
 
 [assets]
 path = "assets"
+
+[world_state] #for new accounts
+role_level = 1
+role_exp = 0
+last_scene = "map01_lv001"
+pos_x = 469.0
+pos_y = 107.11
+pos_z = 217.83
+rot_x = 0.0
+rot_y = 60.00
+rot_z = 0.0
+
+#Default player spawn positions(x, y, z):
+#"map01_lv001" - (469.00, 107.11, 217.83)	|	"map01_lv004" - (469.00, 107.11, 217.83)
+#"map01_lv002" - (414.41, 29.53, 4.01)		|	"map01_lv005" - (395.00, 95.00, 302.40)
+#"map01_lv003" - (227.90, 137.60, 297.00)	|	"map01_lv006" - (687.00, 68.00, 120.00)
+
+[default_team] #for new accounts
+team = [
+"chr_0013_aglina",
+"chr_0004_pelica",
+"chr_0005_chen",
+"chr_0006_wolfgd",
+]
+#Character IDs:
+#"chr_0003_endmin"	|	"chr_0008_kholec"	|	"chr_0013_aglina"
+#"chr_0004_pelica"	|	"chr_0009_azrila"	|
+#"chr_0005_chen"	|	"chr_0011_seraph"	|
+#"chr_0006_wolfgd"	|	"chr_0012_avywen"	|

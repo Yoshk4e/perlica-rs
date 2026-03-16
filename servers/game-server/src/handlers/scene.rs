@@ -80,7 +80,7 @@ pub async fn on_scene_load_finish(
     let char_list = pack_scene_chars(ctx);
     let monster_list = pack_scene_monsters(ctx, &req.scene_name);
 
-    if !notify_object_enter_view(ctx, req.scene_name.clone(), char_list.clone(), monster_list).await
+    if !notify_object_enter_view(ctx, req.scene_name.clone(), char_list.clone(), monster_list.clone()).await
     {
         error!("object enter view failed");
     }
@@ -99,6 +99,7 @@ pub async fn on_scene_load_finish(
         scene_impl: Some(SceneImpl::Empty(SceneImplEmpty {})),
         detail: Some(SceneObjectDetailContainer {
             char_list,
+			monster_list,
             ..Default::default()
         }),
         level_scripts: vec![],
@@ -145,7 +146,7 @@ fn pack_scene_chars(ctx: &NetContext<'_>) -> Vec<SceneCharacter> {
     debug!(count = chars.len(), "scene chars packed");
     chars
 }
-
+//Monster level is set to 5 to downscale them to character power level. At least until character leveling is a thing
 fn pack_scene_monsters(ctx: &NetContext<'_>, scene_name: &str) -> Vec<SceneMonster> {
     let Some(spawns) = ctx.assets.enemy_spawns.get(scene_name) else {
         return vec![];
@@ -171,7 +172,8 @@ fn pack_scene_monsters(ctx: &NetContext<'_>, scene_name: &str) -> Vec<SceneMonst
                 r#type: 16,
             }),
             origin_id: 0,
-            level: enemy.level as i32,
+            level: 5,
+			//level: enemy.level as i32,
         })
         .collect::<Vec<_>>();
 
@@ -208,7 +210,7 @@ pub async fn on_cs_scene_kill_char(ctx: &mut NetContext<'_>, req: CsSceneKillCha
         .await;
 }
 
-pub async fn on_cs_scene_revival(ctx: &mut NetContext<'_>, _req: CsSceneRevival) -> ScSceneRevival {
+pub async fn on_cs_scene_revival(ctx: &mut NetContext<'_>, _req: CsSceneRevival) -> ScObjectEnterView {
     let revive_chars: Vec<u64> = ctx
         .player
         .char_bag
@@ -252,19 +254,33 @@ pub async fn on_cs_scene_revival(ctx: &mut NetContext<'_>, _req: CsSceneRevival)
     let monster_list = pack_scene_monsters(ctx, &scene_name);
     let _ = ctx
         .notify(ScSelfSceneInfo {
-            scene_name,
-            scene_id,
+            scene_name: scene_name.clone(),
+            scene_id: scene_id.clone(),
             self_info_reason: SelfInfoReason::ReviveDead as i32,
             revive_chars,
             scene_impl: Some(SceneImpl::Empty(SceneImplEmpty {})),
             detail: Some(SceneObjectDetailContainer {
-                char_list,
-                monster_list,
+                char_list: char_list.clone(),
+                monster_list: monster_list.clone(),
                 ..Default::default()
             }),
             ..Default::default()
         })
         .await;
-
-    ScSceneRevival {}
+		
+	let _ = ctx
+		.notify(ScSceneRevival {})
+		.await;
+		
+	ScObjectEnterView {
+        scene_name: scene_name.clone(),
+        scene_id: scene_id.clone(),
+        detail: Some(SceneObjectDetailContainer {
+            char_list: char_list.clone(),
+            monster_list: monster_list.clone(),
+            ..Default::default()
+        }),
+        ..Default::default()
+	}
+		
 }

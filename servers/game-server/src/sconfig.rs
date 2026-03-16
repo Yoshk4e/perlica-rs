@@ -1,11 +1,14 @@
 use anyhow::{Context, Result};
 use serde::Deserialize;
 use std::path::PathBuf;
+use perlica_logic::player::WorldState;
 
 #[derive(Debug, Deserialize)]
 pub struct Config {
     pub server: ServerConfig,
     pub assets: AssetsConfig,
+	pub world_state: WorldState,
+	pub default_team: DefaultTeamConfig,
 }
 
 #[derive(Debug, Deserialize)]
@@ -23,6 +26,11 @@ impl ServerConfig {
 #[derive(Debug, Deserialize)]
 pub struct AssetsConfig {
     pub path: PathBuf,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct DefaultTeamConfig {
+    pub team: [String; 4],
 }
 
 impl Config {

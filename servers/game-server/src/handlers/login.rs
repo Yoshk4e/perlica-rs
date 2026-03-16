@@ -1,6 +1,7 @@
 use crate::handlers::{bitset, char_bag, factory, scene, unlock};
 use crate::net::NetContext;
 use crate::player::LoadingState;
+use crate::sconfig;
 use common::time::now_ms;
 use perlica_logic::character::char_bag::CharBag;
 use perlica_proto::{CsLogin, ScLogin, ScSyncBaseData};
@@ -17,12 +18,15 @@ pub async fn on_login(ctx: &mut NetContext<'_>, req: CsLogin) -> ScLogin {
             ctx.player.world = record.world;
         }
         Ok(None) => {
+			let cfg = sconfig::Config::load();
             debug!(uid = %ctx.player.uid, "new player");
-            ctx.player.char_bag = CharBag::new(ctx.assets).unwrap_or_default();
+            ctx.player.char_bag = CharBag::new(ctx.assets, &cfg.as_ref().unwrap().default_team.team.clone()).unwrap_or_default();
+			ctx.player.world = cfg.as_ref().unwrap().world_state.clone();
         }
         Err(e) => {
+			let cfg = sconfig::Config::load();
             warn!(error = %e, "db load failed, using starter");
-            ctx.player.char_bag = CharBag::new(ctx.assets).unwrap_or_default();
+            ctx.player.char_bag = CharBag::new(ctx.assets, &cfg.as_ref().unwrap().default_team.team.clone()).unwrap_or_default();
         }
     }
 
