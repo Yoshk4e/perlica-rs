@@ -1,30 +1,16 @@
 use crate::net::NetContext;
 use perlica_logic::character::char_bag::CharIndex;
+use perlica_logic::scene::{EntityDestroyReason, SelfInfoReason};
 use perlica_proto::{
     BattleInfo, CsSceneKillChar, CsSceneKillMonster, CsSceneLoadFinish, CsSceneRevival,
-    LeaveObjectInfo, ScCharSyncStatus, ScEnterSceneNotify, ScObjectEnterView, ScObjectLeaveView,
-    ScSceneDestroyEntity, ScSceneRevival, ScSelfSceneInfo, SceneCharacter, SceneImplEmpty,
-    SceneMonster, SceneObjectCommonInfo, SceneObjectDetailContainer, Vector,
-    sc_self_scene_info::SceneImpl,
+    ScCharSyncStatus, ScEnterSceneNotify, ScObjectEnterView, ScSelfSceneInfo, Vector,
 };
-use tracing::{debug, error};
+use tracing::{debug, error, info};
 
-#[repr(i32)]
-pub enum SelfInfoReason {
-    EnterScene = 0,
-    ReviveDead = 1,
-    ReviveRest = 2,
-    ChangeTeam = 3,
-    ReviveByItem = 4,
-    ResetDungeon = 5,
-}
-
-#[repr(i32)]
-pub enum EntityDestroyReason {
-    Immediately = 0,
-    Dead = 1,
-}
-
+/// Sends `ScEnterSceneNotify` to push the player into their last known scene.
+///
+/// Called during the login sequence before the client has acknowledged loading.
+/// Returns `false` if the notification could not be sent.
 pub async fn notify_enter_scene(ctx: &mut NetContext<'_>) -> bool {
     let msg = ScEnterSceneNotify {
         role_id: 1,
@@ -35,252 +21,217 @@ pub async fn notify_enter_scene(ctx: &mut NetContext<'_>) -> bool {
             .get_scene_id(&ctx.player.world.last_scene)
             .unwrap_or(0),
         position: Some(Vector {
-            x: ctx.player.world.pos_x,
-            y: ctx.player.world.pos_y,
-            z: ctx.player.world.pos_z,
+            x: ctx.player.movement.pos_x,
+            y: ctx.player.movement.pos_y,
+            z: ctx.player.movement.pos_z,
         }),
     };
-    debug!(scene = %msg.scene_name, "enter scene");
+    debug!("enter scene: {}", msg.scene_name);
     if let Err(e) = ctx.notify(msg).await {
-        error!(error = %e, "enter scene failed");
+        error!("enter scene notify failed: {e}");
         return false;
     }
     true
 }
 
-pub async fn notify_object_enter_view(
-    ctx: &mut NetContext<'_>,
-    scene_name: String,
-    char_list: Vec<SceneCharacter>,
-    monster_list: Vec<SceneMonster>,
-) -> bool {
-    let msg = ScObjectEnterView {
-        scene_name: scene_name.clone(),
-        scene_id: ctx.assets.str_id_num.get_scene_id(&scene_name).unwrap_or(0),
-        detail: Some(SceneObjectDetailContainer {
-            char_list,
-            monster_list,
-            ..Default::default()
-        }),
-        ..Default::default()
-    };
-    if let Err(e) = ctx.notify(msg).await {
-        error!(error = %e, "object enter view failed");
-        return false;
-    }
-    true
-}
-
+/// Handles `CsSceneLoadFinish` — the client confirming it has finished loading
+/// the scene.
+///
+/// Finalises the server-side scene state, then sends `ScObjectEnterView` for
+/// all characters and monsters before returning `ScSelfSceneInfo`. Also pushes
+/// character attributes and status so the client is fully in sync from the
+/// moment gameplay begins.
 pub async fn on_scene_load_finish(
     ctx: &mut NetContext<'_>,
     req: CsSceneLoadFinish,
 ) -> ScSelfSceneInfo {
+    info!("scene load finish: {}", req.scene_name);
+
     ctx.player.world.last_scene = req.scene_name.clone();
 
-    let char_list = pack_scene_chars(ctx);
-    let monster_list = pack_scene_monsters(ctx, &req.scene_name);
+    let (enter_view, self_info) = ctx.player.scene.finish_scene_load(
+        &ctx.player.char_bag,
+        &ctx.player.movement,
+        ctx.assets,
+        &mut ctx.player.entities,
+    );
 
-    if !notify_object_enter_view(ctx, req.scene_name.clone(), char_list.clone(), monster_list.clone()).await
-    {
-        error!("object enter view failed");
+    if let Err(e) = ctx.notify(enter_view).await {
+        error!("object enter view failed: {e}");
     }
+
     if !post_load_sync(ctx).await {
         error!("post-load sync failed");
     }
 
-    ScSelfSceneInfo {
-        scene_name: req.scene_name.clone(),
-        scene_id: ctx
-            .assets
-            .str_id_num
-            .get_scene_id(&req.scene_name)
-            .unwrap_or(0),
-        self_info_reason: SelfInfoReason::EnterScene as i32,
-        scene_impl: Some(SceneImpl::Empty(SceneImplEmpty {})),
-        detail: Some(SceneObjectDetailContainer {
-            char_list,
-			monster_list,
-            ..Default::default()
-        }),
-        level_scripts: vec![],
-        ..Default::default()
-    }
+    self_info
 }
 
-fn pack_scene_chars(ctx: &NetContext<'_>) -> Vec<SceneCharacter> {
-    let char_bag = &ctx.player.char_bag;
-    let team = &char_bag.teams[char_bag.meta.curr_team_index as usize];
-
-    let spawn_pos = Vector {
-        x: ctx.player.world.pos_x,
-        y: ctx.player.world.pos_y,
-        z: ctx.player.world.pos_z,
-    };
-    let spawn_rot = Vector {
-        x: ctx.player.world.rot_x,
-        y: ctx.player.world.rot_y,
-        z: ctx.player.world.rot_z,
-    };
-
-    let chars = team
-        .char_team
-        .iter()
-        .filter_map(|slot| slot.char_index())
-        .map(|idx| {
-            let char_data = &char_bag.chars[idx.as_usize()];
-            SceneCharacter {
-                common_info: Some(SceneObjectCommonInfo {
-                    id: idx.object_id(),
-                    templateid: char_data.template_id.clone(),
-                    position: Some(spawn_pos.clone()),
-                    rotation: Some(spawn_rot.clone()),
-                    belong_level_script_id: 0,
-                    r#type: 0,
-                }),
-                level: 15,
-                name: "Yoshk4e".to_string(),
-            }
-        })
-        .collect::<Vec<_>>();
-
-    debug!(count = chars.len(), "scene chars packed");
-    chars
-}
-//Monster level is set to 5 to downscale them to character power level. At least until character leveling is a thing
-fn pack_scene_monsters(ctx: &NetContext<'_>, scene_name: &str) -> Vec<SceneMonster> {
-    let Some(spawns) = ctx.assets.enemy_spawns.get(scene_name) else {
-        return vec![];
-    };
-    let monsters = spawns
-        .iter()
-        .enumerate()
-        .map(|(i, enemy)| SceneMonster {
-            common_info: Some(SceneObjectCommonInfo {
-                id: 1000 + i as u64,
-                templateid: enemy.template_id.clone(),
-                position: Some(Vector {
-                    x: enemy.position.x,
-                    y: enemy.position.y,
-                    z: enemy.position.z,
-                }),
-                rotation: Some(Vector {
-                    x: enemy.rotation.x,
-                    y: enemy.rotation.y,
-                    z: enemy.rotation.z,
-                }),
-                belong_level_script_id: 0,
-                r#type: 16,
-            }),
-            origin_id: 0,
-            level: 5,
-			//level: enemy.level as i32,
-        })
-        .collect::<Vec<_>>();
-
-    debug!(count = monsters.len(), "scene monsters packed");
-    monsters
-}
-
-pub async fn post_load_sync(ctx: &mut NetContext<'_>) -> bool {
+/// Pushes character attributes and HP/is_dead status after a scene load.
+async fn post_load_sync(ctx: &mut NetContext<'_>) -> bool {
     let ok_attrs = super::char_bag::push_char_attrs(ctx).await;
     let ok_status = super::char_bag::push_char_status(ctx).await;
     ok_attrs && ok_status
 }
 
+/// Handles `CsSceneKillMonster` — removes the entity from the manager and
+/// notifies the client with `ScSceneDestroyEntity`.
 pub async fn on_cs_scene_kill_monster(ctx: &mut NetContext<'_>, req: CsSceneKillMonster) {
-    let _ = ctx
-        .notify(ScSceneDestroyEntity {
-            scene_name: ctx.player.world.last_scene.clone(),
-            id: req.id,
-            reason: EntityDestroyReason::Dead as i32,
-        })
-        .await;
+    debug!("kill monster: {}", req.id);
+
+    ctx.player.entities.remove(req.id);
+
+    let msg = ctx
+        .player
+        .scene
+        .build_entity_destroy(req.id, EntityDestroyReason::Dead);
+
+    if let Err(e) = ctx.notify(msg).await {
+        error!("kill monster notify failed: {e}");
+    }
 }
 
+/// Handles `CsSceneKillChar` — marks the character as dead and notifies the
+/// client with `ScSceneDestroyEntity`.
+///
+/// The character remains in the [`CharBag`] so it can be revived later; only
+/// the scene entity is destroyed from the client's perspective.
 pub async fn on_cs_scene_kill_char(ctx: &mut NetContext<'_>, req: CsSceneKillChar) {
+    debug!("kill char: {}", req.id);
+
     if let Some(char) = ctx.player.char_bag.get_char_by_objid_mut(req.id) {
         char.is_dead = true;
     }
-    let _ = ctx
-        .notify(ScSceneDestroyEntity {
-            scene_name: ctx.player.world.last_scene.clone(),
-            id: req.id,
-            reason: EntityDestroyReason::Dead as i32,
-        })
-        .await;
+
+    let msg = ctx
+        .player
+        .scene
+        .build_entity_destroy(req.id, EntityDestroyReason::Dead);
+
+    if let Err(e) = ctx.notify(msg).await {
+        error!("kill char notify failed: {e}");
+    }
 }
 
-pub async fn on_cs_scene_revival(ctx: &mut NetContext<'_>, _req: CsSceneRevival) -> ScObjectEnterView {
-    let revive_chars: Vec<u64> = ctx
-        .player
-        .char_bag
-        .chars
-        .iter()
-        .enumerate()
-        .filter(|(_, c)| c.is_dead)
-        .map(|(i, _)| CharIndex::from_usize(i).object_id())
-        .collect();
+/// Handles `CsSceneRevival` — revives all dead characters in the current team
+/// at 50 % HP.
+///
+/// Sends `ScSelfSceneInfo`, `ScSceneRevival`, and individual `ScCharSyncStatus`
+/// messages for each revived character before returning `ScObjectEnterView`.
+pub async fn on_cs_scene_revival(
+    ctx: &mut NetContext<'_>,
+    _req: CsSceneRevival,
+) -> ScObjectEnterView {
+    info!("scene revival");
 
-    for &objid in &revive_chars {
-        if let Some(char) = ctx.player.char_bag.get_char_by_objid_mut(objid) {
-            char.is_dead = false;
-            char.hp = ctx
-                .assets
-                .characters
-                .get_stats(&char.template_id.clone(), char.level, char.break_stage)
-                .map(|a| a.hp / 2.0)
-                .unwrap_or(50.0);
+    let (enter_view, self_info, revival) = ctx.player.scene.handle_revival(
+        &mut ctx.player.char_bag,
+        &ctx.player.movement,
+        ctx.assets,
+        &mut ctx.player.entities,
+        None,
+    );
+
+    if let Err(e) = ctx.notify(self_info.clone()).await {
+        error!("revival self info failed: {e}");
+    }
+
+    if let Err(e) = ctx.notify(revival).await {
+        error!("revival notify failed: {e}");
+    }
+    send_revival_status_updates(ctx).await;
+
+    enter_view
+}
+
+/// Pushes `ScCharSyncStatus` for every alive character in the current team
+/// after a revival.
+async fn send_revival_status_updates(ctx: &mut NetContext<'_>) {
+    let mut updates = Vec::new();
+
+    let team_idx = ctx.player.char_bag.meta.curr_team_index as usize;
+    let team = &ctx.player.char_bag.teams[team_idx];
+
+    for (i, char) in ctx.player.char_bag.chars.iter().enumerate() {
+        let in_team = team.char_team.iter().any(|slot| {
+            slot.char_index()
+                .map(|idx| idx.as_usize() == i)
+                .unwrap_or(false)
+        });
+
+        if in_team && !char.is_dead {
+            let objid = CharIndex::from_usize(i).object_id();
+            updates.push((objid, char.hp, char.ultimate_sp));
         }
     }
 
-    for &objid in &revive_chars {
-        if let Some(char) = ctx.player.char_bag.get_char_by_objid_mut(objid) {
-            let hp = char.hp;
-            let sp = char.ultimate_sp;
-            drop(char);
-            let _ = ctx
-                .notify(ScCharSyncStatus {
-                    objid,
-                    is_dead: false,
-                    battle_info: Some(BattleInfo { hp, ultimatesp: sp }),
-                })
-                .await;
+    for (objid, hp, ultimatesp) in updates {
+        if let Err(e) = ctx
+            .notify(ScCharSyncStatus {
+                objid,
+                is_dead: false,
+                battle_info: Some(BattleInfo { hp, ultimatesp }),
+            })
+            .await
+        {
+            error!("revival status update failed for {}: {e}", objid);
         }
     }
+}
 
-    let scene_name = ctx.player.world.last_scene.clone();
-    let scene_id = ctx.assets.str_id_num.get_scene_id(&scene_name).unwrap_or(0);
-    let char_list = pack_scene_chars(ctx);
-    let monster_list = pack_scene_monsters(ctx, &scene_name);
-    let _ = ctx
-        .notify(ScSelfSceneInfo {
-            scene_name: scene_name.clone(),
-            scene_id: scene_id.clone(),
-            self_info_reason: SelfInfoReason::ReviveDead as i32,
-            revive_chars,
-            scene_impl: Some(SceneImpl::Empty(SceneImplEmpty {})),
-            detail: Some(SceneObjectDetailContainer {
-                char_list: char_list.clone(),
-                monster_list: monster_list.clone(),
-                ..Default::default()
-            }),
-            ..Default::default()
-        })
-        .await;
-		
-	let _ = ctx
-		.notify(ScSceneRevival {})
-		.await;
-		
-	ScObjectEnterView {
-        scene_name: scene_name.clone(),
-        scene_id: scene_id.clone(),
-        detail: Some(SceneObjectDetailContainer {
-            char_list: char_list.clone(),
-            monster_list: monster_list.clone(),
-            ..Default::default()
+/// Dynamically spawns a monster entity and returns the create/enter-view data.
+///
+/// Allocates a new entity ID, inserts the entity into the [`EntityManager`], and
+/// returns both the `ScSceneCreateEntity` notification and the `SceneMonster`
+/// descriptor needed to build an `ScObjectEnterView`. The caller is responsible
+/// for sending both to the client.
+pub fn spawn_dynamic_monster(
+    ctx: &mut NetContext<'_>,
+    template_id: String,
+    position: Vector,
+    level: i32,
+) -> (
+    perlica_proto::ScSceneCreateEntity,
+    perlica_proto::SceneMonster,
+) {
+    use perlica_logic::entity::{EntityKind, SceneEntity};
+
+    let id = ctx.player.entities.next_monster_id();
+
+    ctx.player.entities.insert(SceneEntity {
+        id,
+        template_id: template_id.clone(),
+        kind: EntityKind::Enemy,
+        pos_x: position.x,
+        pos_y: position.y,
+        pos_z: position.z,
+    });
+
+    let create = ctx.player.scene.build_entity_create(id);
+
+    let monster = perlica_proto::SceneMonster {
+        common_info: Some(perlica_proto::SceneObjectCommonInfo {
+            id,
+            templateid: template_id,
+            position: Some(position),
+            rotation: None,
+            belong_level_script_id: 0,
+            r#type: 16,
         }),
-        ..Default::default()
-	}
-		
+        origin_id: 0,
+        level,
+    };
+
+    (create, monster)
+}
+
+/// Returns `true` if the entity with the given ID is currently tracked in the
+/// player's [`EntityManager`].
+pub fn entity_exists(ctx: &NetContext<'_>, entity_id: u64) -> bool {
+    ctx.player.entities.contains(entity_id)
+}
+
+/// Returns the name of the scene the player is currently in.
+pub fn current_scene_name<'a>(ctx: &'a NetContext<'_>) -> &'a str {
+    ctx.player.scene.scene_name()
 }

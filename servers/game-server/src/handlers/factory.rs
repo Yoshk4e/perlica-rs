@@ -1,8 +1,7 @@
 use crate::net::NetContext;
 use perlica_proto::{ScFactorySyncContext, ScdFactorySyncRegion};
-use tracing::{debug, error, instrument};
+use tracing::{debug, error};
 
-#[instrument(skip(ctx), fields(uid = %ctx.player.uid))]
 pub async fn push_factory(ctx: &mut NetContext<'_>) -> bool {
     let msg = ScFactorySyncContext {
         tms: 0,
@@ -15,9 +14,13 @@ pub async fn push_factory(ctx: &mut NetContext<'_>) -> bool {
         }],
         quickbars: vec![],
     };
-    debug!(regions = msg.regions.len(), "factory");
+    debug!(
+        "factory: uid={}, regions={}",
+        ctx.player.uid,
+        msg.regions.len()
+    );
     if let Err(e) = ctx.notify(msg).await {
-        error!(error = %e, "factory push failed");
+        error!("factory push failed: uid={}, error={}", ctx.player.uid, e);
         return false;
     }
     true

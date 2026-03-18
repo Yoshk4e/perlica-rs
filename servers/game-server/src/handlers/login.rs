@@ -9,24 +9,34 @@ use tracing::{debug, warn};
 
 pub async fn on_login(ctx: &mut NetContext<'_>, req: CsLogin) -> ScLogin {
     ctx.player.on_login(req.uid.clone());
-    debug!(uid = %req.uid, "login");
+    debug!("login: uid={}", req.uid);
 
     match ctx.db.load(&ctx.player.uid).await {
         Ok(Some(record)) => {
-            debug!(uid = %ctx.player.uid, "loaded from db");
+            debug!("loaded from db: uid={}", ctx.player.uid);
             ctx.player.char_bag = record.char_bag;
             ctx.player.world = record.world;
+            ctx.player.bitsets = record.bitsets;
+            ctx.player.scene.checkpoint = record.checkpoint;
+            ctx.player.scene.current_revival_mode = record.revival_mode;
         }
         Ok(None) => {
-			let cfg = sconfig::Config::load();
-            debug!(uid = %ctx.player.uid, "new player");
-            ctx.player.char_bag = CharBag::new(ctx.assets, &cfg.as_ref().unwrap().default_team.team.clone()).unwrap_or_default();
-			ctx.player.world = cfg.as_ref().unwrap().world_state.clone();
+            let cfg = sconfig::Config::load();
+            debug!("new player: uid={}", ctx.player.uid);
+            ctx.player.char_bag =
+                CharBag::new(ctx.assets, &cfg.as_ref().unwrap().default_team.team.clone())
+                    .unwrap_or_default();
+            ctx.player.world = cfg.as_ref().unwrap().world_state.clone();
         }
         Err(e) => {
-			let cfg = sconfig::Config::load();
-            warn!(error = %e, "db load failed, using starter");
-            ctx.player.char_bag = CharBag::new(ctx.assets, &cfg.as_ref().unwrap().default_team.team.clone()).unwrap_or_default();
+            let cfg = sconfig::Config::load();
+            warn!(
+                "db load failed, using starter: uid={}, error={}",
+                ctx.player.uid, e
+            );
+            ctx.player.char_bag =
+                CharBag::new(ctx.assets, &cfg.as_ref().unwrap().default_team.team.clone())
+                    .unwrap_or_default();
         }
     }
 
@@ -41,14 +51,6 @@ pub async fn on_login(ctx: &mut NetContext<'_>, req: CsLogin) -> ScLogin {
         is_client_reconnect: false,
     }
 }
-
-// ---------------------------------------------------------------------------
-// Login sequence state machine
-//
-// Inspired by the Zig server's event queue: each phase is an explicit named
-// state that knows its successor. The machine drives itself forward, logging
-// which step it's on, and stops on the first failure.
-// ---------------------------------------------------------------------------
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum LoginPhase {
@@ -87,11 +89,11 @@ pub(crate) async fn run_login_sequence(ctx: &mut NetContext<'_>) {
     loop {
         if phase == LoginPhase::Done {
             ctx.player.loading_state = LoadingState::Complete;
-            debug!(uid = %ctx.player.uid, "login sequence complete");
+            debug!("login sequence complete: uid={}", ctx.player.uid);
             break;
         }
 
-        debug!(uid = %ctx.player.uid, phase = ?phase, "login phase");
+        debug!("login phase: uid={}, phase={:?}", ctx.player.uid, phase);
 
         let ok = match phase {
             LoginPhase::BaseData => push_base_data(ctx).await,
@@ -109,7 +111,10 @@ pub(crate) async fn run_login_sequence(ctx: &mut NetContext<'_>) {
         if ok {
             phase = phase.next();
         } else {
-            warn!(uid = %ctx.player.uid, phase = ?phase, "login sequence failed");
+            warn!(
+                "login sequence failed: uid={}, phase={:?}",
+                ctx.player.uid, phase
+            );
             break;
         }
     }

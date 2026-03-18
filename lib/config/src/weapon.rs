@@ -96,6 +96,20 @@ impl WeaponAssets {
         self.data.len()
     }
 
+    pub fn get_breakthrough_template(&self, template_id: &str) -> Option<&BreakthroughTemplate> {
+        self.breakthrough.get(template_id)
+    }
+
+    pub fn get_breakthrough_required_level(&self, weapon_id: &str, target_lv: u32) -> Option<u32> {
+        let weapon = self.data.get(weapon_id)?;
+        let template = self.breakthrough.get(&weapon.breakthrough_template_id)?;
+        template
+            .list
+            .iter()
+            .find(|e| e.breakthrough_lv == target_lv)
+            .map(|e| e.breakthrough_show_lv)
+    }
+
     pub fn count_by_type(&self) -> HashMap<u32, usize> {
         let mut map = HashMap::new();
         for w in self.data.values() {

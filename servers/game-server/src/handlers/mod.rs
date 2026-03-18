@@ -7,3 +7,4 @@ pub mod movement;
 pub mod ping;
 pub mod scene;
 pub mod unlock;
+pub mod weapon;

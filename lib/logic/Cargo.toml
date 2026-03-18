@@ -9,3 +9,4 @@ serde.workspace = true
 anyhow.workspace = true
 tracing.workspace = true
 perlica-proto.workspace = true
+common.workspace = true

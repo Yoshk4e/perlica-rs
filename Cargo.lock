@@ -511,6 +511,7 @@ name = "perlica-logic"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "common",
  "config",
  "perlica-proto",
  "serde",

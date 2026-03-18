@@ -1,37 +1,51 @@
 use crate::net::NetContext;
+use perlica_logic::movement::MovementManager;
 use perlica_proto::{CsMoveObjectMove, ScMoveObjectMove};
 use tracing::debug;
 
+/// Handles `CsMoveObjectMove` — the authoritative position update from the client.
+///
+/// Only the team leader's motion is tracked server-side; other character positions
+/// are driven entirely by the client. The leader's new position and rotation are
+/// stored in the [`MovementManager`] and synced back to [`WorldState`] so they
+/// persist across sessions.
+///
+/// The packet is echoed back as-is with `server_notify: true` so that any
+/// future peer-broadcasting path can re-use the same message.
 pub async fn on_cs_move_object_move(
     ctx: &mut NetContext<'_>,
     req: CsMoveObjectMove,
 ) -> ScMoveObjectMove {
-    // Track the leader's position so it persists on disconnect.
     let leader_objid = {
         let bag = &ctx.player.char_bag;
         let team = &bag.teams[bag.meta.curr_team_index as usize];
         team.leader_index.object_id()
     };
 
+    if ctx.player.movement.position_tuple() == MovementManager::default().position_tuple() {
+        ctx.player.movement = MovementManager::from_world(&ctx.player.world);
+    }
+
     for info in &req.move_info {
         if info.objid == leader_objid {
             if let Some(motion) = &info.motion_info {
                 if let Some(pos) = &motion.position {
-                    ctx.player.world.pos_x = pos.x;
-                    ctx.player.world.pos_y = pos.y;
-                    ctx.player.world.pos_z = pos.z;
+                    ctx.player.movement.update_position(pos.x, pos.y, pos.z);
                 }
                 if let Some(rot) = &motion.rotation {
-                    ctx.player.world.rot_x = rot.x;
-                    ctx.player.world.rot_y = rot.y;
-                    ctx.player.world.rot_z = rot.z;
+                    ctx.player.movement.update_rotation(rot.x, rot.y, rot.z);
                 }
+                ctx.player.movement.sync_to_world(&mut ctx.player.world);
             }
             break;
         }
     }
 
-    debug!(count = req.move_info.len(), "movement update");
+    debug!(
+        "movement update: uid={}, count={}",
+        ctx.player.uid,
+        req.move_info.len()
+    );
     ScMoveObjectMove {
         move_info: req.move_info,
         server_notify: true,

@@ -1,18 +1,19 @@
 use anyhow::{Context, Result};
+use common::time::now_ms;
 use config::BeyondAssets;
 use perlica_proto::{
-    AttrInfo, BattleInfo, CharInfo, CharTeamInfo, CharTeamMemberInfo, ItemInst, ScCharSyncStatus,
-    ScItemBagSync, ScSyncAttr, ScSyncCharBagInfo, ScdItemDepot, ScdItemGrid, SkillInfo,
-    SkillLevelInfo, WeaponData, item_inst::InstImpl,
+    AttrInfo, BattleInfo, CharInfo, CharTeamInfo, CharTeamMemberInfo, ScCharSyncStatus,
+    ScItemBagSync, ScSyncAttr, ScSyncCharBagInfo, ScWeaponAddExp, ScWeaponAttachGem,
+    ScWeaponBreakthrough, ScWeaponDetachGem, ScWeaponPuton, WeaponData,
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use tracing::{debug, info};
+use tracing::{debug, info, warn};
 
 use crate::enums::AttributeType;
+use crate::item::{WeaponDepot, WeaponInstId, WeaponInstance};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
-#[repr(transparent)]
 pub struct CharIndex(u64);
 
 impl CharIndex {
@@ -30,18 +31,6 @@ impl CharIndex {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
-pub struct WeaponIndex(u64);
-
-impl WeaponIndex {
-    pub fn inst_id(self) -> u64 {
-        self.0
-    }
-    pub fn from_raw(id: u64) -> Self {
-        Self(id)
-    }
-}
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub enum TeamSlot {
     #[default]
@@ -55,6 +44,10 @@ impl TeamSlot {
             TeamSlot::Occupied(idx) => Some(*idx),
             TeamSlot::Empty => None,
         }
+    }
+
+    pub fn object_id(&self) -> Option<u64> {
+        self.char_index().map(|idx| idx.object_id())
     }
 }
 
@@ -78,8 +71,10 @@ pub struct Char {
     pub is_dead: bool,
     pub hp: f64,
     pub ultimate_sp: f32,
-    pub weapon_id: WeaponIndex,
-    pub weapon_template_id: String,
+    // this is just for cache
+    // Use weapon_depot.get_equipped_weapon(char_obj_id) to get actual weapon
+    #[serde(skip)]
+    pub cached_weapon_inst_id: Option<WeaponInstId>,
     pub own_time: i64,
     pub skill_levels: HashMap<String, u32>,
 }
@@ -89,11 +84,12 @@ pub struct Meta {
     pub curr_team_index: u32,
 }
 
-#[derive(Debug, Clone)]
-pub struct SkillLevelState {
-    pub skill_id: String,
-    pub skill_level: i32,
-    pub skill_max_level: i32,
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct CharBag {
+    pub teams: Vec<Team>,
+    pub chars: Vec<Char>,
+    pub meta: Meta,
+    pub weapon_depot: WeaponDepot,
 }
 
 #[derive(Debug, Clone)]
@@ -113,6 +109,13 @@ pub struct CharSyncState {
 }
 
 #[derive(Debug, Clone)]
+pub struct SkillLevelState {
+    pub skill_id: String,
+    pub skill_level: i32,
+    pub skill_max_level: i32,
+}
+
+#[derive(Debug, Clone)]
 pub struct TeamSyncState {
     pub name: String,
     pub char_ids: Vec<u64>,
@@ -120,24 +123,20 @@ pub struct TeamSyncState {
     pub member_skills: HashMap<u64, String>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct CharBag {
-    pub teams: Vec<Team>,
-    pub chars: Vec<Char>,
-    pub meta: Meta,
-}
-
 impl CharBag {
-    /// Creates a fully initialized bag for a new player, populating all chars from assets.
+    // Creates a fully initialized bag for a new player
     pub fn new(assets: &BeyondAssets, default_team: &[String; 4]) -> Result<Self> {
-        let mut bag = Self::default();
-        let DEFAULT_TEAM: &[String; 4] = &default_team;
+        let mut bag = Self {
+            weapon_depot: WeaponDepot::new(),
+            ..Default::default()
+        };
 
         let mut index_map: HashMap<String, CharIndex> = HashMap::new();
+        let own_time = now_ms() as i64;
 
-        info!("Starting charbag population with all characters");
+        info!("Starting CharBag population with all characters");
 
-        for (template_id, char_data) in assets.characters.iter() {
+        for (template_id, _char_data) in assets.characters.iter() {
             if assets.char_skills.get_char_skills(template_id).is_empty() {
                 debug!("Skipping placeholder char: {}", template_id);
                 continue;
@@ -159,6 +158,33 @@ impl CharBag {
                 .map(|e| (e.skill_id.clone(), 1u32))
                 .collect();
 
+            let char = Char {
+                template_id: template_id.clone(),
+                level: attrs.level,
+                exp: 0,
+                break_stage: attrs.break_stage,
+                is_dead: false,
+                hp: attrs.hp,
+                ultimate_sp: 0.0,
+                cached_weapon_inst_id: None,
+                own_time,
+                skill_levels,
+            };
+
+            let idx = bag.add_char(char);
+            index_map.insert(template_id.clone(), idx);
+        }
+
+        debug!("Populated {} characters in CharBag", index_map.len());
+
+        for (template_id, char_idx) in &index_map {
+            let char_obj_id = char_idx.object_id();
+
+            let char_data = match assets.characters.get(template_id) {
+                Some(data) => data,
+                None => continue,
+            };
+
             let weapon = assets
                 .weapons
                 .get_best_for_char(char_data.weapon_type)
@@ -169,49 +195,40 @@ impl CharBag {
                         .first()
                         .copied()
                 })
-                .unwrap_or_else(|| assets.weapons.get("wpn_0002").unwrap());
+                .unwrap_or_else(|| {
+                    assets
+                        .weapons
+                        .get("wpn_0002")
+                        .expect("Default weapon must exist")
+                });
 
-            let Some(numeric_id) = assets.str_id_num.get_weapon_id(&weapon.weapon_id) else {
-                debug!(
-                    "Skipping char {} — no numeric id for weapon {}",
-                    template_id, weapon.weapon_id
+            let weapon_inst_id = bag
+                .weapon_depot
+                .add_weapon(weapon.weapon_id.clone(), own_time);
+
+            if let Err(e) = bag.weapon_depot.equip_weapon(weapon_inst_id, char_obj_id) {
+                warn!(
+                    "Failed to equip default weapon to char {}: {}",
+                    char_obj_id, e
                 );
-                continue;
-            };
-
-            debug!(
-                "Creating char: template_id={}, weapon_type={}, assigned_weapon_id={} (numeric: {}), rarity={}",
-                template_id, char_data.weapon_type, weapon.weapon_id, numeric_id, weapon.rarity
-            );
-
-            let char = Char {
-                template_id: template_id.clone(),
-                level: attrs.level,
-                exp: 0,
-                break_stage: attrs.break_stage,
-                is_dead: false,
-                weapon_id: WeaponIndex::from_raw(numeric_id as u64),
-                weapon_template_id: weapon.weapon_id.clone(),
-                own_time: std::time::SystemTime::now()
-                    .duration_since(std::time::UNIX_EPOCH)
-                    .map(|d| d.as_millis() as i64)
-                    .unwrap_or(0),
-                hp: attrs.hp,
-                ultimate_sp: 0.0,
-                skill_levels,
-            };
-
-            let idx = bag.add_char(char, assets);
-            index_map.insert(template_id.clone(), idx);
+            } else {
+                debug!(
+                    "Equipped default weapon {} (inst: {}) to char {} ({})",
+                    weapon.weapon_id,
+                    weapon_inst_id.as_u64(),
+                    char_obj_id,
+                    template_id
+                );
+            }
         }
 
-        debug!("Populated {} characters in charbag", index_map.len());
-
+        // Create default team
         let mut team = Team::default();
         team.name = "Team 1".to_string();
         let mut slot = 0;
         let mut leader = None;
-        for template_id in DEFAULT_TEAM {
+
+        for template_id in default_team {
             if let Some(&idx) = index_map.get(template_id) {
                 if slot < Team::SLOTS_COUNT {
                     team.char_team[slot] = TeamSlot::Occupied(idx);
@@ -223,38 +240,15 @@ impl CharBag {
             }
         }
         team.leader_index = leader.unwrap_or_default();
-        bag.teams.push(team.clone());
+        bag.teams.push(team);
         bag.meta.curr_team_index = 0;
 
-        debug!("Default team created with leader: {:?}", team.leader_index);
+        info!("Default team created with leader: {:?}", leader);
 
         Ok(bag)
     }
 
-    pub fn add_char(&mut self, mut char: Char, assets: &BeyondAssets) -> CharIndex {
-        // Ensure weapon is always assigned
-        if char.weapon_template_id.is_empty() {
-            if let Some(template) = assets.characters.get(&char.template_id) {
-                let weapon = assets
-                    .weapons
-                    .get_best_for_char(template.weapon_type)
-                    .or_else(|| {
-                        assets
-                            .weapons
-                            .get_by_type(template.weapon_type)
-                            .first()
-                            .copied()
-                    })
-                    .unwrap_or_else(|| assets.weapons.get("wpn_0002").unwrap());
-                char.weapon_template_id = weapon.weapon_id.clone();
-                char.weapon_id = WeaponIndex::from_raw(
-                    assets
-                        .str_id_num
-                        .get_weapon_id(&weapon.weapon_id)
-                        .unwrap_or(template.weapon_type as u32) as u64,
-                );
-            }
-        }
+    pub fn add_char(&mut self, char: Char) -> CharIndex {
         let idx = CharIndex::from_usize(self.chars.len());
         self.chars.push(char);
         idx
@@ -264,11 +258,19 @@ impl CharBag {
         self.chars.get(idx.as_usize())
     }
 
+    pub fn get_char_mut(&mut self, idx: CharIndex) -> Option<&mut Char> {
+        self.chars.get_mut(idx.as_usize())
+    }
+
     pub fn char_index_by_id(&self, template_id: &str) -> Option<CharIndex> {
         self.chars
             .iter()
             .position(|c| c.template_id == template_id)
             .map(CharIndex::from_usize)
+    }
+
+    pub fn get_char_by_objid(&self, objid: u64) -> Option<&Char> {
+        self.chars.get(CharIndex::from_object_id(objid).as_usize())
     }
 
     pub fn get_char_by_objid_mut(&mut self, objid: u64) -> Option<&mut Char> {
@@ -283,97 +285,67 @@ impl CharBag {
         }
     }
 
-    fn team_sync_states(&self, assets: &BeyondAssets) -> Vec<TeamSyncState> {
-        self.teams
-            .iter()
-            .map(|team| {
-                let char_ids = team
-                    .char_team
-                    .iter()
-                    .filter_map(|slot| slot.char_index())
-                    .map(|idx| idx.object_id())
-                    .collect();
-                let member_skills = team
-                    .char_team
-                    .iter()
-                    .filter_map(|slot| slot.char_index())
-                    .map(|idx| {
-                        let char_data = &self.chars[idx.as_usize()];
-                        let skill = Self::get_normal_skill(&char_data.template_id, assets);
-                        (idx.object_id(), skill)
-                    })
-                    .collect();
-                TeamSyncState {
-                    name: team.name.clone(),
-                    char_ids,
-                    leader_id: team.leader_index.object_id(),
-                    member_skills,
-                }
-            })
-            .collect()
+    pub fn equip_weapon(&mut self, char_id: u64, weapon_inst_id: u64) -> Result<ScWeaponPuton> {
+        let weapon_inst_id = WeaponInstId::new(weapon_inst_id);
+
+        // Verify character exists
+        let _char = self
+            .get_char_by_objid(char_id)
+            .context("Character not found")?;
+
+        // Get currently equipped weapon for this character (if any)
+        let prev_weapon_id = self
+            .weapon_depot
+            .get_equipped_weapon_id(char_id)
+            .map(|id| id.as_u64());
+
+        // Get previous owner of the weapon we're equipping (if any)
+        let weapon = self
+            .weapon_depot
+            .get(weapon_inst_id)
+            .context("Weapon not found")?;
+        let prev_owner = if weapon.is_equipped() && weapon.equip_char_id != char_id {
+            Some(weapon.equip_char_id)
+        } else {
+            None
+        };
+
+        // Perform the equip operation
+        let off_weapon_id = self
+            .weapon_depot
+            .equip_weapon(weapon_inst_id, char_id)?
+            .map(|id| id.as_u64());
+
+        info!(
+            "Equipped weapon {} to char {} (prev equipped: {:?}, prev owner: {:?})",
+            weapon_inst_id.as_u64(),
+            char_id,
+            off_weapon_id,
+            prev_owner
+        );
+
+        Ok(self
+            .weapon_depot
+            .to_weapon_puton_sc(char_id, weapon_inst_id, off_weapon_id, prev_owner))
     }
 
-    fn char_sync_states(&self, assets: &BeyondAssets) -> Result<Vec<CharSyncState>> {
-        self.chars
-            .iter()
-            .enumerate()
-            .map(|(i, char)| {
-                let objid = CharIndex::from_usize(i).object_id();
-                let template = assets
-                    .characters
-                    .get(&char.template_id)
-                    .with_context(|| format!("Unknown character template: {}", char.template_id))?;
-                let bundles = assets.char_skills.get_char_skills(&template.char_id);
-                let normal_skill = Self::get_normal_skill(&char.template_id, assets);
-                let skill_levels = bundles
-                    .iter()
-                    .filter_map(|bundle| {
-                        let first_id = &bundle.entries.first()?.skill_id;
-                        let current_level = char.skill_levels.get(first_id).copied().unwrap_or(1);
-                        let entry = bundle.entries.iter().find(|e| e.level == current_level)?;
-                        let max = bundle.entries.iter().map(|e| e.level).max().unwrap_or(1);
-                        Some(SkillLevelState {
-                            skill_id: entry.skill_id.clone(),
-                            skill_level: entry.level as i32,
-                            skill_max_level: max as i32,
-                        })
-                    })
-                    .collect();
-                let weapon_inst_id = if !char.weapon_template_id.is_empty() {
-                    objid
-                } else {
-                    0
-                };
-                Ok(CharSyncState {
-                    objid,
-                    template_id: char.template_id.clone(),
-                    level: char.level,
-                    exp: char.exp,
-                    break_stage: char.break_stage,
-                    hp: char.hp,
-                    ultimate_sp: char.ultimate_sp,
-                    weapon_id: weapon_inst_id,
-                    own_time: char.own_time,
-                    is_dead: char.is_dead,
-                    normal_skill,
-                    skill_levels,
-                })
-            })
-            .collect()
+    pub fn unequip_weapon(&mut self, char_id: u64) -> Result<Option<WeaponInstId>> {
+        if let Some(weapon_inst_id) = self.weapon_depot.get_equipped_weapon_id(char_id) {
+            self.weapon_depot.unequip_weapon(weapon_inst_id)?;
+            info!("Unequipped weapon from char {}", char_id);
+            Ok(Some(weapon_inst_id))
+        } else {
+            Ok(None)
+        }
     }
 
-    fn get_normal_skill(template_id: &str, assets: &BeyondAssets) -> String {
-        assets
-            .char_skills
-            .get_char_skills(template_id)
-            .into_iter()
-            .find_map(|b| {
-                b.entries
-                    .first()
-                    .filter(|e| e.skill_id.contains("normal_skill"))
-                    .map(|e| e.skill_id.clone())
-            })
-            .unwrap_or_default()
+    pub fn get_equipped_weapon(&self, char_id: u64) -> Option<&WeaponInstance> {
+        self.weapon_depot.get_equipped_weapon(char_id)
+    }
+
+    fn get_weapon_data_for_char(&self, char_id: u64) -> Option<WeaponData> {
+        self.get_equipped_weapon(char_id)
+            .map(|w| w.to_weapon_data())
     }
 
     pub fn char_bag_info(&self, assets: &BeyondAssets) -> Result<ScSyncCharBagInfo> {
@@ -403,34 +375,40 @@ impl CharBag {
 
         let char_info = char_states
             .into_iter()
-            .map(|c| CharInfo {
-                objid: c.objid,
-                templateid: c.template_id,
-                level: c.level,
-                exp: c.exp,
-                finish_break_stage: c.break_stage as i32,
-                equip_col: Default::default(),
-                equip_suit: Default::default(),
-                normal_skill: c.normal_skill.clone(),
-                is_dead: c.is_dead,
-                weapon_id: c.weapon_id,
-                own_time: c.own_time,
-                battle_info: Some(BattleInfo {
-                    hp: c.hp,
-                    ultimatesp: c.ultimate_sp,
-                }),
-                skill_info: Some(SkillInfo {
-                    normal_skill: c.normal_skill,
-                    level_info: c
-                        .skill_levels
-                        .into_iter()
-                        .map(|s| SkillLevelInfo {
-                            skill_id: s.skill_id,
-                            skill_level: s.skill_level,
-                            skill_max_level: s.skill_max_level,
-                        })
-                        .collect(),
-                }),
+            .map(|c| {
+                // Get equipped weapon data
+                let weapon_data = self.get_weapon_data_for_char(c.objid);
+                let weapon_id = weapon_data.as_ref().map(|w| w.inst_id).unwrap_or(0);
+
+                CharInfo {
+                    objid: c.objid,
+                    templateid: c.template_id,
+                    level: c.level,
+                    exp: c.exp,
+                    finish_break_stage: c.break_stage as i32,
+                    equip_col: Default::default(),
+                    equip_suit: Default::default(),
+                    normal_skill: c.normal_skill.clone(),
+                    is_dead: c.is_dead,
+                    weapon_id,
+                    own_time: c.own_time,
+                    battle_info: Some(BattleInfo {
+                        hp: c.hp,
+                        ultimatesp: c.ultimate_sp,
+                    }),
+                    skill_info: Some(perlica_proto::SkillInfo {
+                        normal_skill: c.normal_skill,
+                        level_info: c
+                            .skill_levels
+                            .into_iter()
+                            .map(|s| perlica_proto::SkillLevelInfo {
+                                skill_id: s.skill_id,
+                                skill_level: s.skill_level,
+                                skill_max_level: s.skill_max_level,
+                            })
+                            .collect(),
+                    }),
+                }
             })
             .collect();
 
@@ -475,48 +453,145 @@ impl CharBag {
             })
             .collect()
     }
-    pub fn item_bag_sync(&self, assets: &BeyondAssets) -> ScItemBagSync {
-        let inst_list = self
-            .chars
+
+    pub fn item_bag_sync(&self) -> ScItemBagSync {
+        self.weapon_depot.build_item_bag_sync()
+    }
+
+    fn team_sync_states(&self, assets: &BeyondAssets) -> Vec<TeamSyncState> {
+        self.teams
             .iter()
-            .enumerate()
-            .filter(|(_, c)| !c.weapon_template_id.is_empty())
-            .map(|(i, char)| {
-                let inst_id = CharIndex::from_usize(i).object_id();
-                let template_id = char.weapon_template_id.clone();
-                let equip_char_id = inst_id;
-                ScdItemGrid {
-                    grid_index: 0,
-                    id: template_id.clone(),
-                    count: 1,
-                    inst: Some(ItemInst {
-                        inst_id,
-                        is_lock: false,
-                        is_new: false,
-                        inst_impl: Some(InstImpl::Weapon(WeaponData {
-                            inst_id,
-                            template_id,
-                            exp: 0,
-                            weapon_lv: 1,
-                            refine_lv: 0,
-                            breakthrough_lv: 1,
-                            equip_char_id,
-                            attach_gem_id: 0,
-                        })),
-                    }),
+            .map(|team| {
+                let char_ids: Vec<u64> = team
+                    .char_team
+                    .iter()
+                    .filter_map(|slot| slot.object_id())
+                    .collect();
+
+                let member_skills: HashMap<u64, String> = team
+                    .char_team
+                    .iter()
+                    .filter_map(|slot| slot.char_index())
+                    .map(|idx| {
+                        let char_data = &self.chars[idx.as_usize()];
+                        let skill = Self::get_normal_skill(&char_data.template_id, assets);
+                        (idx.object_id(), skill)
+                    })
+                    .collect();
+
+                TeamSyncState {
+                    name: team.name.clone(),
+                    char_ids,
+                    leader_id: team.leader_index.object_id(),
+                    member_skills,
                 }
             })
-            .collect();
-        let mut depot = std::collections::HashMap::new();
-        depot.insert(1, ScdItemDepot { inst_list });
+            .collect()
+    }
 
-        ScItemBagSync {
-            depot,
-            bag: None,
-            factory_depot: None,
-            cannot_destroy: std::collections::HashMap::new(),
-            use_blackboard: None,
+    fn char_sync_states(&self, assets: &BeyondAssets) -> Result<Vec<CharSyncState>> {
+        self.chars
+            .iter()
+            .enumerate()
+            .map(|(i, char)| {
+                let objid = CharIndex::from_usize(i).object_id();
+                let template = assets
+                    .characters
+                    .get(&char.template_id)
+                    .with_context(|| format!("Unknown character template: {}", char.template_id))?;
+
+                let bundles = assets.char_skills.get_char_skills(&template.char_id);
+                let normal_skill = Self::get_normal_skill(&char.template_id, assets);
+
+                let skill_levels: Vec<SkillLevelState> = bundles
+                    .iter()
+                    .filter_map(|bundle| {
+                        let first_id = &bundle.entries.first()?.skill_id;
+                        let current_level = char.skill_levels.get(first_id).copied().unwrap_or(1);
+                        let entry = bundle.entries.iter().find(|e| e.level == current_level)?;
+                        let max = bundle.entries.iter().map(|e| e.level).max().unwrap_or(1);
+                        Some(SkillLevelState {
+                            skill_id: entry.skill_id.clone(),
+                            skill_level: entry.level as i32,
+                            skill_max_level: max as i32,
+                        })
+                    })
+                    .collect();
+
+                // Get weapon inst_id from depot
+                let weapon_id = self
+                    .weapon_depot
+                    .get_equipped_weapon_id(objid)
+                    .map(|id| id.as_u64())
+                    .unwrap_or(0);
+
+                Ok(CharSyncState {
+                    objid,
+                    template_id: char.template_id.clone(),
+                    level: char.level,
+                    exp: char.exp,
+                    break_stage: char.break_stage,
+                    hp: char.hp,
+                    ultimate_sp: char.ultimate_sp,
+                    weapon_id,
+                    own_time: char.own_time,
+                    is_dead: char.is_dead,
+                    normal_skill,
+                    skill_levels,
+                })
+            })
+            .collect()
+    }
+
+    fn get_normal_skill(template_id: &str, assets: &BeyondAssets) -> String {
+        assets
+            .char_skills
+            .get_char_skills(template_id)
+            .into_iter()
+            .find_map(|b| {
+                b.entries
+                    .first()
+                    .filter(|e| e.skill_id.contains("normal_skill"))
+                    .map(|e| e.skill_id.clone())
+            })
+            .unwrap_or_default()
+    }
+
+    // Validate and repair data after loading
+    pub fn validate_after_load(&mut self) {
+        self.weapon_depot.validate_equipped_weapons();
+
+        // Ensure all characters have valid weapon references
+        for i in 0..self.chars.len() {
+            let char_obj_id = CharIndex::from_usize(i).object_id();
+            let char = &self.chars[i];
+
+            // Check if weapon reference is consistent
+            if let Some(weapon) = self.weapon_depot.get_equipped_weapon(char_obj_id) {
+                if weapon.equip_char_id != char_obj_id {
+                    warn!(
+                        "Char {} has mismatched weapon reference: weapon claims char {}",
+                        char_obj_id, weapon.equip_char_id
+                    );
+                }
+            }
         }
+
+        info!(
+            "CharBag validation complete: {} chars, {} weapons",
+            self.chars.len(),
+            self.weapon_depot.len()
+        );
+    }
+
+    // Get weapon depot reference for external operations
+    pub fn weapon_depot(&self) -> &WeaponDepot {
+        &self.weapon_depot
+    }
+
+    // Get mutable weapon depot reference for external operations
+    pub fn weapon_depot_mut(&mut self) -> &mut WeaponDepot {
+        &mut self.weapon_depot
     }
 }
 
@@ -553,4 +628,108 @@ fn attrs_from_stats(a: &config::tables::character::Attributes) -> Vec<AttrInfo> 
             a.spawn_energy_shard_efficiency as f64,
         ),
     ]
+}
+
+pub fn handle_weapon_add_exp(
+    char_bag: &mut CharBag,
+    weapon_id: u64,
+    cost_weapon_ids: &[u64],
+    assets: &BeyondAssets,
+) -> Result<ScWeaponAddExp> {
+    let target_id = WeaponInstId::new(weapon_id);
+    let fodder_ids: Vec<WeaponInstId> = cost_weapon_ids
+        .iter()
+        .map(|&id| WeaponInstId::new(id))
+        .collect();
+
+    char_bag
+        .weapon_depot
+        .add_exp(target_id, &fodder_ids, assets)?;
+
+    char_bag
+        .weapon_depot
+        .to_add_exp_sc(target_id)
+        .context("Weapon not found after add_exp")
+}
+
+pub fn handle_weapon_breakthrough(
+    char_bag: &mut CharBag,
+    weapon_id: u64,
+    assets: &BeyondAssets,
+) -> Result<ScWeaponBreakthrough> {
+    let inst_id = WeaponInstId::new(weapon_id);
+
+    char_bag.weapon_depot.breakthrough(inst_id, assets)?;
+
+    char_bag
+        .weapon_depot
+        .to_breakthrough_sc(inst_id)
+        .context("Weapon not found after breakthrough")
+}
+
+pub fn handle_weapon_attach_gem(
+    char_bag: &mut CharBag,
+    weapon_id: u64,
+    gem_id: u64,
+) -> Result<ScWeaponAttachGem> {
+    let weapon_inst_id = WeaponInstId::new(weapon_id);
+
+    // Check if gem is attached to another weapon
+    let detached_from_weapon = char_bag
+        .weapon_depot
+        .all_weapons()
+        .values()
+        .find(|w| w.attach_gem_id == gem_id)
+        .map(|w| w.inst_id);
+
+    let detached_gem_id = if let Some(other_weapon_id) = detached_from_weapon {
+        // Detach from other weapon first
+        char_bag.weapon_depot.detach_gem(other_weapon_id)?;
+        Some(gem_id)
+    } else {
+        None
+    };
+
+    // Detach any existing gem from target weapon
+    let weapon = char_bag
+        .weapon_depot
+        .get(weapon_inst_id)
+        .context("Weapon not found")?;
+    let prev_gem_id = if weapon.attach_gem_id != 0 {
+        Some(weapon.attach_gem_id)
+    } else {
+        None
+    };
+
+    char_bag.weapon_depot.attach_gem(weapon_inst_id, gem_id)?;
+
+    Ok(char_bag
+        .weapon_depot
+        .to_attach_gem_sc(
+            weapon_inst_id,
+            prev_gem_id,
+            detached_from_weapon.map(|id| id.as_u64()),
+        )
+        .context("Weapon not found")?)
+}
+
+pub fn handle_weapon_detach_gem(
+    char_bag: &mut CharBag,
+    weapon_id: u64,
+) -> Result<ScWeaponDetachGem> {
+    let weapon_inst_id = WeaponInstId::new(weapon_id);
+
+    let gem_id = char_bag.weapon_depot.detach_gem(weapon_inst_id)?;
+
+    Ok(char_bag
+        .weapon_depot
+        .to_detach_gem_sc(weapon_inst_id, gem_id))
+}
+
+pub fn handle_weapon_puton(
+    char_bag: &mut CharBag,
+    char_id: u64,
+    weapon_id: u64,
+) -> Result<ScWeaponPuton> {
+    char_bag.equip_weapon(char_id, weapon_id)
 }

@@ -16,30 +16,33 @@ use tokio::{
 };
 use tracing::{debug, error, info, warn};
 
+/// Session context holding all state for a connected client.
 pub struct SessionContext {
-    // This struct holds all the juicy context for a session. Think of it as the session's backpack, full of essential gear.
-    pub assets: &'static BeyondAssets, // Game assets, like all the cool stuff in the game. Static means it's always there, chillin'.
-    pub registry: &'static SessionRegistry, // The big list of all active sessions. Kinda like a VIP list, but for connections.
-    pub db: &'static PlayerDb, // Our database connection. Where all the player data lives, safe and sound (hopefully!).
-    pub addr: SocketAddr, // The address of the connected client. So we know who we're talking to, ya know?
+    pub assets: &'static BeyondAssets,
+    pub registry: &'static SessionRegistry,
+    pub db: &'static PlayerDb,
+    pub addr: SocketAddr,
 }
 
+/// Handles a new TCP connection from a client.
+///
+/// Sets up the session channels, spawns the write loop, and runs the main logic loop.
+/// When the logic loop exits, the write task is awaited to flush remaining outbound data.
 pub async fn handle_connection(
-    // This function is the bouncer for new connections. It sets up everything for a new player.
     socket: TcpStream,
     addr: SocketAddr,
     assets: &'static BeyondAssets,
     registry: &'static SessionRegistry,
     db: &'static PlayerDb,
 ) -> anyhow::Result<()> {
-    let (reader, writer) = socket.into_split(); // Splitting the socket into a reader and a writer. Gotta read and write separately, multitasking FTW!
+    let (reader, writer) = socket.into_split();
 
-    let (outbound_tx, outbound_rx) = mpsc::channel::<Vec<u8>>(64); // Channel for sending data *out* to the client. Like a one-way street for packets.
-    let (notify_tx, notify_rx) = mpsc::channel::<Notification>(32); // Channel for internal notifications. Server's gotta talk to itself sometimes, right? XD
+    let (outbound_tx, outbound_rx) = mpsc::channel::<Vec<u8>>(64);
+    let (notify_tx, notify_rx) = mpsc::channel::<Notification>(32);
 
-    let handle = PlayerHandle::new(notify_tx); // A handle to notify this player. Like a pager, but for server events.
+    let handle = PlayerHandle::new(notify_tx);
 
-    let write_task = tokio::spawn(write_loop(writer, outbound_rx)); // Spawning a task to constantly send data. Keep those packets flowing!
+    let write_task = tokio::spawn(write_loop(writer, outbound_rx));
 
     let ctx = SessionContext {
         assets,
@@ -48,18 +51,18 @@ pub async fn handle_connection(
         addr,
     };
 
-    let result = logic_loop(reader, outbound_tx, notify_rx, handle, ctx).await; // The main logic loop for the session. This is where the real game happens, fam.
+    let result = logic_loop(reader, outbound_tx, notify_rx, handle, ctx).await;
 
-    // outbound_tx dropped here, write_loop drains remaining frames then exits.
     let _ = write_task.await;
 
     result
 }
 
-// Drains the outbound channel and writes each pre-encoded frame to the socket.
-// Exits when the sender side (logic loop) is dropped.
+/// Writes outbound frames to the client socket.
+///
+/// Continuously reads from the outbound channel and writes each pre-encoded frame.
+/// Exits gracefully when the sender (logic loop) is dropped and the channel is drained.
 async fn write_loop(
-    // This loop just writes data to the client. Simple, yet crucial.
     mut writer: tokio::net::tcp::OwnedWriteHalf,
     mut rx: mpsc::Receiver<Vec<u8>>,
 ) -> anyhow::Result<()> {
@@ -69,23 +72,29 @@ async fn write_loop(
     Ok(())
 }
 
+/// Main session logic loop for a connected player.
+///
+/// Handles two types of events:
+/// - Incoming packets from the client (commands)
+/// - Internal server notifications (push messages)
+///
+/// On exit, saves player data to the database and unregisters from the session registry.
 async fn logic_loop(
-    // The core logic for a player's session. It's like their personal game engine.
     mut reader: tokio::net::tcp::OwnedReadHalf,
     outbound_tx: mpsc::Sender<Vec<u8>>,
     mut notify_rx: mpsc::Receiver<Notification>,
     handle: PlayerHandle,
     ctx: SessionContext,
 ) -> anyhow::Result<()> {
-    let mut player = Player::default(); // Creating a new player instance. Fresh spawn!
+    let mut player = Player::default();
     let mut server_seq_id = 0u64;
     let mut registered = false;
 
-    info!("session started"); // Session's live! Let's get this bread.
+    info!("session started");
 
     let result = loop {
-        tokio::select! { // This is where the magic happens: handling multiple async events at once. So efficient, much wow.
-            result = read_packet(&mut reader) => { // Trying to read a packet from the client. What's up, client?
+        tokio::select! {
+            result = read_packet(&mut reader) => {
                 match result {
                     Ok((cmd_id, body, client_seq_id)) => {
                         let mut net_ctx = NetContext::new(
@@ -96,19 +105,18 @@ async fn logic_loop(
                             client_seq_id,
                             &mut server_seq_id,
                         );
-                        if let Err(e) = handle_command(&mut net_ctx, cmd_id, body).await { // Processing the command. Hope it's not a hack attempt, lol.
-                            warn!(error = %e, cmd_id, "command error");
+                        if let Err(e) = handle_command(&mut net_ctx, cmd_id, body).await {
+                            warn!("command error: cmd_id={}, error={}", cmd_id, e);
                         }
 
-                        // uid is empty until on_login sets it.
-                        if !registered && !player.uid.is_empty() { // If the player just logged in and isn't registered yet...
-                            ctx.registry.register(player.uid.clone(), handle.clone()); // Registering the player. Welcome to the club!
-                            info!(uid = %player.uid, online = ctx.registry.online(), "player online"); // Player's online! Let everyone know.
+                        if !registered && !player.uid.is_empty() {
+                            ctx.registry.register(player.uid.clone(), handle.clone());
+                            info!("player online: uid={}, online_count={}", player.uid, ctx.registry.online());
                             registered = true;
                         }
                     }
                     Err(e) if is_clean_disconnect(&e) => {
-                        debug!("disconnected"); // Client disconnected. It's not you, it's them. Probably.
+                        debug!("disconnected");
                         break Ok(());
                     }
                     Err(e) => break Err(e.into()),
@@ -129,24 +137,46 @@ async fn logic_loop(
         }
     };
 
-    // Runs on every exit path, clean disconnect, error, or future break.
     if registered {
-        // If the player was actually registered...
-        if let Err(e) = ctx.db
-        // Saving player data. Don't wanna lose all that hard-earned progress, right?
-        {
-            error!(uid = %player.uid, error = %e, "Save failed");
-        }
-        ctx.registry.unregister(&player.uid); // Unregistering the player. They're gone, but not forgotten (by the DB).
-        info!(uid = %player.uid, online = ctx.registry.online(), "Player offline"); // Player's offline. Sadge.
-    }
+        // Flush latest position into WorldState so the player respawns at
+        // their actual last location rather than the last movement-packet sync.
+        player.movement.sync_to_world(&mut player.world);
 
+        if let Err(e) = ctx
+            .db
+            .save(
+                &player.uid,
+                &player.char_bag,
+                &player.world,
+                &player.bitsets,
+                player.scene.get_checkpoint(),
+                player.scene.current_revival_mode,
+            )
+            .await
+        {
+            error!("save failed: uid={}, error={}", player.uid, e);
+        }
+
+        ctx.registry.unregister(&player.uid);
+        info!(
+            "player offline: uid={}, online_count={}",
+            player.uid,
+            ctx.registry.online()
+        );
+    }
     result
 }
 
-// Reads one framed packet and returns (cmd_id, body, client_seq_id).
+/// Reads a single framed packet from the client socket.
+///
+/// Packet format:
+/// - 1 byte: header size
+/// - 2 bytes: body size (little-endian)
+/// - N bytes: header (protobuf encoded CsHead)
+/// - M bytes: body (command payload)
+///
+/// Returns the command ID, body bytes, and client sequence ID.
 async fn read_packet(
-    // This function reads a single packet from the client. It's like the mailman for game data.
     reader: &mut tokio::net::tcp::OwnedReadHalf,
 ) -> std::io::Result<(i32, Vec<u8>, u64)> {
     let head_size = reader.read_u8().await?;
@@ -164,8 +194,8 @@ async fn read_packet(
     Ok((head.msgid, body_buf, head.up_seqid))
 }
 
+/// Returns true if the error represents a clean client disconnect.
 fn is_clean_disconnect(e: &std::io::Error) -> bool {
-    // Checking if the disconnect was graceful. No drama, please.
     matches!(
         e.kind(),
         std::io::ErrorKind::UnexpectedEof
@@ -174,10 +204,8 @@ fn is_clean_disconnect(e: &std::io::Error) -> bool {
     )
 }
 
-// Dispatches an inbound server notification into the player's session.
-// Each Notification variant maps to the logic that produces outbound frames.
+/// Dispatches an inbound server notification into the player's session.
 async fn handle_notification(ctx: &mut NetContext<'_>, notification: Notification) {
-    // Handling internal server notifications. The server's internal monologue, basically.
     match notification {
         #[allow(unreachable_patterns)]
         _ => {}
