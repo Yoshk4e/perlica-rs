@@ -2,6 +2,7 @@ use crate::net::NetContext;
 use perlica_proto::{ScFactorySyncContext, ScdFactorySyncRegion};
 use tracing::{debug, error};
 
+// Thanks xeondev for pointing this out
 pub async fn push_factory(ctx: &mut NetContext<'_>) -> bool {
     let msg = ScFactorySyncContext {
         tms: 0,

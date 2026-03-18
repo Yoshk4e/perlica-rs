@@ -115,9 +115,12 @@ pub async fn on_cs_scene_kill_char(ctx: &mut NetContext<'_>, req: CsSceneKillCha
 
 /// Handles `CsSceneRevival` — revives all dead characters in the current team
 /// at 50 % HP.
-///
-/// Sends `ScSelfSceneInfo`, `ScSceneRevival`, and individual `ScCharSyncStatus`
-/// messages for each revived character before returning `ScObjectEnterView`.
+/// ORDER MATTERS!!
+/// Send order:
+/// 1. `ScCharSyncStatus` × N — HP per revived char
+/// 2. `ScSelfSceneInfo` with `revive_chars` — triggers client revival logic
+/// 3. `ScSceneRevival` — revival UI/effect
+/// 4. `ScObjectEnterView` — reply, re-enters chars into the scene
 pub async fn on_cs_scene_revival(
     ctx: &mut NetContext<'_>,
     _req: CsSceneRevival,
@@ -132,38 +135,38 @@ pub async fn on_cs_scene_revival(
         None,
     );
 
-    if let Err(e) = ctx.notify(self_info.clone()).await {
+    send_revival_status_updates(ctx).await;
+    if let Err(e) = ctx.notify(self_info).await {
         error!("revival self info failed: {e}");
     }
 
     if let Err(e) = ctx.notify(revival).await {
         error!("revival notify failed: {e}");
     }
-    send_revival_status_updates(ctx).await;
-
     enter_view
 }
 
-/// Pushes `ScCharSyncStatus` for every alive character in the current team
-/// after a revival.
+/// Pushes `ScCharSyncStatus` for every alive character in the current team.
 async fn send_revival_status_updates(ctx: &mut NetContext<'_>) {
-    let mut updates = Vec::new();
-
     let team_idx = ctx.player.char_bag.meta.curr_team_index as usize;
     let team = &ctx.player.char_bag.teams[team_idx];
 
-    for (i, char) in ctx.player.char_bag.chars.iter().enumerate() {
-        let in_team = team.char_team.iter().any(|slot| {
-            slot.char_index()
-                .map(|idx| idx.as_usize() == i)
-                .unwrap_or(false)
-        });
-
-        if in_team && !char.is_dead {
-            let objid = CharIndex::from_usize(i).object_id();
-            updates.push((objid, char.hp, char.ultimate_sp));
-        }
-    }
+    let updates: Vec<(u64, f64, f32)> = ctx
+        .player
+        .char_bag
+        .chars
+        .iter()
+        .enumerate()
+        .filter(|(i, c)| {
+            !c.is_dead
+                && team.char_team.iter().any(|slot| {
+                    slot.char_index()
+                        .map(|idx| idx.as_usize() == *i)
+                        .unwrap_or(false)
+                })
+        })
+        .map(|(i, c)| (CharIndex::from_usize(i).object_id(), c.hp, c.ultimate_sp))
+        .collect();
 
     for (objid, hp, ultimatesp) in updates {
         if let Err(e) = ctx
@@ -174,7 +177,7 @@ async fn send_revival_status_updates(ctx: &mut NetContext<'_>) {
             })
             .await
         {
-            error!("revival status update failed for {}: {e}", objid);
+            error!("revival status update failed for {objid}: {e}");
         }
     }
 }
