@@ -95,7 +95,7 @@ The server will listen on the configured address and is ready for client connect
 ### Logging in
 
 The server is compatible with the alpha client.
-So you want the Client? join the Discord server. 
+for more information about this consider joining the discord server.
 
 To connect to the local server, you must apply the provided [client patch](https://github.com/Yoshk4e/beyond-patch-universal).(its shit yes but idfc)
 It replaces the server address with a custom one so the client can communicate with the server.
