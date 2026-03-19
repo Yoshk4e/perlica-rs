@@ -2,9 +2,6 @@
 
 Thank you for considering contributing to Perlica RS.
 
-Please note that we have a [Code of Conduct](CODE_OF_CONDUCT.md) (or see the pinned message in Discord).  
-All participants are expected to follow it in issues, pull requests, discussions, and Discord interactions.
-
 ## Contribution Guidelines
 
 - **One concern per pull request**  
