@@ -5,8 +5,8 @@ use config::BeyondAssets;
 use perlica_proto::{
     LeaveObjectInfo, ScEnterSceneNotify, ScLeaveSceneNotify, ScObjectEnterView, ScObjectLeaveView,
     ScSceneCreateEntity, ScSceneDestroyEntity, ScSceneRevival, ScSceneTeleport, ScSelfSceneInfo,
-    SceneCharacter, SceneImplEmpty, SceneMonster, SceneInteractive, SceneNpc, SceneObjectCommonInfo,
-    SceneObjectDetailContainer, Vector, sc_self_scene_info::SceneImpl,
+    SceneCharacter, SceneImplEmpty, SceneInteractive, SceneMonster, SceneNpc,
+    SceneObjectCommonInfo, SceneObjectDetailContainer, Vector, sc_self_scene_info::SceneImpl,
 };
 
 #[repr(i32)]
@@ -407,14 +407,14 @@ impl SceneManager {
                     .and_then(|spawns| spawns.iter().find(|s| s.template_id == e.template_id))
                     .map(|s| s.level as i32)
                     .unwrap_or(1);
-					
-				let origin_id = assets
+
+                let origin_id = assets
                     .enemy_spawns
                     .get(&self.current_scene)
                     .and_then(|spawns| spawns.iter().find(|s| s.template_id == e.template_id))
                     .map(|s| s.origin_id as u64)
                     .unwrap_or(0);
-					
+
                 SceneMonster {
                     common_info: Some(SceneObjectCommonInfo {
                         id: e.id,
@@ -661,7 +661,12 @@ impl SceneManager {
             .collect()
     }
 
-    pub fn pack_single_monster(&self, entity: &SceneEntity, level: i32, origin_id: u64) -> SceneMonster {
+    pub fn pack_single_monster(
+        &self,
+        entity: &SceneEntity,
+        level: i32,
+        origin_id: u64,
+    ) -> SceneMonster {
         SceneMonster {
             common_info: Some(SceneObjectCommonInfo {
                 id: entity.id,

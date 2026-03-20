@@ -40,9 +40,10 @@ pub async fn on_login(ctx: &mut NetContext<'_>, req: CsLogin) -> ScLogin {
         }
     }
 
-
     ctx.player.movement = perlica_logic::movement::MovementManager::from_world(&ctx.player.world);
-    ctx.player.scene.update_from_world(&ctx.player.world, ctx.assets);
+    ctx.player
+        .scene
+        .update_from_world(&ctx.player.world, ctx.assets);
 
     ScLogin {
         uid: req.uid,
