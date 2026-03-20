@@ -193,6 +193,7 @@ pub fn spawn_dynamic_monster(
     template_id: String,
     position: Vector,
     level: i32,
+	origin_id: u64,
 ) -> (
     perlica_proto::ScSceneCreateEntity,
     perlica_proto::SceneMonster,
@@ -221,7 +222,7 @@ pub fn spawn_dynamic_monster(
             belong_level_script_id: 0,
             r#type: 16,
         }),
-        origin_id: 0,
+        origin_id,
         level,
     };
 
