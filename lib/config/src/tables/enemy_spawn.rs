@@ -8,7 +8,7 @@ pub struct EnemySpawnsTable {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SceneEnemyInfo {
-	#[serde(rename = "levelLogicId")]
+    #[serde(rename = "levelLogicId")]
     pub origin_id: u64,
     #[serde(rename = "entityType")]
     pub entity_type: i32,
