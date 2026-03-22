@@ -6,7 +6,7 @@
 //! enemy groups, factory regions, splines, and safe zones.
 //!
 //! Expected asset layout:
-//! ```
+//! ```text
 //! assets/
 //!   level_data/
 //!     map01_lv001_lv_data.json
