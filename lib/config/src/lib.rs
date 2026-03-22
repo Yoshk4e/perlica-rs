@@ -1,6 +1,6 @@
 pub mod character;
-pub mod enemy_spawn;
 pub mod id_to_str;
+pub mod level_data;
 pub mod skill;
 pub mod str_to_id;
 pub mod tables;
@@ -16,23 +16,24 @@ pub struct BeyondAssets {
     pub characters: character::CharacterAssets,
     pub char_skills: skill::SkillAssets,
     pub weapons: weapon::WeaponAssets,
+    pub level_data: level_data::LevelDataAssets,
     pub str_id_num: StrIdNumAssets,
     pub num_id_str: NumIdStrAssets,
-    pub enemy_spawns: enemy_spawn::EnemySpawnAssets,
 }
 
 impl BeyondAssets {
     pub fn load<P: AsRef<Path>>(base_path: P) -> Result<Self> {
         let base_path = base_path.as_ref();
         let tables_dir = base_path.join("tables");
+        let config_dir = base_path.join("config");
 
         Ok(BeyondAssets {
             characters: character::CharacterAssets::load(&tables_dir)?,
             char_skills: skill::SkillAssets::load(&tables_dir)?,
             weapons: weapon::WeaponAssets::load(&tables_dir)?,
+            level_data: level_data::LevelDataAssets::load(&config_dir)?,
             str_id_num: StrIdNumAssets::load(&tables_dir)?,
             num_id_str: NumIdStrAssets::load(&tables_dir)?,
-            enemy_spawns: enemy_spawn::EnemySpawnAssets::load(&tables_dir)?,
         })
     }
 }

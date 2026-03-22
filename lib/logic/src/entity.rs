@@ -21,6 +21,10 @@ pub struct SceneEntity {
     pub pos_x: f32,
     pub pos_y: f32,
     pub pos_z: f32,
+    /// The `levelLogicId` from the lv_data file. Used as `origin_id` in
+    /// `SceneMonster` so the client knows the AI/behaviour config.
+    pub level_logic_id: u64,
+    pub belong_level_script_id: i32,
 }
 
 impl SceneEntity {

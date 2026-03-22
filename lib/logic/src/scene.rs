@@ -60,6 +60,8 @@ pub struct SceneManager {
     pub in_battle: bool,
     pub checkpoint: Option<CheckpointInfo>,
     pub current_revival_mode: RevivalMode,
+    /// Maps level_logic_id to the timestamp (ms) when it was killed.
+    pub dead_entities: std::collections::HashMap<u64, u64>,
 }
 
 impl Default for SceneManager {
@@ -71,6 +73,7 @@ impl Default for SceneManager {
             in_battle: false,
             checkpoint: None,
             current_revival_mode: RevivalMode::Default,
+            dead_entities: std::collections::HashMap::new(),
         }
     }
 }
@@ -88,6 +91,7 @@ impl SceneManager {
         entities: &mut EntityManager,
     ) -> (ScEnterSceneNotify, ScLeaveSceneNotify) {
         entities.clear();
+        self.dead_entities.clear();
 
         let leave_notify = ScLeaveSceneNotify {
             role_id: 1, //TODO: figure out why and where is this even used
@@ -394,43 +398,29 @@ impl SceneManager {
     pub fn pack_monsters_from_manager(
         &self,
         entities: &EntityManager,
-        assets: &BeyondAssets,
+        _assets: &BeyondAssets,
     ) -> Vec<SceneMonster> {
         use perlica_proto::SceneObjectCommonInfo;
 
         entities
             .monsters()
-            .map(|e| {
-                let level = assets
-                    .enemy_spawns
-                    .get(&self.current_scene)
-                    .and_then(|spawns| spawns.iter().find(|s| s.template_id == e.template_id))
-                    .map(|s| s.level as i32)
-                    .unwrap_or(1);
-
-                let origin_id = assets
-                    .enemy_spawns
-                    .get(&self.current_scene)
-                    .and_then(|spawns| spawns.iter().find(|s| s.template_id == e.template_id))
-                    .map(|s| s.origin_id as u64)
-                    .unwrap_or(0);
-
-                SceneMonster {
-                    common_info: Some(SceneObjectCommonInfo {
-                        id: e.id,
-                        templateid: e.template_id.clone(),
-                        position: Some(Vector {
-                            x: e.pos_x,
-                            y: e.pos_y,
-                            z: e.pos_z,
-                        }),
-                        rotation: None,
-                        belong_level_script_id: 0,
-                        r#type: 16,
+            .map(|e| SceneMonster {
+                common_info: Some(SceneObjectCommonInfo {
+                    id: e.id,
+                    templateid: e.template_id.clone(),
+                    position: Some(Vector {
+                        x: e.pos_x,
+                        y: e.pos_y,
+                        z: e.pos_z,
                     }),
-                    origin_id,
-                    level,
-                }
+                    rotation: None,
+                    belong_level_script_id: e.belong_level_script_id,
+                    r#type: 16,
+                }),
+                origin_id: e.level_logic_id,
+                // Level not re-sent on team switch; client already has it from
+                // the initial ScObjectEnterView on scene load.
+                level: 1,
             })
             .collect()
     }
@@ -620,45 +610,115 @@ impl SceneManager {
         assets: &BeyondAssets,
         entities: &mut EntityManager,
     ) -> Vec<SceneMonster> {
-        let Some(spawns) = assets.enemy_spawns.get(&self.current_scene) else {
-            return vec![];
+        // We don't spawn anything by default now.
+        // The dynamic radius-based system will handle it.
+        vec![]
+    }
+
+    pub fn update_visible_entities(
+        &mut self,
+        pos: (f32, f32, f32),
+        assets: &BeyondAssets,
+        entities: &mut EntityManager,
+    ) -> (Option<ScObjectEnterView>, Option<ScObjectLeaveView>) {
+        const ENTER_RADIUS: f32 = 80.0;
+        const LEAVE_RADIUS: f32 = 100.0;
+        const RESPAWN_COOLDOWN_MS: u64 = 60_000; // 60 seconds
+
+        let now = common::time::now_ms();
+
+        // Cleanup expired dead entities
+        self.dead_entities
+            .retain(|_, &mut time| now - time < RESPAWN_COOLDOWN_MS);
+
+        let mut enter_monsters = vec![];
+        let mut leave_ids = vec![];
+
+        // 1. Check which monsters should enter view
+        let spawns = assets.level_data.enemies(&self.current_scene);
+        for enemy in spawns {
+            let dx = enemy.base.position.x - pos.0;
+            let dy = enemy.base.position.y - pos.1;
+            let dz = enemy.base.position.z - pos.2;
+            let dist_sq = dx * dx + dy * dy + dz * dz;
+
+            if dist_sq <= ENTER_RADIUS * ENTER_RADIUS {
+                // Should be in view. Is it already?
+                let already_exists = entities
+                    .monsters()
+                    .any(|e| e.level_logic_id == enemy.base.level_logic_id);
+
+                // Is it on respawn cooldown?
+                let is_on_cooldown = self.dead_entities.contains_key(&enemy.base.level_logic_id);
+
+                if !already_exists && !is_on_cooldown {
+                    let id = entities.next_monster_id();
+                    entities.insert(SceneEntity {
+                        id,
+                        template_id: enemy.base.template_id.clone(),
+                        kind: EntityKind::Enemy,
+                        pos_x: enemy.base.position.x,
+                        pos_y: enemy.base.position.y,
+                        pos_z: enemy.base.position.z,
+                        level_logic_id: enemy.base.level_logic_id,
+                        belong_level_script_id: enemy.base.belong_level_script_id,
+                    });
+
+                    enter_monsters.push(SceneMonster {
+                        common_info: Some(SceneObjectCommonInfo {
+                            id,
+                            templateid: enemy.base.template_id.clone(),
+                            position: Some(Vector {
+                                x: enemy.base.position.x,
+                                y: enemy.base.position.y,
+                                z: enemy.base.position.z,
+                            }),
+                            rotation: Some(Vector {
+                                x: enemy.base.rotation.x,
+                                y: enemy.base.rotation.y,
+                                z: enemy.base.rotation.z,
+                            }),
+                            belong_level_script_id: enemy.base.belong_level_script_id,
+                            r#type: enemy.base.entity_type,
+                        }),
+                        origin_id: enemy.base.level_logic_id,
+                        level: enemy.level as i32,
+                    });
+                }
+            }
+        }
+
+        // 2. Check which monsters should leave view
+        let current_monsters: Vec<(u64, f32, f32, f32)> = entities
+            .monsters()
+            .map(|e| (e.id, e.pos_x, e.pos_y, e.pos_z))
+            .collect();
+
+        for (id, ex, ey, ez) in current_monsters {
+            let dx = ex - pos.0;
+            let dy = ey - pos.1;
+            let dz = ez - pos.2;
+            let dist_sq = dx * dx + dy * dy + dz * dz;
+
+            if dist_sq > LEAVE_RADIUS * LEAVE_RADIUS {
+                entities.remove(id);
+                leave_ids.push(id);
+            }
+        }
+
+        let enter_view = if !enter_monsters.is_empty() {
+            Some(self.build_object_enter_view(vec![], enter_monsters))
+        } else {
+            None
         };
 
-        spawns
-            .iter()
-            .map(|enemy| {
-                let id = entities.next_monster_id();
-                entities.insert(SceneEntity {
-                    id,
-                    template_id: enemy.template_id.clone(),
-                    kind: EntityKind::Enemy,
-                    pos_x: enemy.position.x,
-                    pos_y: enemy.position.y,
-                    pos_z: enemy.position.z,
-                });
+        let leave_view = if !leave_ids.is_empty() {
+            Some(self.build_object_leave_view(leave_ids))
+        } else {
+            None
+        };
 
-                SceneMonster {
-                    common_info: Some(SceneObjectCommonInfo {
-                        id,
-                        templateid: enemy.template_id.clone(),
-                        position: Some(Vector {
-                            x: enemy.position.x,
-                            y: enemy.position.y,
-                            z: enemy.position.z,
-                        }),
-                        rotation: Some(Vector {
-                            x: enemy.rotation.x,
-                            y: enemy.rotation.y,
-                            z: enemy.rotation.z,
-                        }),
-                        belong_level_script_id: 0, //TODO: load from asset
-                        r#type: 16,
-                    }),
-                    origin_id: enemy.origin_id as u64, // entity logic id
-                    level: enemy.level as i32,
-                }
-            })
-            .collect()
+        (enter_view, leave_view)
     }
 
     pub fn pack_single_monster(

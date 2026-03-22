@@ -60,6 +60,19 @@ pub async fn on_scene_load_finish(
         error!("object enter view failed: {e}");
     }
 
+    // Trigger initial dynamic visibility check to spawn nearby monsters
+    let pos = ctx.player.movement.position_tuple();
+    let (initial_enter, _) =
+        ctx.player
+            .scene
+            .update_visible_entities(pos, ctx.assets, &mut ctx.player.entities);
+
+    if let Some(msg) = initial_enter {
+        if let Err(e) = ctx.notify(msg).await {
+            error!("initial dynamic enter view failed: {e}");
+        }
+    }
+
     if !post_load_sync(ctx).await {
         error!("post-load sync failed");
     }
@@ -79,7 +92,14 @@ async fn post_load_sync(ctx: &mut NetContext<'_>) -> bool {
 pub async fn on_cs_scene_kill_monster(ctx: &mut NetContext<'_>, req: CsSceneKillMonster) {
     debug!("kill monster: {}", req.id);
 
-    ctx.player.entities.remove(req.id);
+    if let Some(entity) = ctx.player.entities.remove(req.id) {
+        if entity.kind == perlica_logic::entity::EntityKind::Enemy {
+            ctx.player
+                .scene
+                .dead_entities
+                .insert(entity.level_logic_id, common::time::now_ms());
+        }
+    }
 
     let msg = ctx
         .player
@@ -184,16 +204,15 @@ async fn send_revival_status_updates(ctx: &mut NetContext<'_>) {
 
 /// Dynamically spawns a monster entity and returns the create/enter-view data.
 ///
-/// Allocates a new entity ID, inserts the entity into the [`EntityManager`], and
-/// returns both the `ScSceneCreateEntity` notification and the `SceneMonster`
-/// descriptor needed to build an `ScObjectEnterView`. The caller is responsible
-/// for sending both to the client.
+/// `ScSceneCreateEntity` carries only `{scene_name, id}` — all entity detail
+/// goes in the `SceneMonster` which the caller wraps in `ScObjectEnterView`.
 pub fn spawn_dynamic_monster(
     ctx: &mut NetContext<'_>,
     template_id: String,
     position: Vector,
     level: i32,
-    origin_id: u64,
+    entity_type: i32,
+    level_logic_id: u64,
 ) -> (
     perlica_proto::ScSceneCreateEntity,
     perlica_proto::SceneMonster,
@@ -209,6 +228,8 @@ pub fn spawn_dynamic_monster(
         pos_x: position.x,
         pos_y: position.y,
         pos_z: position.z,
+        level_logic_id,
+        belong_level_script_id: 0,
     });
 
     let create = ctx.player.scene.build_entity_create(id);
@@ -216,13 +237,13 @@ pub fn spawn_dynamic_monster(
     let monster = perlica_proto::SceneMonster {
         common_info: Some(perlica_proto::SceneObjectCommonInfo {
             id,
+            r#type: entity_type,
             templateid: template_id,
             position: Some(position),
             rotation: None,
             belong_level_script_id: 0,
-            r#type: 16,
         }),
-        origin_id,
+        origin_id: level_logic_id,
         level,
     };
 

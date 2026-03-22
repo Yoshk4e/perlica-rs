@@ -36,6 +36,26 @@ pub async fn on_cs_move_object_move(
                     ctx.player.movement.update_rotation(rot.x, rot.y, rot.z);
                 }
                 ctx.player.movement.sync_to_world(&mut ctx.player.world);
+
+                // Dynamic visibility check
+                let pos = ctx.player.movement.position_tuple();
+                let (enter_view, leave_view) = ctx.player.scene.update_visible_entities(
+                    pos,
+                    ctx.assets,
+                    &mut ctx.player.entities,
+                );
+
+                if let Some(msg) = enter_view {
+                    if let Err(e) = ctx.notify(msg).await {
+                        tracing::error!("failed to send dynamic enter view: {e}");
+                    }
+                }
+
+                if let Some(msg) = leave_view {
+                    if let Err(e) = ctx.notify(msg).await {
+                        tracing::error!("failed to send dynamic leave view: {e}");
+                    }
+                }
             }
             break;
         }
