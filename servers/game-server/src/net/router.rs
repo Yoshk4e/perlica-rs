@@ -145,9 +145,11 @@ handlers! {
         // Core System Commands
         CsLogin                => login::on_login,
         CsPing                 => ping::on_csping,
+        CsFlushSync            => ping::on_cs_flush_sync,
         // Scene Commands
         CsSceneLoadFinish      => scene::on_scene_load_finish,
         CsSceneRevival         => scene::on_cs_scene_revival,
+        CsSceneInteractiveEventTrigger     => scene::on_cs_scene_interactive_event_trigger,
         // Movement Commands
         CsMoveObjectMove       => movement::on_cs_move_object_move,
         // Character & Team Commands

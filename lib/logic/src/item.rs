@@ -695,7 +695,10 @@ impl WeaponDepot {
     pub fn to_depot_sync(&self) -> ScdItemDepot {
         let inst_list: Vec<ScdItemGrid> = self.weapons.values().map(|w| w.to_item_grid()).collect();
 
-        ScdItemDepot { inst_list }
+        ScdItemDepot {
+            stackable_items: HashMap::new(),
+            inst_list,
+        }
     }
 
     pub fn to_weapon_modify(&self, inst_id: WeaponInstId) -> Option<ScdItemGrid> {

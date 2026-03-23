@@ -2,8 +2,9 @@ use crate::net::NetContext;
 use perlica_logic::character::char_bag::CharIndex;
 use perlica_logic::scene::{EntityDestroyReason, SelfInfoReason};
 use perlica_proto::{
-    BattleInfo, CsSceneKillChar, CsSceneKillMonster, CsSceneLoadFinish, CsSceneRevival,
-    ScCharSyncStatus, ScEnterSceneNotify, ScObjectEnterView, ScSelfSceneInfo, Vector,
+    BattleInfo, CsSceneInteractiveEventTrigger, CsSceneKillChar, CsSceneKillMonster,
+    CsSceneLoadFinish, CsSceneRevival, ScCharSyncStatus, ScEnterSceneNotify, ScObjectEnterView,
+    ScSceneInteractiveEventTrigger, ScSelfSceneInfo, Vector,
 };
 use tracing::{debug, error, info};
 
@@ -71,6 +72,10 @@ pub async fn on_scene_load_finish(
         if let Err(e) = ctx.notify(msg).await {
             error!("initial dynamic enter view failed: {e}");
         }
+    }
+
+    if !crate::handlers::factory::push_factory(ctx).await {
+        error!("factory context sync failed");
     }
 
     if !post_load_sync(ctx).await {
@@ -259,4 +264,15 @@ pub fn entity_exists(ctx: &NetContext<'_>, entity_id: u64) -> bool {
 /// Returns the name of the scene the player is currently in.
 pub fn current_scene_name<'a>(ctx: &'a NetContext<'_>) -> &'a str {
     ctx.player.scene.scene_name()
+}
+
+pub async fn on_cs_scene_interactive_event_trigger(
+    _ctx: &mut NetContext<'_>,
+    req: CsSceneInteractiveEventTrigger,
+) -> ScSceneInteractiveEventTrigger {
+    debug!(
+        "interactive event: scene={} id={} event={}",
+        req.scene_name, req.id, req.event_name
+    );
+    ScSceneInteractiveEventTrigger {}
 }

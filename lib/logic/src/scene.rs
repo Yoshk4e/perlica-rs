@@ -2,12 +2,15 @@ use crate::character::char_bag::{CharBag, CharIndex};
 use crate::entity::{EntityKind, EntityManager, SceneEntity};
 use crate::movement::MovementManager;
 use config::BeyondAssets;
+use config::tables::level_data::{LvInteractive, LvLevelScript, LvNpc, LvProperty};
 use perlica_proto::{
-    LeaveObjectInfo, ScEnterSceneNotify, ScLeaveSceneNotify, ScObjectEnterView, ScObjectLeaveView,
-    ScSceneCreateEntity, ScSceneDestroyEntity, ScSceneRevival, ScSceneTeleport, ScSelfSceneInfo,
-    SceneCharacter, SceneImplEmpty, SceneInteractive, SceneMonster, SceneNpc,
-    SceneObjectCommonInfo, SceneObjectDetailContainer, Vector, sc_self_scene_info::SceneImpl,
+    DynamicParameter, LeaveObjectInfo, LevelScriptInfo, ScEnterSceneNotify, ScLeaveSceneNotify,
+    ScObjectEnterView, ScObjectLeaveView, ScSceneCreateEntity, ScSceneDestroyEntity,
+    ScSceneRevival, ScSceneTeleport, ScSelfSceneInfo, SceneCharacter, SceneImplEmpty,
+    SceneInteractive, SceneMonster, SceneNpc, SceneObjectCommonInfo, SceneObjectDetailContainer,
+    Vector, sc_self_scene_info::SceneImpl,
 };
+use std::collections::HashMap;
 
 #[repr(i32)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -78,6 +81,173 @@ impl Default for SceneManager {
     }
 }
 
+fn lv_property_to_dynamic_param(prop: &LvProperty) -> DynamicParameter {
+    let val = &prop.value;
+    let type_id = val.get("type").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
+
+    let value_array = val
+        .get("valueArray")
+        .and_then(|v| v.as_array())
+        .cloned()
+        .unwrap_or_default();
+
+    match type_id {
+        1 => DynamicParameter {
+            value_type: 1,
+            real_type: 1,
+            value_bool_list: value_array
+                .iter()
+                .map(|v| v.get("valueBit64").and_then(|x| x.as_i64()).unwrap_or(0) != 0)
+                .collect(),
+            ..Default::default()
+        },
+        2 => DynamicParameter {
+            value_type: 2,
+            real_type: 2,
+            value_int_list: value_array
+                .iter()
+                .map(|v| v.get("valueBit64").and_then(|x| x.as_i64()).unwrap_or(0))
+                .collect(),
+            ..Default::default()
+        },
+        3 => DynamicParameter {
+            value_type: 3,
+            real_type: 3,
+            value_float_list: value_array
+                .iter()
+                .map(|v| {
+                    let bits = v.get("valueBit64").and_then(|x| x.as_i64()).unwrap_or(0) as u32;
+                    f32::from_bits(bits)
+                })
+                .collect(),
+            ..Default::default()
+        },
+        7 => DynamicParameter {
+            value_type: 7,
+            real_type: 7,
+            value_string_list: value_array
+                .iter()
+                .filter_map(|v| {
+                    v.get("valueString")
+                        .and_then(|s| s.as_str())
+                        .map(|s| s.to_string())
+                })
+                .collect(),
+            ..Default::default()
+        },
+        11 => DynamicParameter {
+            value_type: 11,
+            real_type: 11,
+            value_float_list: value_array
+                .iter()
+                .map(|v| {
+                    let bits = v.get("valueBit64").and_then(|x| x.as_i64()).unwrap_or(0) as u32;
+                    f32::from_bits(bits)
+                })
+                .collect(),
+            ..Default::default()
+        },
+        _ => DynamicParameter {
+            value_type: type_id,
+            real_type: type_id,
+            value_int_list: value_array
+                .iter()
+                .map(|v| v.get("valueBit64").and_then(|x| x.as_i64()).unwrap_or(0))
+                .collect(),
+            ..Default::default()
+        },
+    }
+}
+
+fn lv_props_to_map(props: &[LvProperty]) -> HashMap<String, DynamicParameter> {
+    props
+        .iter()
+        .map(|p| (p.key.clone(), lv_property_to_dynamic_param(p)))
+        .collect()
+}
+
+// Interactive and NPC entity IDs start above the monster ID range to avoid collisions.
+const INTERACTIVE_ID_BASE: u64 = 0x0004_0000_0000_0000;
+const NPC_ID_BASE: u64 = 0x0005_0000_0000_0000;
+
+fn interactive_id(level_logic_id: u64) -> u64 {
+    INTERACTIVE_ID_BASE | level_logic_id
+}
+
+fn npc_id(level_logic_id: u64) -> u64 {
+    NPC_ID_BASE | level_logic_id
+}
+
+fn pack_interactives(scene_id: &str, assets: &BeyondAssets) -> Vec<SceneInteractive> {
+    assets
+        .level_data
+        .interactives(scene_id)
+        .iter()
+        .filter(|i| !i.base.default_hide)
+        .map(|i| SceneInteractive {
+            common_info: Some(SceneObjectCommonInfo {
+                id: interactive_id(i.base.level_logic_id),
+                r#type: i.base.entity_type,
+                templateid: i.base.template_id.clone(),
+                position: Some(Vector {
+                    x: i.base.position.x,
+                    y: i.base.position.y,
+                    z: i.base.position.z,
+                }),
+                rotation: Some(Vector {
+                    x: i.base.rotation.x,
+                    y: i.base.rotation.y,
+                    z: i.base.rotation.z,
+                }),
+                belong_level_script_id: i.base.belong_level_script_id,
+            }),
+            origin_id: i.base.level_logic_id,
+            properties: lv_props_to_map(&i.properties),
+        })
+        .collect()
+}
+
+fn pack_npcs(scene_id: &str, assets: &BeyondAssets) -> Vec<SceneNpc> {
+    assets
+        .level_data
+        .npcs(scene_id)
+        .iter()
+        .filter(|n| !n.base.default_hide)
+        .map(|n| SceneNpc {
+            common_info: Some(SceneObjectCommonInfo {
+                id: npc_id(n.base.level_logic_id),
+                r#type: n.base.entity_type,
+                templateid: n.base.template_id.clone(),
+                position: Some(Vector {
+                    x: n.base.position.x,
+                    y: n.base.position.y,
+                    z: n.base.position.z,
+                }),
+                rotation: Some(Vector {
+                    x: n.base.rotation.x,
+                    y: n.base.rotation.y,
+                    z: n.base.rotation.z,
+                }),
+                belong_level_script_id: n.base.belong_level_script_id,
+            }),
+        })
+        .collect()
+}
+
+fn pack_level_scripts(scene_id: &str, assets: &BeyondAssets) -> Vec<LevelScriptInfo> {
+    assets
+        .level_data
+        .level_scripts(scene_id)
+        .iter()
+        .map(|ls| LevelScriptInfo {
+            script_id: ls.script_id as i32,
+            // All scripts start Inactive (0), the client activates via area triggers
+            state: 0,
+            properties: lv_props_to_map(&ls.properties),
+        })
+        .collect()
+}
+
 impl SceneManager {
     pub fn new() -> Self {
         Self::default()
@@ -129,10 +299,24 @@ impl SceneManager {
 
         let char_list = self.pack_scene_chars(char_bag, movement);
         let monster_list = self.pack_scene_monsters(assets, entities);
+        let interactive_list = pack_interactives(&self.current_scene, assets);
+        let npc_list = pack_npcs(&self.current_scene, assets);
 
-        let enter_view = self.build_object_enter_view(char_list.clone(), monster_list.clone());
-        let self_info =
-            self.build_self_scene_info(SelfInfoReason::EnterScene, char_list, monster_list, vec![]);
+        let enter_view = self.build_object_enter_view_full(
+            char_list.clone(),
+            monster_list.clone(),
+            interactive_list.clone(),
+            npc_list.clone(),
+        );
+        let self_info = self.build_self_scene_info(
+            SelfInfoReason::EnterScene,
+            char_list,
+            monster_list,
+            interactive_list,
+            npc_list,
+            vec![],
+            assets,
+        );
 
         (enter_view, self_info)
     }
@@ -160,7 +344,7 @@ impl SceneManager {
         &self,
         char_list: Vec<SceneCharacter>,
         monster_list: Vec<SceneMonster>,
-        interactive_list: Vec<perlica_proto::SceneInteractive>,
+        interactive_list: Vec<SceneInteractive>,
         npc_list: Vec<SceneNpc>,
     ) -> ScObjectEnterView {
         ScObjectEnterView {
@@ -198,24 +382,30 @@ impl SceneManager {
         reason: SelfInfoReason,
         char_list: Vec<SceneCharacter>,
         monster_list: Vec<SceneMonster>,
+        interactive_list: Vec<SceneInteractive>,
+        npc_list: Vec<SceneNpc>,
         revive_chars: Vec<u64>,
+        assets: &BeyondAssets,
     ) -> ScSelfSceneInfo {
+        let level_scripts = pack_level_scripts(&self.current_scene, assets);
+
         ScSelfSceneInfo {
             scene_name: self.current_scene.clone(),
             scene_id: self.scene_id,
             detail: Some(SceneObjectDetailContainer {
                 char_list,
                 monster_list,
-                interactive_list: vec![],
-                npc_list: vec![],
+                interactive_list,
+                npc_list,
                 summon_list: vec![],
             }),
-            last_camp_id: 0, //unused for now
+            last_camp_id: 0,
             revive_chars,
-            level_scripts: vec![],
+            level_scripts,
             self_info_reason: reason as i32,
-            unlock_area: vec![],
+            unlock_area: vec![self.current_scene.clone()],
             revival_mode: self.current_revival_mode as i32,
+            scene_var: HashMap::new(),
             scene_impl: Some(SceneImpl::Empty(SceneImplEmpty {})), //since dungeons aren't implemented yet we'll default to empty for the time being
         }
     }
@@ -281,14 +471,23 @@ impl SceneManager {
         // Pack scene objects
         let char_list = self.pack_scene_chars(char_bag, movement);
         let monster_list = self.pack_scene_monsters(assets, entities);
+        let interactive_list = pack_interactives(&self.current_scene, assets);
+        let npc_list = pack_npcs(&self.current_scene, assets);
 
-        // Build notifications
-        let enter_view = self.build_object_enter_view(char_list.clone(), monster_list.clone());
+        let enter_view = self.build_object_enter_view_full(
+            char_list.clone(),
+            monster_list.clone(),
+            interactive_list.clone(),
+            npc_list.clone(),
+        );
         let self_info = self.build_self_scene_info(
             SelfInfoReason::ReviveDead,
             char_list,
             monster_list,
+            interactive_list,
+            npc_list,
             revive_chars,
+            assets,
         );
         let revival = ScSceneRevival {};
 
@@ -311,6 +510,7 @@ impl SceneManager {
         let _ = assets;
         let new_set: std::collections::HashSet<u64> = new_team_ids.iter().copied().collect();
         let old_set: std::collections::HashSet<u64> = old_team_ids.iter().copied().collect();
+
         let leaving: Vec<u64> = old_team_ids
             .iter()
             .filter(|&&id| {
@@ -353,6 +553,7 @@ impl SceneManager {
             self.pack_scene_chars_for_ids(&entering, char_bag, movement),
             vec![],
         );
+
         let all_alive_ids: Vec<u64> = new_team_ids
             .iter()
             .filter(|&&id| {
@@ -367,7 +568,6 @@ impl SceneManager {
             .collect();
 
         let mut char_list = self.pack_scene_chars_for_ids(&all_alive_ids, char_bag, movement);
-
         let leader_id = char_bag.teams[char_bag.meta.curr_team_index as usize]
             .leader_index
             .object_id();
@@ -382,19 +582,19 @@ impl SceneManager {
         }
 
         let monster_list = self.pack_monsters_from_manager(entities, assets);
-
-        let self_info =
-            self.build_self_scene_info(SelfInfoReason::ChangeTeam, char_list, monster_list, vec![]);
+        let self_info = self.build_self_scene_info(
+            SelfInfoReason::ChangeTeam,
+            char_list,
+            monster_list,
+            vec![],
+            vec![],
+            vec![],
+            assets,
+        );
 
         (leave_view, enter_view, self_info)
     }
 
-    /// Builds a monster list from entities already tracked in the [`EntityManager`].
-    ///
-    /// Unlike [`pack_scene_monsters`], this method does **not** allocate new entity
-    /// IDs or insert anything into the manager. It is used for team-change scene
-    /// syncs where monsters are already present in the client scene and only need
-    /// to be described, not freshly spawned.
     pub fn pack_monsters_from_manager(
         &self,
         entities: &EntityManager,
@@ -424,6 +624,7 @@ impl SceneManager {
             })
             .collect()
     }
+
     pub fn pack_scene_chars_for_ids(
         &self,
         char_ids: &[u64],
@@ -525,7 +726,15 @@ impl SceneManager {
             }
         }
 
-        self.build_self_scene_info(SelfInfoReason::ChangeTeam, char_list, monster_list, vec![])
+        self.build_self_scene_info(
+            SelfInfoReason::ChangeTeam,
+            char_list,
+            monster_list,
+            vec![],
+            vec![],
+            vec![],
+            assets,
+        )
     }
 
     pub fn build_teleport(
@@ -607,8 +816,8 @@ impl SceneManager {
 
     pub fn pack_scene_monsters(
         &self,
-        assets: &BeyondAssets,
-        entities: &mut EntityManager,
+        _assets: &BeyondAssets,
+        _entities: &mut EntityManager,
     ) -> Vec<SceneMonster> {
         // We don't spawn anything by default now.
         // The dynamic radius-based system will handle it.

@@ -863,7 +863,7 @@ pub struct CsFactorySttUnlockNode {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[serde(default)]
-#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CsFactoryTradeCashOrder {
     #[prost(string, tag = "1")]
     pub region: ::prost::alloc::string::String,
@@ -871,6 +871,8 @@ pub struct CsFactoryTradeCashOrder {
     pub node_id: u32,
     #[prost(uint64, tag = "3")]
     pub inst_id: u64,
+    #[prost(map = "string, int64", tag = "4")]
+    pub items: ::std::collections::HashMap<::prost::alloc::string::String, i64>,
 }
 /// ref: Proto.CS_FACTORY_TRADE_DELETE_ORDER
 #[derive(serde::Serialize, serde::Deserialize)]
@@ -987,16 +989,21 @@ pub struct CsItemBagBagToFactoryDepot {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[serde(default)]
-#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
-pub struct CsItemBagDestroyInBag {}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CsItemBagDestroyInBag {
+    #[prost(map = "int32, int64", tag = "1")]
+    pub grid_cut: ::std::collections::HashMap<i32, i64>,
+}
 /// ref: Proto.CS_ITEM_BAG_DESTROY_IN_DEPOT
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[serde(default)]
-#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CsItemBagDestroyInDepot {
     #[prost(int32, tag = "1")]
     pub depot: i32,
+    #[prost(map = "string, int64", tag = "2")]
+    pub items: ::std::collections::HashMap<::prost::alloc::string::String, i64>,
     #[prost(uint64, repeated, packed = "false", tag = "3")]
     pub inst_id_list: ::prost::alloc::vec::Vec<u64>,
 }
@@ -1004,8 +1011,10 @@ pub struct CsItemBagDestroyInDepot {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[serde(default)]
-#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CsItemBagFactoryDepotToBag {
+    #[prost(map = "string, int64", tag = "1")]
+    pub items: ::std::collections::HashMap<::prost::alloc::string::String, i64>,
     #[prost(uint64, repeated, packed = "false", tag = "2")]
     pub inst_id_list: ::prost::alloc::vec::Vec<u64>,
 }
@@ -1339,7 +1348,7 @@ pub struct CsSceneInteractTree {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[serde(default)]
-#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CsSceneInteractiveEventTrigger {
     #[prost(string, tag = "1")]
     pub scene_name: ::prost::alloc::string::String,
@@ -1347,6 +1356,11 @@ pub struct CsSceneInteractiveEventTrigger {
     pub id: u64,
     #[prost(string, tag = "3")]
     pub event_name: ::prost::alloc::string::String,
+    #[prost(map = "string, message", tag = "4")]
+    pub properties: ::std::collections::HashMap<
+        ::prost::alloc::string::String,
+        DynamicParameter,
+    >,
 }
 /// ref: Proto.CS_SCENE_KILL_CHAR
 #[derive(serde::Serialize, serde::Deserialize)]
@@ -1370,7 +1384,7 @@ pub struct CsSceneKillMonster {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[serde(default)]
-#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CsSceneLevelScriptEventTrigger {
     #[prost(string, tag = "1")]
     pub scene_name: ::prost::alloc::string::String,
@@ -1378,6 +1392,11 @@ pub struct CsSceneLevelScriptEventTrigger {
     pub script_id: i32,
     #[prost(string, tag = "3")]
     pub event_name: ::prost::alloc::string::String,
+    #[prost(map = "string, message", tag = "4")]
+    pub properties: ::std::collections::HashMap<
+        ::prost::alloc::string::String,
+        DynamicParameter,
+    >,
 }
 /// ref: Proto.CS_SCENE_LOAD_FINISH
 #[derive(serde::Serialize, serde::Deserialize)]
@@ -1594,6 +1613,11 @@ pub struct CsSceneSpawnInteractive {
     pub override_position: ::core::option::Option<Vector>,
     #[prost(message, optional, tag = "5")]
     pub override_rotation: ::core::option::Option<Vector>,
+    #[prost(map = "string, message", tag = "6")]
+    pub override_properties: ::std::collections::HashMap<
+        ::prost::alloc::string::String,
+        DynamicParameter,
+    >,
     #[prost(int32, tag = "7")]
     pub source_script_id: i32,
 }
@@ -1674,23 +1698,33 @@ pub struct CsSceneTeleport {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[serde(default)]
-#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CsSceneUpdateInteractiveProperty {
     #[prost(string, tag = "1")]
     pub scene_name: ::prost::alloc::string::String,
     #[prost(uint64, tag = "2")]
     pub id: u64,
+    #[prost(map = "string, message", tag = "3")]
+    pub properties: ::std::collections::HashMap<
+        ::prost::alloc::string::String,
+        DynamicParameter,
+    >,
 }
 /// ref: Proto.CS_SCENE_UPDATE_LEVEL_SCRIPT_PROPERTY
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[serde(default)]
-#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CsSceneUpdateLevelScriptProperty {
     #[prost(string, tag = "1")]
     pub scene_name: ::prost::alloc::string::String,
     #[prost(int32, tag = "2")]
     pub script_id: i32,
+    #[prost(map = "string, message", tag = "3")]
+    pub properties: ::std::collections::HashMap<
+        ::prost::alloc::string::String,
+        DynamicParameter,
+    >,
 }
 /// ref: Proto.CS_STOP_TRACKING_MISSION
 #[derive(serde::Serialize, serde::Deserialize)]
@@ -1731,10 +1765,15 @@ pub struct CsUpdateQuestObjective {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[serde(default)]
-#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CsWeaponAddExp {
     #[prost(uint64, tag = "1")]
     pub weaponid: u64,
+    #[prost(map = "string, uint64", tag = "2")]
+    pub cost_item_id2_count: ::std::collections::HashMap<
+        ::prost::alloc::string::String,
+        u64,
+    >,
     #[prost(uint64, repeated, packed = "false", tag = "3")]
     pub cost_weapon_ids: ::prost::alloc::vec::Vec<u64>,
 }
@@ -1793,12 +1832,17 @@ pub struct CsWikiPin {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[serde(default)]
-#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CsdFactoryInteractiveParam {
     #[prost(message, optional, tag = "1")]
     pub position: ::core::option::Option<Vector>,
     #[prost(message, optional, tag = "2")]
     pub rotation: ::core::option::Option<Vector>,
+    #[prost(map = "string, message", tag = "3")]
+    pub properties: ::std::collections::HashMap<
+        ::prost::alloc::string::String,
+        DynamicParameter,
+    >,
 }
 /// ref: Proto.CSD_FACTORY_OBSERVER_PAYLOAD_OP_CHECKOUT_CHARACTER_WORK
 #[derive(serde::Serialize, serde::Deserialize)]
@@ -2057,7 +2101,7 @@ pub struct CsdFactoryOpMoveItemGridBoxToDepot {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[serde(default)]
-#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CsdFactoryOpMoveNode {
     #[prost(uint32, tag = "1")]
     pub node_id: u32,
@@ -2373,18 +2417,23 @@ pub struct LeaveObjectInfo {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[serde(default)]
-#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct LevelScriptInfo {
     #[prost(int32, tag = "1")]
     pub script_id: i32,
     #[prost(int32, tag = "2")]
     pub state: i32,
+    #[prost(map = "string, message", tag = "3")]
+    pub properties: ::std::collections::HashMap<
+        ::prost::alloc::string::String,
+        DynamicParameter,
+    >,
 }
 /// ref: Proto.MAIL_CONTENT
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[serde(default)]
-#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MailContent {
     #[prost(string, tag = "1")]
     pub template_id: ::prost::alloc::string::String,
@@ -2396,6 +2445,11 @@ pub struct MailContent {
     pub sender_name: ::prost::alloc::string::String,
     #[prost(string, tag = "5")]
     pub sender_icon: ::prost::alloc::string::String,
+    #[prost(map = "string, string", tag = "6")]
+    pub params: ::std::collections::HashMap<
+        ::prost::alloc::string::String,
+        ::prost::alloc::string::String,
+    >,
 }
 /// ref: Proto.MISSION
 #[derive(serde::Serialize, serde::Deserialize)]
@@ -2479,19 +2533,29 @@ pub struct Quest {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[serde(default)]
-#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QuestObjective {
     #[prost(string, tag = "1")]
     pub condition_id: ::prost::alloc::string::String,
+    #[prost(map = "string, message", tag = "2")]
+    pub extra_details: ::std::collections::HashMap<
+        ::prost::alloc::string::String,
+        QuestObjectiveDetail,
+    >,
     #[prost(bool, tag = "3")]
     pub is_complete: bool,
+    #[prost(map = "string, int32", tag = "4")]
+    pub values: ::std::collections::HashMap<::prost::alloc::string::String, i32>,
 }
 /// ref: Proto.QUEST_OBJECTIVE_DETAIL
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[serde(default)]
-#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
-pub struct QuestObjectiveDetail {}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct QuestObjectiveDetail {
+    #[prost(map = "uint64, bool", tag = "2")]
+    pub hash_value: ::std::collections::HashMap<u64, bool>,
+}
 /// ref: Proto.REMOVE_ITEM_NEW_DATA
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -2860,18 +2924,20 @@ pub struct ScEnterSceneNotify {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[serde(default)]
-#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ScEquipPutoff {
     #[prost(uint64, tag = "1")]
     pub charid: u64,
     #[prost(int32, tag = "2")]
     pub slotid: i32,
+    #[prost(map = "string, int32", tag = "3")]
+    pub suitinfo: ::std::collections::HashMap<::prost::alloc::string::String, i32>,
 }
 /// ref: Proto.SC_EQUIP_PUTON
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[serde(default)]
-#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ScEquipPuton {
     #[prost(uint64, tag = "1")]
     pub charid: u64,
@@ -2879,8 +2945,15 @@ pub struct ScEquipPuton {
     pub slotid: i32,
     #[prost(uint64, tag = "3")]
     pub equipid: u64,
+    #[prost(map = "string, int32", tag = "4")]
+    pub suitinfo: ::std::collections::HashMap<::prost::alloc::string::String, i32>,
     #[prost(uint64, tag = "5")]
     pub put_off_charid: u64,
+    #[prost(map = "string, int32", tag = "6")]
+    pub old_owner_suitinfo: ::std::collections::HashMap<
+        ::prost::alloc::string::String,
+        i32,
+    >,
 }
 /// ref: Proto.SC_FACTORY_COMMON_RET
 #[derive(serde::Serialize, serde::Deserialize)]
@@ -2931,8 +3004,13 @@ pub struct ScFactoryHsSync {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[serde(default)]
-#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
-pub struct ScFactoryManuallyWorkCancel {}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ScFactoryManuallyWorkCancel {
+    #[prost(map = "string, int32", tag = "1")]
+    pub back_items: ::std::collections::HashMap<::prost::alloc::string::String, i32>,
+    #[prost(map = "string, int32", tag = "2")]
+    pub break_items: ::std::collections::HashMap<::prost::alloc::string::String, i32>,
+}
 /// ref: Proto.SC_FACTORY_MANUFACTURE_CANCEL
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -3395,10 +3473,15 @@ pub struct ScFactorySoilPlant {}
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[serde(default)]
-#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ScFactoryStatisticRequire {
     #[prost(message, optional, tag = "1")]
     pub power: ::core::option::Option<ScdFactoryStatisticRecord>,
+    #[prost(map = "string, message", tag = "2")]
+    pub productivity: ::std::collections::HashMap<
+        ::prost::alloc::string::String,
+        ScdFactoryStatisticRecord,
+    >,
 }
 /// ref: Proto.SC_FACTORY_SYNC
 #[derive(serde::Serialize, serde::Deserialize)]
@@ -3608,10 +3691,17 @@ pub struct ScItemBagSync {
 #[serde(default)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ScItemBagSyncModify {
+    #[prost(map = "int32, message", tag = "1")]
+    pub depot: ::std::collections::HashMap<i32, ScdItemDepotModify>,
     #[prost(message, optional, tag = "2")]
     pub bag: ::core::option::Option<ScdItemBagModify>,
     #[prost(message, optional, tag = "3")]
     pub factory_depot: ::core::option::Option<ScdItemDepotModify>,
+    #[prost(map = "string, bool", tag = "4")]
+    pub cannot_destroy: ::std::collections::HashMap<
+        ::prost::alloc::string::String,
+        bool,
+    >,
     #[prost(message, optional, tag = "11")]
     pub use_blackboard: ::core::option::Option<ScdItemUseBlackboard>,
     #[prost(bool, tag = "12")]
@@ -4208,12 +4298,17 @@ pub struct ScSceneUnlockArea {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[serde(default)]
-#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ScSceneUpdateInteractiveProperty {
     #[prost(string, tag = "1")]
     pub scene_name: ::prost::alloc::string::String,
     #[prost(uint64, tag = "2")]
     pub id: u64,
+    #[prost(map = "string, message", tag = "3")]
+    pub properties: ::std::collections::HashMap<
+        ::prost::alloc::string::String,
+        DynamicParameter,
+    >,
     #[prost(bool, tag = "4")]
     pub client_operate: bool,
 }
@@ -4221,12 +4316,17 @@ pub struct ScSceneUpdateInteractiveProperty {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[serde(default)]
-#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ScSceneUpdateLevelScriptProperty {
     #[prost(string, tag = "1")]
     pub scene_name: ::prost::alloc::string::String,
     #[prost(int32, tag = "2")]
     pub script_id: i32,
+    #[prost(map = "string, message", tag = "3")]
+    pub properties: ::std::collections::HashMap<
+        ::prost::alloc::string::String,
+        DynamicParameter,
+    >,
     #[prost(bool, tag = "4")]
     pub client_operate: bool,
 }
@@ -4244,6 +4344,11 @@ pub struct ScSelfSceneInfo {
     pub detail: ::core::option::Option<SceneObjectDetailContainer>,
     #[prost(int32, tag = "4")]
     pub last_camp_id: i32,
+    #[prost(map = "string, string", tag = "5")]
+    pub scene_var: ::std::collections::HashMap<
+        ::prost::alloc::string::String,
+        ::prost::alloc::string::String,
+    >,
     #[prost(uint64, repeated, packed = "false", tag = "7")]
     pub revive_chars: ::prost::alloc::vec::Vec<u64>,
     #[prost(message, repeated, tag = "8")]
@@ -4337,10 +4442,14 @@ pub struct ScSyncAllMail {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[serde(default)]
-#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ScSyncAllMission {
     #[prost(string, tag = "1")]
     pub track_mission_id: ::prost::alloc::string::String,
+    #[prost(map = "string, message", tag = "2")]
+    pub missions: ::std::collections::HashMap<::prost::alloc::string::String, Mission>,
+    #[prost(map = "string, message", tag = "3")]
+    pub cur_quests: ::std::collections::HashMap<::prost::alloc::string::String, Quest>,
 }
 /// ref: Proto.SC_SYNC_ALL_ROLE_SCENE
 #[derive(serde::Serialize, serde::Deserialize)]
@@ -4398,8 +4507,13 @@ pub struct ScSyncBaseData {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[serde(default)]
-#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ScSyncBlocMissionInfo {
+    #[prost(map = "string, string", tag = "1")]
+    pub bloc_missions: ::std::collections::HashMap<
+        ::prost::alloc::string::String,
+        ::prost::alloc::string::String,
+    >,
     #[prost(bool, tag = "2")]
     pub reward_got: bool,
     #[prost(int64, tag = "3")]
@@ -4522,8 +4636,11 @@ pub struct ScSyncWallet {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[serde(default)]
-#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
-pub struct ScSyncWikiPin {}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ScSyncWikiPin {
+    #[prost(map = "int32, string", tag = "1")]
+    pub pin_map: ::std::collections::HashMap<i32, ::prost::alloc::string::String>,
+}
 /// ref: Proto.SC_TRACK_MISSION_CHANGE
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -4927,6 +5044,26 @@ pub struct ScdFactoryObserverPayloadRetCheckoutCharacterWorkCharacter {
 #[serde(default)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ScdFactoryObserverPayloadRetCheckoutOutsideResource {
+    #[prost(map = "string, int32", tag = "1")]
+    pub place_bandwidth: ::std::collections::HashMap<
+        ::prost::alloc::string::String,
+        i32,
+    >,
+    #[prost(map = "string, int32", tag = "2")]
+    pub place_bandwidth_use: ::std::collections::HashMap<
+        ::prost::alloc::string::String,
+        i32,
+    >,
+    #[prost(map = "string, int32", tag = "11")]
+    pub place_bandwidth_sp: ::std::collections::HashMap<
+        ::prost::alloc::string::String,
+        i32,
+    >,
+    #[prost(map = "string, int32", tag = "12")]
+    pub place_bandwidth_sp_use: ::std::collections::HashMap<
+        ::prost::alloc::string::String,
+        i32,
+    >,
     #[prost(message, repeated, tag = "3")]
     pub place_bandwidth_node_uses: ::prost::alloc::vec::Vec<
         ScdFactoryObserverPayloadRetCheckoutOutsideResourceNodeUse,
@@ -5389,10 +5526,22 @@ pub struct ScdFactoryStatisticLastday {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[serde(default)]
-#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ScdFactoryStatisticLastdayDay {
     #[prost(int64, tag = "1")]
     pub day_ts: i64,
+    #[prost(map = "string, int64", tag = "2")]
+    pub from_manufacture: ::std::collections::HashMap<
+        ::prost::alloc::string::String,
+        i64,
+    >,
+    #[prost(map = "string, int64", tag = "3")]
+    pub from_trader: ::std::collections::HashMap<::prost::alloc::string::String, i64>,
+    #[prost(map = "string, int64", tag = "4")]
+    pub from_productivity: ::std::collections::HashMap<
+        ::prost::alloc::string::String,
+        i64,
+    >,
     #[prost(string, repeated, tag = "5")]
     pub bookmark_item_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
 }
@@ -5435,12 +5584,16 @@ pub struct ScdFactoryStatisticRecord {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[serde(default)]
-#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ScdFactorySttNode {
     #[prost(string, tag = "1")]
     pub id: ::prost::alloc::string::String,
     #[prost(int32, tag = "2")]
     pub state: i32,
+    #[prost(map = "string, int32", tag = "3")]
+    pub values: ::std::collections::HashMap<::prost::alloc::string::String, i32>,
+    #[prost(map = "string, bool", tag = "4")]
+    pub flags: ::std::collections::HashMap<::prost::alloc::string::String, bool>,
 }
 /// ref: Proto.SCD_FACTORY_SUB_PORT
 #[derive(serde::Serialize, serde::Deserialize)]
@@ -5675,8 +5828,11 @@ pub struct ScdFactorySyncComponentHealTower {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[serde(default)]
-#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
-pub struct ScdFactorySyncComponentInventory {}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ScdFactorySyncComponentInventory {
+    #[prost(map = "uint32, int32", tag = "1")]
+    pub items: ::std::collections::HashMap<u32, i32>,
+}
 /// ref: Proto.SCD_FACTORY_SYNC_COMPONENT_POWER_POLE
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -5768,8 +5924,11 @@ pub struct ScdFactorySyncComponentTravelPole {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[serde(default)]
-#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
-pub struct ScdFactorySyncDynamicProperty {}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ScdFactorySyncDynamicProperty {
+    #[prost(map = "int32, message", tag = "1")]
+    pub values: ::std::collections::HashMap<i32, ScdFactorySyncDynamicPropertyValue>,
+}
 /// ref: Proto.SCD_FACTORY_SYNC_DYNAMIC_PROPERTY_VALUE
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -5890,6 +6049,8 @@ pub struct ScdFactorySyncNode {
     pub interactive_object: ::core::option::Option<ScdFactorySyncInteractiveObject>,
     #[prost(message, optional, tag = "7")]
     pub dynamic_property: ::core::option::Option<ScdFactorySyncDynamicProperty>,
+    #[prost(map = "int32, uint32", tag = "11")]
+    pub component_pos: ::std::collections::HashMap<i32, u32>,
     #[prost(message, repeated, tag = "12")]
     pub components: ::prost::alloc::vec::Vec<ScdFactorySyncComponent>,
 }
@@ -6123,6 +6284,11 @@ pub struct ScdItemBagModify {
 #[serde(default)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ScdItemDepot {
+    #[prost(map = "string, int64", tag = "1")]
+    pub stackable_items: ::std::collections::HashMap<
+        ::prost::alloc::string::String,
+        i64,
+    >,
     #[prost(message, repeated, tag = "2")]
     pub inst_list: ::prost::alloc::vec::Vec<ScdItemGrid>,
 }
@@ -6132,6 +6298,8 @@ pub struct ScdItemDepot {
 #[serde(default)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ScdItemDepotModify {
+    #[prost(map = "string, int64", tag = "1")]
+    pub items: ::std::collections::HashMap<::prost::alloc::string::String, i64>,
     #[prost(message, repeated, tag = "2")]
     pub inst_list: ::prost::alloc::vec::Vec<ScdItemGrid>,
     #[prost(uint64, repeated, packed = "false", tag = "3")]
@@ -6156,8 +6324,11 @@ pub struct ScdItemGrid {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[serde(default)]
-#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
-pub struct ScdItemUseBlackboard {}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ScdItemUseBlackboard {
+    #[prost(map = "string, int64", tag = "1")]
+    pub last_use_time: ::std::collections::HashMap<::prost::alloc::string::String, i64>,
+}
 /// ref: Proto.SCENE_CHARACTER
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -6219,6 +6390,11 @@ pub struct SceneInteractive {
     pub common_info: ::core::option::Option<SceneObjectCommonInfo>,
     #[prost(uint64, tag = "2")]
     pub origin_id: u64,
+    #[prost(map = "string, message", tag = "4")]
+    pub properties: ::std::collections::HashMap<
+        ::prost::alloc::string::String,
+        DynamicParameter,
+    >,
 }
 /// ref: Proto.SCENE_MAP_MARK
 #[derive(serde::Serialize, serde::Deserialize)]
@@ -6344,6 +6520,8 @@ pub struct ShopInfo {
     pub shopid: ::prost::alloc::string::String,
     #[prost(int32, tag = "2")]
     pub r#type: i32,
+    #[prost(map = "int32, int32", tag = "3")]
+    pub already_sell_count: ::std::collections::HashMap<i32, i32>,
     #[prost(message, repeated, tag = "4")]
     pub discount_info: ::prost::alloc::vec::Vec<DiscountInfo>,
 }
