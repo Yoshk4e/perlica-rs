@@ -23,12 +23,13 @@ pub async fn on_cs_char_set_battle_info(ctx: &mut NetContext<'_>, req: CsCharSet
 
         debug!(
             "Battle info updated: objid={}, hp={}, ultimate_sp={}",
-            req.objid,
-            bi.hp,
-            bi.ultimatesp
+            req.objid, bi.hp, bi.ultimatesp
         );
     } else {
-        warn!("Battle info update ignored: missing data for objid={}", req.objid);
+        warn!(
+            "Battle info update ignored: missing data for objid={}",
+            req.objid
+        );
     }
 }
 
@@ -38,8 +39,7 @@ pub async fn on_cs_char_bag_set_team_leader(
 ) -> ScCharBagSetTeamLeader {
     debug!(
         "Set team leader request: team_index={}, leader_id={}",
-        req.team_index,
-        req.leaderid
+        req.team_index, req.leaderid
     );
 
     let team_idx = req.team_index as usize;
@@ -55,18 +55,19 @@ pub async fn on_cs_char_bag_set_team_leader(
             team.leader_index = CharIndex::from_object_id(req.leaderid);
             info!(
                 "Team leader updated: team_index={}, leader_id={}",
-                req.team_index,
-                req.leaderid
+                req.team_index, req.leaderid
             );
         } else {
             warn!(
                 "Rejected team leader update: leader_id={} is not in team_index={}",
-                req.leaderid,
-                req.team_index
+                req.leaderid, req.team_index
             );
         }
     } else {
-        error!("Invalid team index for team leader update: team_index={}", req.team_index);
+        error!(
+            "Invalid team index for team leader update: team_index={}",
+            req.team_index
+        );
     }
 
     ScCharBagSetTeamLeader {
@@ -148,7 +149,10 @@ pub async fn on_cs_char_bag_set_curr_team_index(
         })
         .await
     {
-        error!("Failed to send current team index acknowledgement: {:?}", error);
+        error!(
+            "Failed to send current team index acknowledgement: {:?}",
+            error
+        );
         return;
     }
 
@@ -238,9 +242,7 @@ pub async fn on_cs_char_bag_set_team(ctx: &mut NetContext<'_>, req: CsCharBagSet
     {
         error!(
             "Failed to send character bag set team acknowledgement: uid={}, team_index={}, error={:?}",
-            uid,
-            req.team_index,
-            error
+            uid, req.team_index, error
         );
         return;
     }
@@ -259,8 +261,7 @@ pub async fn on_cs_char_bag_set_team(ctx: &mut NetContext<'_>, req: CsCharBagSet
             if let Err(error) = ctx.notify(leave).await {
                 error!(
                     "Failed to notify team leave view: uid={}, error={:?}",
-                    uid,
-                    error
+                    uid, error
                 );
             }
         }
@@ -268,16 +269,14 @@ pub async fn on_cs_char_bag_set_team(ctx: &mut NetContext<'_>, req: CsCharBagSet
         if let Err(error) = ctx.notify(enter_view).await {
             error!(
                 "Failed to notify team enter view: uid={}, error={:?}",
-                uid,
-                error
+                uid, error
             );
         }
 
         if let Err(error) = ctx.notify(self_info).await {
             error!(
                 "Failed to notify team self info: uid={}, error={:?}",
-                uid,
-                error
+                uid, error
             );
         }
 
@@ -294,8 +293,7 @@ pub async fn on_cs_char_bag_set_team(ctx: &mut NetContext<'_>, req: CsCharBagSet
         if let Err(error) = ctx.notify(self_info).await {
             error!(
                 "Failed to notify inactive team update: uid={}, error={:?}",
-                uid,
-                error
+                uid, error
             );
         }
     }
@@ -312,9 +310,7 @@ pub async fn on_cs_char_bag_set_team_name(
 ) -> ScCharBagSetTeamName {
     debug!(
         "Set team name request: uid={}, team_index={}, name={}",
-        ctx.player.uid,
-        req.team_index,
-        req.team_name
+        ctx.player.uid, req.team_index, req.team_name
     );
 
     let team_index = req.team_index as usize;
@@ -323,15 +319,12 @@ pub async fn on_cs_char_bag_set_team_name(
         team.name = req.team_name.clone();
         info!(
             "Team renamed: uid={}, team_index={}, name={}",
-            ctx.player.uid,
-            team_index,
-            req.team_name
+            ctx.player.uid, team_index, req.team_name
         );
     } else {
         error!(
             "Team rename failed: uid={}, invalid team_index={}",
-            ctx.player.uid,
-            team_index
+            ctx.player.uid, team_index
         );
         return ScCharBagSetTeamName {
             team_index: req.team_index,
@@ -362,8 +355,7 @@ pub async fn on_cs_char_level_up(ctx: &mut NetContext<'_>, req: CsCharLevelUp) -
     let Some(char_data) = ctx.player.char_bag.get_char_by_objid_mut(req.char_obj_id) else {
         warn!(
             "Character level up failed: uid={}, unknown char_id={}",
-            ctx.player.uid,
-            req.char_obj_id
+            ctx.player.uid, req.char_obj_id
         );
         return ScCharLevelUp {
             char_obj_id: req.char_obj_id,
@@ -388,19 +380,17 @@ pub async fn on_cs_char_level_up(ctx: &mut NetContext<'_>, req: CsCharLevelUp) -
     if char_data.level < max_level as i32 {
         char_data.level = (char_data.level + 1).min(max_level as i32);
 
-        if let Some(attrs) = ctx
-            .assets
-            .characters
-            .get_stats(&template_id, char_data.level, break_stage)
+        if let Some(attrs) =
+            ctx.assets
+                .characters
+                .get_stats(&template_id, char_data.level, break_stage)
         {
             char_data.hp = attrs.hp;
         }
 
         info!(
             "Character leveled up: uid={}, char_id={}, new_level={}",
-            ctx.player.uid,
-            req.char_obj_id,
-            char_data.level
+            ctx.player.uid, req.char_obj_id, char_data.level
         );
     }
 
@@ -418,8 +408,7 @@ pub async fn on_cs_char_level_up(ctx: &mut NetContext<'_>, req: CsCharLevelUp) -
         if let Err(error) = ctx.notify(attr_msg).await {
             error!(
                 "Failed to sync character attributes after level up: uid={}, error={:?}",
-                ctx.player.uid,
-                error
+                ctx.player.uid, error
             );
         }
     }
@@ -434,8 +423,7 @@ pub async fn on_cs_char_level_up(ctx: &mut NetContext<'_>, req: CsCharLevelUp) -
     {
         error!(
             "Failed to sync character level and exp: uid={}, error={:?}",
-            ctx.player.uid,
-            error
+            ctx.player.uid, error
         );
     }
 
@@ -451,16 +439,13 @@ pub async fn on_cs_char_level_up(ctx: &mut NetContext<'_>, req: CsCharLevelUp) -
 pub async fn on_cs_char_break(ctx: &mut NetContext<'_>, req: CsCharBreak) -> ScCharBreak {
     debug!(
         "Character break request: uid={}, char_id={}, target_stage={}",
-        ctx.player.uid,
-        req.char_obj_id,
-        req.stage
+        ctx.player.uid, req.char_obj_id, req.stage
     );
 
     let Some(char_data) = ctx.player.char_bag.get_char_by_objid_mut(req.char_obj_id) else {
         warn!(
             "Character break failed: uid={}, unknown char_id={}",
-            ctx.player.uid,
-            req.char_obj_id
+            ctx.player.uid, req.char_obj_id
         );
         return ScCharBreak {
             char_obj_id: req.char_obj_id,
@@ -474,27 +459,22 @@ pub async fn on_cs_char_break(ctx: &mut NetContext<'_>, req: CsCharBreak) -> ScC
     if new_stage == char_data.break_stage + 1 {
         char_data.break_stage = new_stage;
 
-        if let Some(attrs) = ctx
-            .assets
-            .characters
-            .get_stats(&template_id, char_data.level, new_stage)
+        if let Some(attrs) =
+            ctx.assets
+                .characters
+                .get_stats(&template_id, char_data.level, new_stage)
         {
             char_data.hp = attrs.hp;
         }
 
         info!(
             "Character breakthrough complete: uid={}, char_id={}, new_stage={}",
-            ctx.player.uid,
-            req.char_obj_id,
-            new_stage
+            ctx.player.uid, req.char_obj_id, new_stage
         );
     } else {
         warn!(
             "Character break rejected: uid={}, char_id={}, current_stage={}, requested_stage={}",
-            ctx.player.uid,
-            req.char_obj_id,
-            char_data.break_stage,
-            new_stage
+            ctx.player.uid, req.char_obj_id, char_data.break_stage, new_stage
         );
     }
 
@@ -511,8 +491,7 @@ pub async fn on_cs_char_break(ctx: &mut NetContext<'_>, req: CsCharBreak) -> ScC
         if let Err(error) = ctx.notify(attr_msg).await {
             error!(
                 "Failed to sync character attributes after breakthrough: uid={}, error={:?}",
-                ctx.player.uid,
-                error
+                ctx.player.uid, error
             );
         }
     }
@@ -532,9 +511,7 @@ pub async fn on_cs_char_set_normal_skill(
 ) -> ScCharSetNormalSkill {
     debug!(
         "Set normal skill request: uid={}, char_id={}, skill_id={}",
-        ctx.player.uid,
-        req.char_obj_id,
-        req.normal_skillid
+        ctx.player.uid, req.char_obj_id, req.normal_skillid
     );
 
     if let Some(char_data) = ctx.player.char_bag.get_char_by_objid_mut(req.char_obj_id) {
@@ -545,15 +522,12 @@ pub async fn on_cs_char_set_normal_skill(
 
         info!(
             "Normal skill updated: uid={}, char_id={}, skill_id={}",
-            ctx.player.uid,
-            req.char_obj_id,
-            req.normal_skillid
+            ctx.player.uid, req.char_obj_id, req.normal_skillid
         );
     } else {
         warn!(
             "Set normal skill ignored: uid={}, unknown char_id={}",
-            ctx.player.uid,
-            req.char_obj_id
+            ctx.player.uid, req.char_obj_id
         );
     }
 
@@ -573,16 +547,13 @@ pub async fn on_cs_char_skill_level_up(
 ) -> ScCharSkillLevelUp {
     debug!(
         "Skill level up request: uid={}, char_id={}, skill_id={}",
-        ctx.player.uid,
-        req.objid,
-        req.skill_id
+        ctx.player.uid, req.objid, req.skill_id
     );
 
     let Some(char_data) = ctx.player.char_bag.get_char_by_objid_mut(req.objid) else {
         warn!(
             "Skill level up failed: uid={}, unknown char_id={}",
-            ctx.player.uid,
-            req.objid
+            ctx.player.uid, req.objid
         );
         return ScCharSkillLevelUp {
             objid: req.objid,
@@ -612,10 +583,7 @@ pub async fn on_cs_char_skill_level_up(
 
     info!(
         "Skill leveled up: uid={}, char_id={}, skill_id={}, new_level={}",
-        ctx.player.uid,
-        req.objid,
-        req.skill_id,
-        new_level
+        ctx.player.uid, req.objid, req.skill_id, new_level
     );
 
     ScCharSkillLevelUp {
@@ -638,10 +606,7 @@ pub async fn on_cs_char_set_team_skill(
 ) -> ScCharSetTeamSkill {
     debug!(
         "Set team skill request: uid={}, char_id={}, team_idx={}, skill_id={}",
-        ctx.player.uid,
-        req.objid,
-        req.team_idx,
-        req.normal_skillid
+        ctx.player.uid, req.objid, req.team_idx, req.normal_skillid
     );
 
     if let Some(char_data) = ctx.player.char_bag.get_char_by_objid_mut(req.objid) {
@@ -652,15 +617,12 @@ pub async fn on_cs_char_set_team_skill(
 
         info!(
             "Team skill binding updated: uid={}, char_id={}, skill_id={}",
-            ctx.player.uid,
-            req.objid,
-            req.normal_skillid
+            ctx.player.uid, req.objid, req.normal_skillid
         );
     } else {
         warn!(
             "Set team skill ignored: uid={}, unknown char_id={}",
-            ctx.player.uid,
-            req.objid
+            ctx.player.uid, req.objid
         );
     }
 

@@ -32,8 +32,7 @@ pub async fn on_login(ctx: &mut NetContext<'_>, req: CsLogin) -> ScLogin {
             let cfg = sconfig::Config::load();
             warn!(
                 "Database load failed; using starter data instead: uid={}, error={}",
-                ctx.player.uid,
-                error
+                ctx.player.uid, error
             );
             ctx.player.char_bag =
                 CharBag::new(ctx.assets, &cfg.as_ref().unwrap().default_team.team.clone())
@@ -101,8 +100,7 @@ pub(crate) async fn run_login_sequence(ctx: &mut NetContext<'_>) {
 
         debug!(
             "Login sequence phase: uid={}, phase={:?}",
-            ctx.player.uid,
-            phase
+            ctx.player.uid, phase
         );
 
         let ok = match phase {
@@ -123,8 +121,7 @@ pub(crate) async fn run_login_sequence(ctx: &mut NetContext<'_>) {
         } else {
             warn!(
                 "Login sequence failed: uid={}, phase={:?}",
-                ctx.player.uid,
-                phase
+                ctx.player.uid, phase
             );
             break;
         }

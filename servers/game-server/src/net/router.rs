@@ -226,7 +226,10 @@ async fn handle_merge_msg(
         let available = data.len() - cursor.position() as usize;
 
         if sub_head_size == 0 || sub_body_size == 0 || needed > available {
-            warn!("Malformed sub-packet Detected, aborting {}, {} , {:?}", sub_head_size, sub_body_size, available);
+            warn!(
+                "Malformed sub-packet Detected, aborting {}, {} , {:?}",
+                sub_head_size, sub_body_size, available
+            );
             break;
         }
 

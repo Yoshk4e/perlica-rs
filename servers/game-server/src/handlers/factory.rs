@@ -43,8 +43,7 @@ pub async fn push_factory(ctx: &mut NetContext<'_>) -> bool {
     if let Err(error) = ctx.notify(msg).await {
         error!(
             "Failed to push factory context: uid={}, error={:?}",
-            ctx.player.uid,
-            error
+            ctx.player.uid, error
         );
         return false;
     }

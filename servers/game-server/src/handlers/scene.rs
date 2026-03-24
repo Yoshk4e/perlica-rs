@@ -208,8 +208,7 @@ async fn send_revival_status_updates(ctx: &mut NetContext<'_>) {
         {
             error!(
                 "Failed to send revival status update for {}: {:?}",
-                objid,
-                error
+                objid, error
             );
         }
     }
@@ -280,9 +279,7 @@ pub async fn on_cs_scene_interactive_event_trigger(
 ) -> ScSceneInteractiveEventTrigger {
     debug!(
         "Interactive event trigger: scene={}, id={}, event={}",
-        req.scene_name,
-        req.id,
-        req.event_name
+        req.scene_name, req.id, req.event_name
     );
 
     ScSceneInteractiveEventTrigger {}

@@ -22,8 +22,7 @@ pub async fn push_char_bag(ctx: &mut NetContext<'_>) -> bool {
         Err(error) => {
             error!(
                 "Failed to build character bag info: uid={}, error={:?}",
-                ctx.player.uid,
-                error
+                ctx.player.uid, error
             );
             false
         }
@@ -58,8 +57,7 @@ pub async fn push_char_attrs(ctx: &mut NetContext<'_>) -> bool {
         if let Err(error) = ctx.notify(msg).await {
             error!(
                 "Failed to push character attributes: uid={}, error={:?}",
-                ctx.player.uid,
-                error
+                ctx.player.uid, error
             );
             return false;
         }
@@ -85,8 +83,7 @@ pub async fn push_char_status(ctx: &mut NetContext<'_>) -> bool {
         if let Err(error) = ctx.notify(msg).await {
             error!(
                 "Failed to push character status: uid={}, error={:?}",
-                ctx.player.uid,
-                error
+                ctx.player.uid, error
             );
             return false;
         }
@@ -130,8 +127,7 @@ pub async fn push_char_status_for_ids(ctx: &mut NetContext<'_>, obj_ids: &[u64])
         if let Err(error) = ctx.notify(msg).await {
             error!(
                 "Failed to push character status: uid={}, error={:?}",
-                ctx.player.uid,
-                error
+                ctx.player.uid, error
             );
             return false;
         }

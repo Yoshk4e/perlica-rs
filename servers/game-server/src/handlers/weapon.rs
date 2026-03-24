@@ -17,9 +17,7 @@ use tracing::{debug, error};
 pub async fn on_cs_weapon_puton(ctx: &mut NetContext<'_>, req: CsWeaponPuton) -> ScWeaponPuton {
     debug!(
         "Weapon put-on request: uid={}, char_id={}, weapon_id={}",
-        ctx.player.uid,
-        req.charid,
-        req.weaponid
+        ctx.player.uid, req.charid, req.weaponid
     );
 
     let response = handle_weapon_puton(&mut ctx.player.char_bag, req.charid, req.weaponid);
@@ -27,10 +25,7 @@ pub async fn on_cs_weapon_puton(ctx: &mut NetContext<'_>, req: CsWeaponPuton) ->
     if let Err(error) = &response {
         error!(
             "Weapon put-on failed: uid={}, char_id={}, weapon_id={}, error={:?}",
-            ctx.player.uid,
-            req.charid,
-            req.weaponid,
-            error
+            ctx.player.uid, req.charid, req.weaponid, error
         );
     }
 
@@ -64,9 +59,7 @@ pub async fn on_cs_weapon_add_exp(ctx: &mut NetContext<'_>, req: CsWeaponAddExp)
     if let Err(error) = &response {
         error!(
             "Weapon add-exp failed: uid={}, weapon_id={}, error={:?}",
-            ctx.player.uid,
-            req.weaponid,
-            error
+            ctx.player.uid, req.weaponid, error
         );
     }
 
@@ -87,8 +80,7 @@ pub async fn on_cs_weapon_breakthrough(
 ) -> ScWeaponBreakthrough {
     debug!(
         "Weapon breakthrough request: uid={}, weapon_id={}",
-        ctx.player.uid,
-        req.weaponid
+        ctx.player.uid, req.weaponid
     );
 
     let response = handle_weapon_breakthrough(&mut ctx.player.char_bag, req.weaponid, ctx.assets);
@@ -96,9 +88,7 @@ pub async fn on_cs_weapon_breakthrough(
     if let Err(error) = &response {
         error!(
             "Weapon breakthrough failed: uid={}, weapon_id={}, error={:?}",
-            ctx.player.uid,
-            req.weaponid,
-            error
+            ctx.player.uid, req.weaponid, error
         );
     }
 
@@ -119,9 +109,7 @@ pub async fn on_cs_weapon_attach_gem(
 ) -> ScWeaponAttachGem {
     debug!(
         "Weapon attach-gem request: uid={}, weapon_id={}, gem_id={}",
-        ctx.player.uid,
-        req.weaponid,
-        req.gemid
+        ctx.player.uid, req.weaponid, req.gemid
     );
 
     let response = handle_weapon_attach_gem(&mut ctx.player.char_bag, req.weaponid, req.gemid);
@@ -129,10 +117,7 @@ pub async fn on_cs_weapon_attach_gem(
     if let Err(error) = &response {
         error!(
             "Weapon attach-gem failed: uid={}, weapon_id={}, gem_id={}, error={:?}",
-            ctx.player.uid,
-            req.weaponid,
-            req.gemid,
-            error
+            ctx.player.uid, req.weaponid, req.gemid, error
         );
     }
 
@@ -154,8 +139,7 @@ pub async fn on_cs_weapon_detach_gem(
 ) -> ScWeaponDetachGem {
     debug!(
         "Weapon detach-gem request: uid={}, weapon_id={}",
-        ctx.player.uid,
-        req.weaponid
+        ctx.player.uid, req.weaponid
     );
 
     let response = handle_weapon_detach_gem(&mut ctx.player.char_bag, req.weaponid);
@@ -163,9 +147,7 @@ pub async fn on_cs_weapon_detach_gem(
     if let Err(error) = &response {
         error!(
             "Weapon detach-gem failed: uid={}, weapon_id={}, error={:?}",
-            ctx.player.uid,
-            req.weaponid,
-            error
+            ctx.player.uid, req.weaponid, error
         );
     }
 
