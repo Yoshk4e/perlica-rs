@@ -1,5 +1,5 @@
+use crate::error::{ConfigError, Result};
 use crate::tables::skill_patch::{SkillPatchBundle, SkillPatchEntry, SkillPatchTable};
-use anyhow::{Context, Result};
 use std::collections::HashMap;
 use std::path::Path;
 
@@ -10,10 +10,15 @@ pub struct SkillAssets {
 impl SkillAssets {
     pub(super) fn load(tables_dir: &Path) -> Result<Self> {
         let path = tables_dir.join("SkillPatchTable.json");
-        let contents = std::fs::read_to_string(&path)
-            .with_context(|| format!("Failed to read {}", path.display()))?;
-        let table: SkillPatchTable = serde_json::from_str(&contents)
-            .with_context(|| format!("Failed to parse {}", path.display()))?;
+        let contents = std::fs::read_to_string(&path).map_err(|e| ConfigError::ReadFile {
+            path: path.clone(),
+            source: e,
+        })?;
+        let table: SkillPatchTable =
+            serde_json::from_str(&contents).map_err(|e| ConfigError::ParseJson {
+                path: path.clone(),
+                source: e,
+            })?;
         Ok(Self { data: table })
     }
 

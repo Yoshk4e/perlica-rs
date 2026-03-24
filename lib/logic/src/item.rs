@@ -1,4 +1,4 @@
-use anyhow::{Context, Result, bail};
+use crate::error::{LogicError, Result};
 use common::time::now_ms;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -188,17 +188,27 @@ impl WeaponDepot {
     /// Returns the removed weapon if found
     /// Fails if the weapon is equipped or locked
     pub fn remove_weapon(&mut self, inst_id: WeaponInstId) -> Result<WeaponInstance> {
-        let weapon = self.weapons.get(&inst_id).context("Weapon not found")?;
+        let weapon = self
+            .weapons
+            .get(&inst_id)
+            .ok_or_else(|| LogicError::NotFound("Weapon not found".into()))?;
 
         if weapon.is_equipped() {
-            bail!("Cannot remove equipped weapon");
+            return Err(LogicError::InvalidOperation(
+                "Cannot remove equipped weapon".into(),
+            ));
         }
 
         if weapon.is_lock {
-            bail!("Cannot remove locked weapon");
+            return Err(LogicError::InvalidOperation(
+                "Cannot remove locked weapon".into(),
+            ));
         }
 
-        let weapon = self.weapons.remove(&inst_id).context("Weapon not found")?;
+        let weapon = self
+            .weapons
+            .remove(&inst_id)
+            .ok_or_else(|| LogicError::NotFound("Weapon not found".into()))?;
 
         debug!("Removed weapon: inst_id={}", inst_id.as_u64());
         Ok(weapon)
@@ -232,11 +242,13 @@ impl WeaponDepot {
         let weapon = self
             .weapons
             .get(&weapon_inst_id)
-            .context("Weapon not found")?;
+            .ok_or_else(|| LogicError::NotFound("Weapon not found".into()))?;
 
         // Check if already equipped to this character
         if weapon.equip_char_id == char_id {
-            bail!("Weapon already equipped to this character");
+            return Err(LogicError::InvalidOperation(
+                "Weapon already equipped to this character".into(),
+            ));
         }
 
         let prev_char_id = weapon.equip_char_id;
@@ -261,7 +273,7 @@ impl WeaponDepot {
         let weapon = self
             .weapons
             .get_mut(&weapon_inst_id)
-            .context("Weapon not found")?;
+            .ok_or_else(|| LogicError::NotFound("Weapon not found".into()))?;
         weapon.equip_char_id = char_id;
 
         self.equipped_weapons.insert(char_id, weapon_inst_id);
@@ -282,7 +294,7 @@ impl WeaponDepot {
         let weapon = self
             .weapons
             .get_mut(&weapon_inst_id)
-            .context("Weapon not found")?;
+            .ok_or_else(|| LogicError::NotFound("Weapon not found".into()))?;
 
         if !weapon.is_equipped() {
             return Ok(false);
@@ -334,7 +346,10 @@ impl WeaponDepot {
 
     /// Set the lock status of a weapon
     pub fn set_lock(&mut self, inst_id: WeaponInstId, is_lock: bool) -> Result<()> {
-        let weapon = self.weapons.get_mut(&inst_id).context("Weapon not found")?;
+        let weapon = self
+            .weapons
+            .get_mut(&inst_id)
+            .ok_or_else(|| LogicError::NotFound("Weapon not found".into()))?;
 
         weapon.is_lock = is_lock;
         debug!("Set weapon {} lock status to {}", inst_id.as_u64(), is_lock);
@@ -343,7 +358,10 @@ impl WeaponDepot {
 
     /// Mark a weapon as no longer new
     pub fn clear_new_flag(&mut self, inst_id: WeaponInstId) -> Result<()> {
-        let weapon = self.weapons.get_mut(&inst_id).context("Weapon not found")?;
+        let weapon = self
+            .weapons
+            .get_mut(&inst_id)
+            .ok_or_else(|| LogicError::NotFound("Weapon not found".into()))?;
 
         weapon.is_new = false;
         Ok(())
@@ -435,10 +453,12 @@ impl WeaponDepot {
         let target = self
             .weapons
             .get(&target_inst_id)
-            .context("Target weapon not found")?;
+            .ok_or_else(|| LogicError::NotFound("Target weapon not found".into()))?;
 
         if target.is_lock {
-            bail!("Cannot upgrade locked weapon");
+            return Err(LogicError::InvalidOperation(
+                "Cannot upgrade locked weapon".into(),
+            ));
         }
 
         let target_template_id = target.template_id.clone();
@@ -449,20 +469,26 @@ impl WeaponDepot {
 
         for &fodder_id in fodder_inst_ids {
             if fodder_id == target_inst_id {
-                bail!("Cannot use weapon as its own fodder");
+                return Err(LogicError::InvalidOperation(
+                    "Cannot use weapon as its own fodder".into(),
+                ));
             }
 
             let fodder = self
                 .weapons
                 .get(&fodder_id)
-                .context("Fodder weapon not found")?;
+                .ok_or_else(|| LogicError::NotFound("Fodder weapon not found".into()))?;
 
             if fodder.is_lock {
-                bail!("Cannot use locked weapon as fodder");
+                return Err(LogicError::InvalidOperation(
+                    "Cannot use locked weapon as fodder".into(),
+                ));
             }
 
             if fodder.is_equipped() {
-                bail!("Cannot use equipped weapon as fodder");
+                return Err(LogicError::InvalidOperation(
+                    "Cannot use equipped weapon as fodder".into(),
+                ));
             }
 
             // Calculate fodder exp value
@@ -481,7 +507,7 @@ impl WeaponDepot {
         let target = self
             .weapons
             .get_mut(&target_inst_id)
-            .context("Target weapon not found")?;
+            .ok_or_else(|| LogicError::NotFound("Target weapon not found".into()))?;
 
         target.exp += total_exp;
 
@@ -507,10 +533,15 @@ impl WeaponDepot {
     /// Perform breakthrough on a weapon
     pub fn breakthrough(&mut self, inst_id: WeaponInstId, assets: &BeyondAssets) -> Result<u64> {
         // Validate weapon exists and is not locked
-        let weapon = self.weapons.get(&inst_id).context("Weapon not found")?;
+        let weapon = self
+            .weapons
+            .get(&inst_id)
+            .ok_or_else(|| LogicError::NotFound("Weapon not found".into()))?;
 
         if weapon.is_lock {
-            bail!("Cannot breakthrough locked weapon");
+            return Err(LogicError::InvalidOperation(
+                "Cannot breakthrough locked weapon".into(),
+            ));
         }
 
         let template_id = weapon.template_id.clone();
@@ -521,7 +552,9 @@ impl WeaponDepot {
         let max_breakthrough = assets.weapons.get_max_breakthrough_lv(&template_id);
 
         if current_breakthrough >= max_breakthrough {
-            bail!("Weapon is already at max breakthrough level");
+            return Err(LogicError::InvalidOperation(
+                "Weapon is already at max breakthrough level".into(),
+            ));
         }
 
         // Get required level for next breakthrough
@@ -530,14 +563,16 @@ impl WeaponDepot {
             .unwrap_or(1);
 
         if weapon_lv < required_level {
-            bail!(
+            return Err(LogicError::InvalidOperation(format!(
                 "Weapon level {} is below required level {} for breakthrough",
-                weapon_lv,
-                required_level
-            );
+                weapon_lv, required_level
+            )));
         }
 
-        let weapon = self.weapons.get_mut(&inst_id).context("Weapon not found")?;
+        let weapon = self
+            .weapons
+            .get_mut(&inst_id)
+            .ok_or_else(|| LogicError::NotFound("Weapon not found".into()))?;
 
         weapon.breakthrough_lv += 1;
 
@@ -576,28 +611,36 @@ impl WeaponDepot {
         let target = self
             .weapons
             .get(&target_inst_id)
-            .context("Target weapon not found")?;
+            .ok_or_else(|| LogicError::NotFound("Target weapon not found".into()))?;
 
         if target.is_lock {
-            bail!("Cannot refine locked weapon");
+            return Err(LogicError::InvalidOperation(
+                "Cannot refine locked weapon".into(),
+            ));
         }
 
         let fodder = self
             .weapons
             .get(&fodder_inst_id)
-            .context("Fodder weapon not found")?;
+            .ok_or_else(|| LogicError::NotFound("Fodder weapon not found".into()))?;
 
         if fodder.is_lock {
-            bail!("Cannot use locked weapon as refinement material");
+            return Err(LogicError::InvalidOperation(
+                "Cannot use locked weapon as refinement material".into(),
+            ));
         }
 
         if fodder.is_equipped() {
-            bail!("Cannot use equipped weapon as refinement material");
+            return Err(LogicError::InvalidOperation(
+                "Cannot use equipped weapon as refinement material".into(),
+            ));
         }
 
         // Must be same template
         if target.template_id != fodder.template_id {
-            bail!("Refinement requires weapons of the same type");
+            return Err(LogicError::InvalidOperation(
+                "Refinement requires weapons of the same type".into(),
+            ));
         }
 
         let target_template = target.template_id.clone();
@@ -606,7 +649,9 @@ impl WeaponDepot {
         let max_refine = Self::get_max_refine(assets.weapons.get(&target_template));
 
         if target.refine_lv >= max_refine {
-            bail!("Weapon is already at max refinement level");
+            return Err(LogicError::InvalidOperation(
+                "Weapon is already at max refinement level".into(),
+            ));
         }
 
         // Remove fodder
@@ -616,7 +661,7 @@ impl WeaponDepot {
         let target = self
             .weapons
             .get_mut(&target_inst_id)
-            .context("Target weapon not found")?;
+            .ok_or_else(|| LogicError::NotFound("Target weapon not found".into()))?;
 
         target.refine_lv += 1;
 
@@ -640,10 +685,12 @@ impl WeaponDepot {
         let weapon = self
             .weapons
             .get_mut(&weapon_inst_id)
-            .context("Weapon not found")?;
+            .ok_or_else(|| LogicError::NotFound("Weapon not found".into()))?;
 
         if weapon.is_lock {
-            bail!("Cannot modify locked weapon");
+            return Err(LogicError::InvalidOperation(
+                "Cannot modify locked weapon".into(),
+            ));
         }
 
         let prev_gem = if weapon.attach_gem_id != 0 {
@@ -670,14 +717,18 @@ impl WeaponDepot {
         let weapon = self
             .weapons
             .get_mut(&weapon_inst_id)
-            .context("Weapon not found")?;
+            .ok_or_else(|| LogicError::NotFound("Weapon not found".into()))?;
 
         if weapon.is_lock {
-            bail!("Cannot modify locked weapon");
+            return Err(LogicError::InvalidOperation(
+                "Cannot modify locked weapon".into(),
+            ));
         }
 
         if weapon.attach_gem_id == 0 {
-            bail!("Weapon has no attached gem");
+            return Err(LogicError::InvalidOperation(
+                "Weapon has no attached gem".into(),
+            ));
         }
 
         let gem_id = weapon.attach_gem_id;

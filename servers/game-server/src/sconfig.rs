@@ -1,4 +1,4 @@
-use anyhow::{Context, Result};
+use crate::error::{Result, ServerError};
 use perlica_logic::player::WorldState;
 use serde::Deserialize;
 use std::path::PathBuf;
@@ -39,9 +39,11 @@ impl Config {
             .nth(1)
             .unwrap_or_else(|| "Config.toml".to_string());
 
-        let contents = std::fs::read_to_string(&path)
-            .with_context(|| format!("failed to read config: {path}"))?;
+        let contents = std::fs::read_to_string(&path).map_err(|e| ServerError::ConfigRead {
+            path: path.clone(),
+            source: e,
+        })?;
 
-        toml::from_str(&contents).context("failed to parse Config.toml")
+        Ok(toml::from_str(&contents)?)
     }
 }

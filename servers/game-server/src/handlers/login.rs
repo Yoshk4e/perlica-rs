@@ -9,11 +9,11 @@ use tracing::{debug, warn};
 
 pub async fn on_login(ctx: &mut NetContext<'_>, req: CsLogin) -> ScLogin {
     ctx.player.on_login(req.uid.clone());
-    debug!("login: uid={}", req.uid);
+    debug!("Login requested: uid={}", req.uid);
 
     match ctx.db.load(&ctx.player.uid).await {
         Ok(Some(record)) => {
-            debug!("loaded from db: uid={}", ctx.player.uid);
+            debug!("Loaded player data from database: uid={}", ctx.player.uid);
             ctx.player.char_bag = record.char_bag;
             ctx.player.world = record.world;
             ctx.player.bitsets = record.bitsets;
@@ -22,17 +22,18 @@ pub async fn on_login(ctx: &mut NetContext<'_>, req: CsLogin) -> ScLogin {
         }
         Ok(None) => {
             let cfg = sconfig::Config::load();
-            debug!("new player: uid={}", ctx.player.uid);
+            debug!("Creating new player profile: uid={}", ctx.player.uid);
             ctx.player.char_bag =
                 CharBag::new(ctx.assets, &cfg.as_ref().unwrap().default_team.team.clone())
                     .unwrap_or_default();
             ctx.player.world = cfg.as_ref().unwrap().world_state.clone();
         }
-        Err(e) => {
+        Err(error) => {
             let cfg = sconfig::Config::load();
             warn!(
-                "db load failed, using starter: uid={}, error={}",
-                ctx.player.uid, e
+                "Database load failed; using starter data instead: uid={}, error={}",
+                ctx.player.uid,
+                error
             );
             ctx.player.char_bag =
                 CharBag::new(ctx.assets, &cfg.as_ref().unwrap().default_team.team.clone())
@@ -94,11 +95,15 @@ pub(crate) async fn run_login_sequence(ctx: &mut NetContext<'_>) {
     loop {
         if phase == LoginPhase::Done {
             ctx.player.loading_state = LoadingState::Complete;
-            debug!("login sequence complete: uid={}", ctx.player.uid);
+            debug!("Login sequence complete: uid={}", ctx.player.uid);
             break;
         }
 
-        debug!("login phase: uid={}, phase={:?}", ctx.player.uid, phase);
+        debug!(
+            "Login sequence phase: uid={}, phase={:?}",
+            ctx.player.uid,
+            phase
+        );
 
         let ok = match phase {
             LoginPhase::BaseData => push_base_data(ctx).await,
@@ -117,8 +122,9 @@ pub(crate) async fn run_login_sequence(ctx: &mut NetContext<'_>) {
             phase = phase.next();
         } else {
             warn!(
-                "login sequence failed: uid={}, phase={:?}",
-                ctx.player.uid, phase
+                "Login sequence failed: uid={}, phase={:?}",
+                ctx.player.uid,
+                phase
             );
             break;
         }

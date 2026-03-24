@@ -120,9 +120,9 @@ dependencies = [
 name = "config"
 version = "0.1.0"
 dependencies = [
- "anyhow",
  "serde",
  "serde_json",
+ "thiserror",
  "tracing",
 ]
 
@@ -481,10 +481,10 @@ dependencies = [
 name = "perlica-db"
 version = "0.1.0"
 dependencies = [
- "anyhow",
  "bincode",
  "perlica-logic",
  "serde",
+ "thiserror",
  "tracing",
 ]
 
@@ -492,7 +492,6 @@ dependencies = [
 name = "perlica-game-server"
 version = "0.1.0"
 dependencies = [
- "anyhow",
  "byteorder",
  "common",
  "config",
@@ -501,6 +500,7 @@ dependencies = [
  "perlica-proto",
  "serde",
  "serde_json",
+ "thiserror",
  "tokio",
  "toml",
  "tracing",
@@ -511,12 +511,12 @@ dependencies = [
 name = "perlica-logic"
 version = "0.1.0"
 dependencies = [
- "anyhow",
  "common",
  "config",
  "perlica-proto",
  "serde",
  "serde_json",
+ "thiserror",
  "tracing",
 ]
 
@@ -839,6 +839,26 @@ dependencies = [
  "once_cell",
  "rustix",
  "windows-sys 0.61.2",
+]
+
+[[package]]
+name = "thiserror"
+version = "2.0.18"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4288b5bcbc7920c07a1149a35cf9590a2aa808e0bc1eafaade0b80947865fbc4"
+dependencies = [
+ "thiserror-impl",
+]
+
+[[package]]
+name = "thiserror-impl"
+version = "2.0.18"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ebc4ee7f67670e9b64d05fa4253e753e016c6c95ff35b89b7941d6b856dec1d5"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]

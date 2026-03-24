@@ -1,4 +1,4 @@
-use anyhow::{Context, Result};
+use crate::error::{LogicError, Result};
 use common::time::now_ms;
 use config::BeyondAssets;
 use perlica_proto::{
@@ -291,7 +291,7 @@ impl CharBag {
         // Verify character exists
         let _char = self
             .get_char_by_objid(char_id)
-            .context("Character not found")?;
+            .ok_or_else(|| LogicError::NotFound("Character not found".into()))?;
 
         // Get currently equipped weapon for this character (if any)
         let prev_weapon_id = self
@@ -303,7 +303,7 @@ impl CharBag {
         let weapon = self
             .weapon_depot
             .get(weapon_inst_id)
-            .context("Weapon not found")?;
+            .ok_or_else(|| LogicError::NotFound("Weapon not found".into()))?;
         let prev_owner = if weapon.is_equipped() && weapon.equip_char_id != char_id {
             Some(weapon.equip_char_id)
         } else {
@@ -495,10 +495,12 @@ impl CharBag {
             .enumerate()
             .map(|(i, char)| {
                 let objid = CharIndex::from_usize(i).object_id();
-                let template = assets
-                    .characters
-                    .get(&char.template_id)
-                    .with_context(|| format!("Unknown character template: {}", char.template_id))?;
+                let template = assets.characters.get(&char.template_id).ok_or_else(|| {
+                    LogicError::NotFound(format!(
+                        "Unknown character template: {}",
+                        char.template_id
+                    ))
+                })?;
 
                 let bundles = assets.char_skills.get_char_skills(&template.char_id);
                 let normal_skill = Self::get_normal_skill(&char.template_id, assets);
@@ -649,7 +651,7 @@ pub fn handle_weapon_add_exp(
     char_bag
         .weapon_depot
         .to_add_exp_sc(target_id)
-        .context("Weapon not found after add_exp")
+        .ok_or_else(|| LogicError::NotFound("Weapon not found after add_exp".into()))
 }
 
 pub fn handle_weapon_breakthrough(
@@ -664,7 +666,7 @@ pub fn handle_weapon_breakthrough(
     char_bag
         .weapon_depot
         .to_breakthrough_sc(inst_id)
-        .context("Weapon not found after breakthrough")
+        .ok_or_else(|| LogicError::NotFound("Weapon not found after breakthrough".into()))
 }
 
 pub fn handle_weapon_attach_gem(
@@ -694,7 +696,7 @@ pub fn handle_weapon_attach_gem(
     let weapon = char_bag
         .weapon_depot
         .get(weapon_inst_id)
-        .context("Weapon not found")?;
+        .ok_or_else(|| LogicError::NotFound("Weapon not found".into()))?;
     let prev_gem_id = if weapon.attach_gem_id != 0 {
         Some(weapon.attach_gem_id)
     } else {
@@ -703,14 +705,14 @@ pub fn handle_weapon_attach_gem(
 
     char_bag.weapon_depot.attach_gem(weapon_inst_id, gem_id)?;
 
-    Ok(char_bag
+    char_bag
         .weapon_depot
         .to_attach_gem_sc(
             weapon_inst_id,
             prev_gem_id,
             detached_from_weapon.map(|id| id.as_u64()),
         )
-        .context("Weapon not found")?)
+        .ok_or_else(|| LogicError::NotFound("Weapon not found".into()))
 }
 
 pub fn handle_weapon_detach_gem(

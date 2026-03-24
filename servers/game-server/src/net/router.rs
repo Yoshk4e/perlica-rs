@@ -79,7 +79,7 @@ macro_rules! handlers {
         /// * `body` - The raw message body bytes
         ///
         /// # Returns
-        /// * `anyhow::Result<()>` - Ok on success, Err on parse/handle failure
+        /// * `Result<(), ServerError>` - Ok on success, Err on parse/handle failure
         ///
         /// # Command Flow
         /// 1. If the command is a merge packet, unpack and process each sub-command
@@ -90,7 +90,7 @@ macro_rules! handlers {
             ctx: &mut crate::net::NetContext<'_>,
             cmd_id: i32,
             body: Vec<u8>,
-        ) -> anyhow::Result<()> {
+        ) -> crate::error::Result<()> {
             use perlica_proto::*;
             use prost::Message;
             use crate::player::LoadingState;
@@ -100,7 +100,7 @@ macro_rules! handlers {
                 // This is an optimization for sending multiple commands in one network frame
                 x if x == <CsMergeMsg as NetMessage>::CMD_ID => {
                     let req = CsMergeMsg::decode(&body[..])?;
-                    debug!(payload = req.msg.len(), "merge packet received");
+                    debug!("Detected Bundled Messages From Client, {:?}", req.msg.len());
                     handle_merge_msg(ctx, req).await?;
                 }
 
@@ -128,7 +128,7 @@ macro_rules! handlers {
 
                 // Unknown command, log warning but don't fail
                 _ => {
-                    warn!(cmd_id, "unhandled command, no handler registered");
+                    warn!("Unhandled command, {:?}", cmd_id);
                 }
             }
             Ok(())
@@ -201,11 +201,11 @@ handlers! {
 /// * `req` - The merge packet containing all sub-messages
 ///
 /// # Returns
-/// * `anyhow::Result<()>` - Ok if all sub-commands processed successfully
+/// * `Result<(), ServerError>` - Ok if all sub-commands processed successfully
 async fn handle_merge_msg(
     ctx: &mut crate::net::NetContext<'_>,
     req: CsMergeMsg,
-) -> anyhow::Result<()> {
+) -> crate::error::Result<()> {
     let data = &req.msg;
     let mut cursor = Cursor::new(data);
     let mut sub_count = 0u32;
@@ -226,12 +226,7 @@ async fn handle_merge_msg(
         let available = data.len() - cursor.position() as usize;
 
         if sub_head_size == 0 || sub_body_size == 0 || needed > available {
-            warn!(
-                head_size = sub_head_size,
-                body_size = sub_body_size,
-                available,
-                "malformed merge sub-packet, aborting"
-            );
+            warn!("Malformed sub-packet Detected, aborting {}, {} , {:?}", sub_head_size, sub_body_size, available);
             break;
         }
 
@@ -249,10 +244,10 @@ async fn handle_merge_msg(
         // Dispatch the sub-command to its handler
         // Using Box::pin to allow recursive async calls
         if let Err(e) = Box::pin(handle_command(ctx, sub_head.msgid, sub_body_buf)).await {
-            warn!(cmd_id = sub_head.msgid, error = %e, "merge sub-packet failed");
+            warn!("Processing Sub-packet Failed {}, {:?}", e, sub_head);
         }
     }
 
-    debug!(count = sub_count, "merge packet processed");
+    debug!("Count of Packets Processed {}", sub_count);
     Ok(())
 }

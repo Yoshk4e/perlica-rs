@@ -1,4 +1,4 @@
-use anyhow::{Context, Result};
+use crate::error::{DbError, Result};
 use perlica_logic::bitset::BitsetManager;
 use perlica_logic::character::char_bag::CharBag;
 use perlica_logic::player::WorldState;
@@ -49,8 +49,10 @@ pub struct PlayerDb {
 impl PlayerDb {
     pub fn open(dir: impl AsRef<Path>) -> Result<Self> {
         let dir = dir.as_ref().to_path_buf();
-        fs::create_dir_all(&dir)
-            .with_context(|| format!("failed to create saves dir: {}", dir.display()))?;
+        fs::create_dir_all(&dir).map_err(|e| DbError::CreateDir {
+            path: dir.clone(),
+            source: e,
+        })?;
         Ok(Self { dir })
     }
 
@@ -59,10 +61,15 @@ impl PlayerDb {
         if !path.exists() {
             return Ok(None);
         }
-        let bytes =
-            fs::read(&path).with_context(|| format!("failed to read save: {}", path.display()))?;
-        let mut record: PlayerRecord = bincode::deserialize(&bytes)
-            .with_context(|| format!("failed to deserialize save for {uid}"))?;
+        let bytes = fs::read(&path).map_err(|e| DbError::ReadSave {
+            path: path.clone(),
+            source: e,
+        })?;
+        let mut record: PlayerRecord =
+            bincode::deserialize(&bytes).map_err(|e| DbError::Deserialize {
+                uid: uid.to_string(),
+                source: e,
+            })?;
 
         // Repair any data inconsistencies that may have crept in (mismatched
         // weapon references, stale cache fields, etc.).
@@ -86,14 +93,18 @@ impl PlayerDb {
             bitsets: bitsets.clone(),
             checkpoint: checkpoint.cloned(),
             revival_mode,
-        })
-        .context("failed to serialize save")?;
+        })?;
 
         let path = self.path(uid);
         let tmp = path.with_extension("bin.tmp");
-        fs::write(&tmp, &bytes)
-            .with_context(|| format!("failed to write tmp: {}", tmp.display()))?;
-        fs::rename(&tmp, &path).with_context(|| format!("failed to rename: {}", path.display()))?;
+        fs::write(&tmp, &bytes).map_err(|e| DbError::WriteTmp {
+            path: tmp.clone(),
+            source: e,
+        })?;
+        fs::rename(&tmp, &path).map_err(|e| DbError::Rename {
+            path: path.clone(),
+            source: e,
+        })?;
         Ok(())
     }
 

@@ -27,11 +27,14 @@ pub async fn notify_enter_scene(ctx: &mut NetContext<'_>) -> bool {
             z: ctx.player.movement.pos_z,
         }),
     };
-    debug!("enter scene: {}", msg.scene_name);
-    if let Err(e) = ctx.notify(msg).await {
-        error!("enter scene notify failed: {e}");
+
+    debug!("Entering scene: {}", msg.scene_name);
+
+    if let Err(error) = ctx.notify(msg).await {
+        error!("Failed to send enter scene notification: {:?}", error);
         return false;
     }
+
     true
 }
 
@@ -46,7 +49,7 @@ pub async fn on_scene_load_finish(
     ctx: &mut NetContext<'_>,
     req: CsSceneLoadFinish,
 ) -> ScSelfSceneInfo {
-    info!("scene load finish: {}", req.scene_name);
+    info!("Scene load finished: {}", req.scene_name);
 
     ctx.player.world.last_scene = req.scene_name.clone();
 
@@ -57,11 +60,10 @@ pub async fn on_scene_load_finish(
         &mut ctx.player.entities,
     );
 
-    if let Err(e) = ctx.notify(enter_view).await {
-        error!("object enter view failed: {e}");
+    if let Err(error) = ctx.notify(enter_view).await {
+        error!("Failed to send object enter view: {:?}", error);
     }
 
-    // Trigger initial dynamic visibility check to spawn nearby monsters
     let pos = ctx.player.movement.position_tuple();
     let (initial_enter, _) =
         ctx.player
@@ -69,17 +71,17 @@ pub async fn on_scene_load_finish(
             .update_visible_entities(pos, ctx.assets, &mut ctx.player.entities);
 
     if let Some(msg) = initial_enter {
-        if let Err(e) = ctx.notify(msg).await {
-            error!("initial dynamic enter view failed: {e}");
+        if let Err(error) = ctx.notify(msg).await {
+            error!("Failed to send initial dynamic enter view: {:?}", error);
         }
     }
 
     if !crate::handlers::factory::push_factory(ctx).await {
-        error!("factory context sync failed");
+        error!("Failed to sync factory context");
     }
 
     if !post_load_sync(ctx).await {
-        error!("post-load sync failed");
+        error!("Failed to complete post-load sync");
     }
 
     self_info
@@ -95,7 +97,7 @@ async fn post_load_sync(ctx: &mut NetContext<'_>) -> bool {
 /// Handles `CsSceneKillMonster` — removes the entity from the manager and
 /// notifies the client with `ScSceneDestroyEntity`.
 pub async fn on_cs_scene_kill_monster(ctx: &mut NetContext<'_>, req: CsSceneKillMonster) {
-    debug!("kill monster: {}", req.id);
+    debug!("Monster killed: {}", req.id);
 
     if let Some(entity) = ctx.player.entities.remove(req.id) {
         if entity.kind == perlica_logic::entity::EntityKind::Enemy {
@@ -111,8 +113,8 @@ pub async fn on_cs_scene_kill_monster(ctx: &mut NetContext<'_>, req: CsSceneKill
         .scene
         .build_entity_destroy(req.id, EntityDestroyReason::Dead);
 
-    if let Err(e) = ctx.notify(msg).await {
-        error!("kill monster notify failed: {e}");
+    if let Err(error) = ctx.notify(msg).await {
+        error!("Failed to send monster kill notification: {:?}", error);
     }
 }
 
@@ -122,10 +124,10 @@ pub async fn on_cs_scene_kill_monster(ctx: &mut NetContext<'_>, req: CsSceneKill
 /// The character remains in the [`CharBag`] so it can be revived later; only
 /// the scene entity is destroyed from the client's perspective.
 pub async fn on_cs_scene_kill_char(ctx: &mut NetContext<'_>, req: CsSceneKillChar) {
-    debug!("kill char: {}", req.id);
+    debug!("Character killed: {}", req.id);
 
-    if let Some(char) = ctx.player.char_bag.get_char_by_objid_mut(req.id) {
-        char.is_dead = true;
+    if let Some(char_data) = ctx.player.char_bag.get_char_by_objid_mut(req.id) {
+        char_data.is_dead = true;
     }
 
     let msg = ctx
@@ -133,14 +135,14 @@ pub async fn on_cs_scene_kill_char(ctx: &mut NetContext<'_>, req: CsSceneKillCha
         .scene
         .build_entity_destroy(req.id, EntityDestroyReason::Dead);
 
-    if let Err(e) = ctx.notify(msg).await {
-        error!("kill char notify failed: {e}");
+    if let Err(error) = ctx.notify(msg).await {
+        error!("Failed to send character kill notification: {:?}", error);
     }
 }
 
 /// Handles `CsSceneRevival` — revives all dead characters in the current team
 /// at 50 % HP.
-/// ORDER MATTERS!!
+///
 /// Send order:
 /// 1. `ScCharSyncStatus` × N — HP per revived char
 /// 2. `ScSelfSceneInfo` with `revive_chars` — triggers client revival logic
@@ -150,7 +152,7 @@ pub async fn on_cs_scene_revival(
     ctx: &mut NetContext<'_>,
     _req: CsSceneRevival,
 ) -> ScObjectEnterView {
-    info!("scene revival");
+    info!("Scene revival requested");
 
     let (enter_view, self_info, revival) = ctx.player.scene.handle_revival(
         &mut ctx.player.char_bag,
@@ -161,13 +163,15 @@ pub async fn on_cs_scene_revival(
     );
 
     send_revival_status_updates(ctx).await;
-    if let Err(e) = ctx.notify(self_info).await {
-        error!("revival self info failed: {e}");
+
+    if let Err(error) = ctx.notify(self_info).await {
+        error!("Failed to send revival self info: {:?}", error);
     }
 
-    if let Err(e) = ctx.notify(revival).await {
-        error!("revival notify failed: {e}");
+    if let Err(error) = ctx.notify(revival).await {
+        error!("Failed to send revival notification: {:?}", error);
     }
+
     enter_view
 }
 
@@ -194,7 +198,7 @@ async fn send_revival_status_updates(ctx: &mut NetContext<'_>) {
         .collect();
 
     for (objid, hp, ultimatesp) in updates {
-        if let Err(e) = ctx
+        if let Err(error) = ctx
             .notify(ScCharSyncStatus {
                 objid,
                 is_dead: false,
@@ -202,7 +206,11 @@ async fn send_revival_status_updates(ctx: &mut NetContext<'_>) {
             })
             .await
         {
-            error!("revival status update failed for {objid}: {e}");
+            error!(
+                "Failed to send revival status update for {}: {:?}",
+                objid,
+                error
+            );
         }
     }
 }
@@ -271,8 +279,11 @@ pub async fn on_cs_scene_interactive_event_trigger(
     req: CsSceneInteractiveEventTrigger,
 ) -> ScSceneInteractiveEventTrigger {
     debug!(
-        "interactive event: scene={} id={} event={}",
-        req.scene_name, req.id, req.event_name
+        "Interactive event trigger: scene={}, id={}, event={}",
+        req.scene_name,
+        req.id,
+        req.event_name
     );
+
     ScSceneInteractiveEventTrigger {}
 }

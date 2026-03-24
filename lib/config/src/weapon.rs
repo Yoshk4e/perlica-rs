@@ -1,5 +1,5 @@
+use crate::error::{ConfigError, Result};
 use crate::tables::weapon::{BreakthroughTemplate, Weapon, WeaponTable};
-use anyhow::{Context, Result};
 use std::collections::HashMap;
 use std::path::Path;
 
@@ -11,11 +11,16 @@ pub struct WeaponAssets {
 impl WeaponAssets {
     pub(super) fn load(tables_dir: &Path) -> Result<Self> {
         let path = tables_dir.join("Weapon.json");
-        let contents = std::fs::read_to_string(&path)
-            .with_context(|| format!("Failed to read {}", path.display()))?;
+        let contents = std::fs::read_to_string(&path).map_err(|e| ConfigError::ReadFile {
+            path: path.clone(),
+            source: e,
+        })?;
 
-        let table: WeaponTable = serde_json::from_str(&contents)
-            .with_context(|| format!("Failed to parse {}", path.display()))?;
+        let table: WeaponTable =
+            serde_json::from_str(&contents).map_err(|e| ConfigError::ParseJson {
+                path: path.clone(),
+                source: e,
+            })?;
 
         Ok(Self {
             data: table.weapon_basic_table,

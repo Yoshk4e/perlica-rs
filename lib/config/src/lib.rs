@@ -1,4 +1,5 @@
 pub mod character;
+pub mod error;
 pub mod id_to_str;
 pub mod level_data;
 pub mod skill;
@@ -9,7 +10,7 @@ pub mod weapon;
 use crate::id_to_str::NumIdStrAssets;
 use crate::str_to_id::StrIdNumAssets;
 
-use anyhow::Result;
+pub use error::{ConfigError, Result};
 use std::path::Path;
 
 pub struct BeyondAssets {

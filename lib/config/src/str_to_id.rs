@@ -1,4 +1,4 @@
-use anyhow::{Context, Result};
+use crate::error::{ConfigError, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::Path;
@@ -22,11 +22,16 @@ pub struct StrIdNumAssets {
 impl StrIdNumAssets {
     pub(super) fn load(tables_dir: &Path) -> Result<Self> {
         let path = tables_dir.join("StrIdNumTable.json");
-        let contents = std::fs::read_to_string(&path)
-            .with_context(|| format!("Failed to read {}", path.display()))?;
+        let contents = std::fs::read_to_string(&path).map_err(|e| ConfigError::ReadFile {
+            path: path.clone(),
+            source: e,
+        })?;
 
-        let table: StrIdNumTable = serde_json::from_str(&contents)
-            .with_context(|| format!("Failed to parse {}", path.display()))?;
+        let table: StrIdNumTable =
+            serde_json::from_str(&contents).map_err(|e| ConfigError::ParseJson {
+                path: path.clone(),
+                source: e,
+            })?;
 
         Ok(Self { data: table })
     }

@@ -7,7 +7,7 @@ use perlica_proto::{
     CsWeaponAddExp, CsWeaponAttachGem, CsWeaponBreakthrough, CsWeaponDetachGem, CsWeaponPuton,
     ScWeaponAddExp, ScWeaponAttachGem, ScWeaponBreakthrough, ScWeaponDetachGem, ScWeaponPuton,
 };
-use tracing::{debug, error, info};
+use tracing::{debug, error};
 
 /// Equips a weapon to a character, swapping any previously equipped weapon.
 ///
@@ -16,15 +16,22 @@ use tracing::{debug, error, info};
 /// client can detect the rejection without a disconnect.
 pub async fn on_cs_weapon_puton(ctx: &mut NetContext<'_>, req: CsWeaponPuton) -> ScWeaponPuton {
     debug!(
-        char_id = req.charid,
-        weapon_id = req.weaponid,
-        "weapon puton request"
+        "Weapon put-on request: uid={}, char_id={}, weapon_id={}",
+        ctx.player.uid,
+        req.charid,
+        req.weaponid
     );
 
     let response = handle_weapon_puton(&mut ctx.player.char_bag, req.charid, req.weaponid);
 
-    if let Err(e) = &response {
-        error!("weapon puton failed: {e}");
+    if let Err(error) = &response {
+        error!(
+            "Weapon put-on failed: uid={}, char_id={}, weapon_id={}, error={:?}",
+            ctx.player.uid,
+            req.charid,
+            req.weaponid,
+            error
+        );
     }
 
     response.unwrap_or_else(|_| ScWeaponPuton {
@@ -41,9 +48,10 @@ pub async fn on_cs_weapon_puton(ctx: &mut NetContext<'_>, req: CsWeaponPuton) ->
 /// exp and level; on failure the original values are echoed with zeroed fields.
 pub async fn on_cs_weapon_add_exp(ctx: &mut NetContext<'_>, req: CsWeaponAddExp) -> ScWeaponAddExp {
     debug!(
-        weapon_id = req.weaponid,
-        fodder_count = req.cost_weapon_ids.len(),
-        "weapon add exp request"
+        "Weapon add-exp request: uid={}, weapon_id={}, fodder_count={}",
+        ctx.player.uid,
+        req.weaponid,
+        req.cost_weapon_ids.len()
     );
 
     let response = handle_weapon_add_exp(
@@ -53,8 +61,13 @@ pub async fn on_cs_weapon_add_exp(ctx: &mut NetContext<'_>, req: CsWeaponAddExp)
         ctx.assets,
     );
 
-    if let Err(e) = &response {
-        error!("weapon add exp failed: {e}");
+    if let Err(error) = &response {
+        error!(
+            "Weapon add-exp failed: uid={}, weapon_id={}, error={:?}",
+            ctx.player.uid,
+            req.weaponid,
+            error
+        );
     }
 
     response.unwrap_or_else(|_| ScWeaponAddExp {
@@ -72,12 +85,21 @@ pub async fn on_cs_weapon_breakthrough(
     ctx: &mut NetContext<'_>,
     req: CsWeaponBreakthrough,
 ) -> ScWeaponBreakthrough {
-    debug!(weapon_id = req.weaponid, "weapon breakthrough request");
+    debug!(
+        "Weapon breakthrough request: uid={}, weapon_id={}",
+        ctx.player.uid,
+        req.weaponid
+    );
 
     let response = handle_weapon_breakthrough(&mut ctx.player.char_bag, req.weaponid, ctx.assets);
 
-    if let Err(e) = &response {
-        error!("weapon breakthrough failed: {e}");
+    if let Err(error) = &response {
+        error!(
+            "Weapon breakthrough failed: uid={}, weapon_id={}, error={:?}",
+            ctx.player.uid,
+            req.weaponid,
+            error
+        );
     }
 
     response.unwrap_or_else(|_| ScWeaponBreakthrough {
@@ -96,15 +118,22 @@ pub async fn on_cs_weapon_attach_gem(
     req: CsWeaponAttachGem,
 ) -> ScWeaponAttachGem {
     debug!(
-        weapon_id = req.weaponid,
-        gem_id = req.gemid,
-        "weapon attach gem request"
+        "Weapon attach-gem request: uid={}, weapon_id={}, gem_id={}",
+        ctx.player.uid,
+        req.weaponid,
+        req.gemid
     );
 
     let response = handle_weapon_attach_gem(&mut ctx.player.char_bag, req.weaponid, req.gemid);
 
-    if let Err(e) = &response {
-        error!("weapon attach gem failed: {e}");
+    if let Err(error) = &response {
+        error!(
+            "Weapon attach-gem failed: uid={}, weapon_id={}, gem_id={}, error={:?}",
+            ctx.player.uid,
+            req.weaponid,
+            req.gemid,
+            error
+        );
     }
 
     response.unwrap_or_else(|_| ScWeaponAttachGem {
@@ -123,12 +152,21 @@ pub async fn on_cs_weapon_detach_gem(
     ctx: &mut NetContext<'_>,
     req: CsWeaponDetachGem,
 ) -> ScWeaponDetachGem {
-    debug!(weapon_id = req.weaponid, "weapon detach gem request");
+    debug!(
+        "Weapon detach-gem request: uid={}, weapon_id={}",
+        ctx.player.uid,
+        req.weaponid
+    );
 
     let response = handle_weapon_detach_gem(&mut ctx.player.char_bag, req.weaponid);
 
-    if let Err(e) = &response {
-        error!("weapon detach gem failed: {e}");
+    if let Err(error) = &response {
+        error!(
+            "Weapon detach-gem failed: uid={}, weapon_id={}, error={:?}",
+            ctx.player.uid,
+            req.weaponid,
+            error
+        );
     }
 
     response.unwrap_or_else(|_| ScWeaponDetachGem {

@@ -12,15 +12,19 @@ pub async fn push_char_bag(ctx: &mut NetContext<'_>) -> bool {
     match ctx.player.char_bag.char_bag_info(ctx.assets) {
         Ok(msg) => {
             debug!(
-                "push char bag: uid={}, chars={}, teams={}",
+                "Pushing character bag: uid={}, chars={}, teams={}",
                 ctx.player.uid,
                 msg.char_info.len(),
                 msg.team_info.len()
             );
             ctx.notify(msg).await.is_ok()
         }
-        Err(e) => {
-            error!("char bag info failed: uid={}, error={}", ctx.player.uid, e);
+        Err(error) => {
+            error!(
+                "Failed to build character bag info: uid={}, error={:?}",
+                ctx.player.uid,
+                error
+            );
             false
         }
     }
@@ -33,7 +37,7 @@ pub async fn push_char_bag(ctx: &mut NetContext<'_>) -> bool {
 /// items (e.g. weapon foddering).
 pub async fn push_item_bag_sync(ctx: &mut NetContext<'_>) -> bool {
     let msg = ctx.player.char_bag.item_bag_sync();
-    debug!("push item bag sync: uid={}", ctx.player.uid);
+    debug!("Pushing item bag sync: uid={}", ctx.player.uid);
     ctx.notify(msg).await.is_ok()
 }
 
@@ -45,19 +49,22 @@ pub async fn push_item_bag_sync(ctx: &mut NetContext<'_>) -> bool {
 pub async fn push_char_attrs(ctx: &mut NetContext<'_>) -> bool {
     let msgs = ctx.player.char_bag.char_attrs(ctx.assets);
     debug!(
-        "push char attrs: uid={}, count={}",
+        "Pushing character attributes: uid={}, count={}",
         ctx.player.uid,
         msgs.len()
     );
+
     for msg in msgs {
-        if let Err(e) = ctx.notify(msg).await {
+        if let Err(error) = ctx.notify(msg).await {
             error!(
-                "char attrs push failed: uid={}, error={}",
-                ctx.player.uid, e
+                "Failed to push character attributes: uid={}, error={:?}",
+                ctx.player.uid,
+                error
             );
             return false;
         }
     }
+
     true
 }
 
@@ -69,19 +76,22 @@ pub async fn push_char_attrs(ctx: &mut NetContext<'_>) -> bool {
 pub async fn push_char_status(ctx: &mut NetContext<'_>) -> bool {
     let msgs = ctx.player.char_bag.char_status();
     debug!(
-        "push char status: uid={}, count={}",
+        "Pushing character status: uid={}, count={}",
         ctx.player.uid,
         msgs.len()
     );
+
     for msg in msgs {
-        if let Err(e) = ctx.notify(msg).await {
+        if let Err(error) = ctx.notify(msg).await {
             error!(
-                "char status push failed: uid={}, error={}",
-                ctx.player.uid, e
+                "Failed to push character status: uid={}, error={:?}",
+                ctx.player.uid,
+                error
             );
             return false;
         }
     }
+
     true
 }
 
@@ -111,19 +121,21 @@ pub async fn push_char_status_for_ids(ctx: &mut NetContext<'_>, obj_ids: &[u64])
         .collect();
 
     debug!(
-        "push char status for ids: uid={}, count={}",
+        "Pushing character status for IDs: uid={}, count={}",
         ctx.player.uid,
         updates.len()
     );
 
     for msg in updates {
-        if let Err(e) = ctx.notify(msg).await {
+        if let Err(error) = ctx.notify(msg).await {
             error!(
-                "char status push failed: uid={}, error={}",
-                ctx.player.uid, e
+                "Failed to push character status: uid={}, error={:?}",
+                ctx.player.uid,
+                error
             );
             return false;
         }
     }
+
     true
 }

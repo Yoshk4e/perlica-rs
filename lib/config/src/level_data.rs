@@ -15,11 +15,11 @@
 //!     ...
 //! ```
 
+use crate::error::{ConfigError, Result};
 use crate::tables::level_data::{
     LvDataFile, LvEnemy, LvEnemyGroup, LvFactoryRegion, LvInteractive, LvLevelScript, LvNpc,
     LvPatrol, LvSpline,
 };
-use anyhow::{Context, Result};
 use std::collections::HashMap;
 use std::path::Path;
 use tracing::{debug, warn};
@@ -56,11 +56,9 @@ impl LevelDataAssets {
 
         let mut file_count = 0u32;
 
-        for entry in std::fs::read_dir(&level_data_dir).with_context(|| {
-            format!(
-                "Failed to read level_data dir: {}",
-                level_data_dir.display()
-            )
+        for entry in std::fs::read_dir(&level_data_dir).map_err(|e| ConfigError::ReadDir {
+            path: level_data_dir.clone(),
+            source: e,
         })? {
             let path = entry?.path();
             if path.extension().and_then(|e| e.to_str()) != Some("json") {
@@ -75,8 +73,10 @@ impl LevelDataAssets {
                 continue;
             }
 
-            let contents = std::fs::read_to_string(&path)
-                .with_context(|| format!("Failed to read {}", path.display()))?;
+            let contents = std::fs::read_to_string(&path).map_err(|e| ConfigError::ReadFile {
+                path: path.clone(),
+                source: e,
+            })?;
 
             let file: LvDataFile = match serde_json::from_str(&contents) {
                 Ok(f) => f,

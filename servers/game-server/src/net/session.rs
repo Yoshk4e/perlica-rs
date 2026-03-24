@@ -1,3 +1,4 @@
+use crate::error::ServerError;
 use crate::net::{
     context::NetContext,
     notify::{Notification, PlayerHandle},
@@ -34,7 +35,7 @@ pub async fn handle_connection(
     assets: &'static BeyondAssets,
     registry: &'static SessionRegistry,
     db: &'static PlayerDb,
-) -> anyhow::Result<()> {
+) -> Result<(), ServerError> {
     let (reader, writer) = socket.into_split();
 
     let (outbound_tx, outbound_rx) = mpsc::channel::<Vec<u8>>(64);
@@ -65,7 +66,7 @@ pub async fn handle_connection(
 async fn write_loop(
     mut writer: tokio::net::tcp::OwnedWriteHalf,
     mut rx: mpsc::Receiver<Vec<u8>>,
-) -> anyhow::Result<()> {
+) -> Result<(), ServerError> {
     while let Some(frame) = rx.recv().await {
         writer.write_all(&frame).await?;
     }
@@ -85,12 +86,12 @@ async fn logic_loop(
     mut notify_rx: mpsc::Receiver<Notification>,
     handle: PlayerHandle,
     ctx: SessionContext,
-) -> anyhow::Result<()> {
+) -> Result<(), ServerError> {
     let mut player = Player::default();
     let mut server_seq_id = 0u64;
     let mut registered = false;
 
-    info!("session started");
+    info!("Session Started");
 
     let result = loop {
         tokio::select! {
@@ -106,17 +107,17 @@ async fn logic_loop(
                             &mut server_seq_id,
                         );
                         if let Err(e) = handle_command(&mut net_ctx, cmd_id, body).await {
-                            warn!("command error: cmd_id={}, error={}", cmd_id, e);
+                            warn!("Command Error: CmdId={}, Error={}", cmd_id, e);
                         }
 
                         if !registered && !player.uid.is_empty() {
                             ctx.registry.register(player.uid.clone(), handle.clone());
-                            info!("player online: uid={}, online_count={}", player.uid, ctx.registry.online());
+                            info!("Player Online: UID={}, OnlineCount={}", player.uid, ctx.registry.online());
                             registered = true;
                         }
                     }
                     Err(e) if is_clean_disconnect(&e) => {
-                        debug!("disconnected");
+                        debug!("Disconnected");
                         break Ok(());
                     }
                     Err(e) => break Err(e.into()),
@@ -154,12 +155,12 @@ async fn logic_loop(
             )
             .await
         {
-            error!("save failed: uid={}, error={}", player.uid, e);
+            error!("Save Failed: UID={}, Error={}", player.uid, e);
         }
 
         ctx.registry.unregister(&player.uid);
         info!(
-            "player offline: uid={}, online_count={}",
+            "Player Offline: UID={}, OnlineCount={}",
             player.uid,
             ctx.registry.online()
         );
