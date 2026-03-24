@@ -83,77 +83,165 @@ impl Default for SceneManager {
 
 fn lv_property_to_dynamic_param(prop: &LvProperty) -> DynamicParameter {
     let val = &prop.value;
-    let type_id = val.get("type").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
-
+    let real_type = val.get("type").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
     let value_array = val
         .get("valueArray")
         .and_then(|v| v.as_array())
         .cloned()
         .unwrap_or_default();
 
-    match type_id {
+    let as_int = |v: &serde_json::Value| v.get("valueBit64").and_then(|x| x.as_i64()).unwrap_or(0);
+    let as_u32 = |v: &serde_json::Value| as_int(v) as u32;
+    let as_str = |v: &serde_json::Value| {
+        v.get("valueString")
+            .and_then(|s| s.as_str())
+            .unwrap_or("")
+            .to_string()
+    };
+
+    match real_type {
         1 => DynamicParameter {
             value_type: 1,
             real_type: 1,
-            value_bool_list: value_array
-                .iter()
-                .map(|v| v.get("valueBit64").and_then(|x| x.as_i64()).unwrap_or(0) != 0)
-                .collect(),
+            value_bool_list: value_array.iter().map(|v| as_int(v) != 0).collect(),
             ..Default::default()
         },
         2 => DynamicParameter {
             value_type: 2,
             real_type: 2,
-            value_int_list: value_array
-                .iter()
-                .map(|v| v.get("valueBit64").and_then(|x| x.as_i64()).unwrap_or(0))
-                .collect(),
+            value_bool_list: value_array.iter().map(|v| as_int(v) != 0).collect(),
             ..Default::default()
         },
         3 => DynamicParameter {
             value_type: 3,
             real_type: 3,
+            value_int_list: value_array.iter().map(as_int).collect(),
+            ..Default::default()
+        },
+        4 => DynamicParameter {
+            value_type: 4,
+            real_type: 4,
+            value_int_list: value_array.iter().map(as_int).collect(),
+            ..Default::default()
+        },
+        5 => {
+            let bits = as_int(value_array.first().unwrap_or(&serde_json::Value::Null));
+            if bits < 0 {
+                DynamicParameter {
+                    value_type: 3,
+                    real_type: 5,
+                    value_int_list: value_array.iter().map(as_int).collect(),
+                    ..Default::default()
+                }
+            } else {
+                DynamicParameter {
+                    value_type: 5,
+                    real_type: 5,
+                    value_float_list: value_array
+                        .iter()
+                        .map(|v| f32::from_bits(as_u32(v)))
+                        .collect(),
+                    ..Default::default()
+                }
+            }
+        }
+        6 => DynamicParameter {
+            value_type: 6,
+            real_type: 6,
             value_float_list: value_array
                 .iter()
-                .map(|v| {
-                    let bits = v.get("valueBit64").and_then(|x| x.as_i64()).unwrap_or(0) as u32;
-                    f32::from_bits(bits)
-                })
+                .map(|v| f32::from_bits(as_u32(v)))
                 .collect(),
             ..Default::default()
         },
         7 => DynamicParameter {
             value_type: 7,
             real_type: 7,
-            value_string_list: value_array
-                .iter()
-                .filter_map(|v| {
-                    v.get("valueString")
-                        .and_then(|s| s.as_str())
-                        .map(|s| s.to_string())
-                })
-                .collect(),
+            value_string_list: value_array.iter().map(as_str).collect(),
+            ..Default::default()
+        },
+        8 => DynamicParameter {
+            value_type: 8,
+            real_type: 8,
+            value_string_list: value_array.iter().map(as_str).collect(),
+            ..Default::default()
+        },
+        9 => DynamicParameter {
+            value_type: 7,
+            real_type: 9,
+            value_string_list: value_array.iter().map(as_str).collect(),
+            ..Default::default()
+        },
+        10 => DynamicParameter {
+            value_type: 8,
+            real_type: 10,
+            value_string_list: value_array.iter().map(as_str).collect(),
             ..Default::default()
         },
         11 => DynamicParameter {
-            value_type: 11,
+            value_type: 6,
             real_type: 11,
             value_float_list: value_array
                 .iter()
-                .map(|v| {
-                    let bits = v.get("valueBit64").and_then(|x| x.as_i64()).unwrap_or(0) as u32;
-                    f32::from_bits(bits)
-                })
+                .map(|v| f32::from_bits(as_u32(v)))
                 .collect(),
             ..Default::default()
         },
-        _ => DynamicParameter {
-            value_type: type_id,
-            real_type: type_id,
-            value_int_list: value_array
+        12 => DynamicParameter {
+            value_type: 6,
+            real_type: 12,
+            value_float_list: value_array
                 .iter()
-                .map(|v| v.get("valueBit64").and_then(|x| x.as_i64()).unwrap_or(0))
+                .map(|v| f32::from_bits(as_u32(v)))
                 .collect(),
+            ..Default::default()
+        },
+        13 => DynamicParameter {
+            value_type: 4,
+            real_type: 13,
+            value_int_list: value_array.iter().map(as_int).collect(),
+            ..Default::default()
+        },
+        14 => DynamicParameter {
+            value_type: 4,
+            real_type: 14,
+            value_int_list: value_array.iter().map(as_int).collect(),
+            ..Default::default()
+        },
+        15 => DynamicParameter {
+            value_type: 7,
+            real_type: 15,
+            value_string_list: value_array.iter().map(as_str).collect(),
+            ..Default::default()
+        },
+        16 => DynamicParameter {
+            value_type: 8,
+            real_type: 16,
+            value_string_list: value_array.iter().map(as_str).collect(),
+            ..Default::default()
+        },
+        17 | 18 => DynamicParameter {
+            value_type: 4,
+            real_type,
+            value_int_list: value_array.iter().map(as_int).collect(),
+            ..Default::default()
+        },
+        28 => DynamicParameter {
+            value_type: 7,
+            real_type: 28,
+            value_string_list: value_array.iter().map(as_str).collect(),
+            ..Default::default()
+        },
+        29 => DynamicParameter {
+            value_type: 8,
+            real_type: 29,
+            value_string_list: value_array.iter().map(as_str).collect(),
+            ..Default::default()
+        },
+        _ => DynamicParameter {
+            value_type: 4,
+            real_type,
+            value_int_list: value_array.iter().map(as_int).collect(),
             ..Default::default()
         },
     }
@@ -183,7 +271,6 @@ fn pack_interactives(scene_id: &str, assets: &BeyondAssets) -> Vec<SceneInteract
         .level_data
         .interactives(scene_id)
         .iter()
-        .filter(|i| !i.base.default_hide)
         .map(|i| SceneInteractive {
             common_info: Some(SceneObjectCommonInfo {
                 id: interactive_id(i.base.level_logic_id),
@@ -212,7 +299,6 @@ fn pack_npcs(scene_id: &str, assets: &BeyondAssets) -> Vec<SceneNpc> {
         .level_data
         .npcs(scene_id)
         .iter()
-        .filter(|n| !n.base.default_hide)
         .map(|n| SceneNpc {
             common_info: Some(SceneObjectCommonInfo {
                 id: npc_id(n.base.level_logic_id),
@@ -301,6 +387,15 @@ impl SceneManager {
         let monster_list = self.pack_scene_monsters(assets, entities);
         let interactive_list = pack_interactives(&self.current_scene, assets);
         let npc_list = pack_npcs(&self.current_scene, assets);
+
+        tracing::info!(
+            "Scene '{}' loaded: {} chars, {} monsters, {} interactives, {} npcs",
+            self.current_scene,
+            char_list.len(),
+            monster_list.len(),
+            interactive_list.len(),
+            npc_list.len()
+        );
 
         let enter_view = self.build_object_enter_view_full(
             char_list.clone(),
@@ -473,6 +568,15 @@ impl SceneManager {
         let monster_list = self.pack_scene_monsters(assets, entities);
         let interactive_list = pack_interactives(&self.current_scene, assets);
         let npc_list = pack_npcs(&self.current_scene, assets);
+
+        tracing::info!(
+            "Revival in scene '{}': {} chars, {} monsters, {} interactives, {} npcs",
+            self.current_scene,
+            char_list.len(),
+            monster_list.len(),
+            interactive_list.len(),
+            npc_list.len()
+        );
 
         let enter_view = self.build_object_enter_view_full(
             char_list.clone(),

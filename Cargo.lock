@@ -516,6 +516,7 @@ dependencies = [
  "config",
  "perlica-proto",
  "serde",
+ "serde_json",
  "tracing",
 ]
 
