@@ -183,7 +183,7 @@ pub async fn on_cs_char_bag_set_curr_team_index(
 /// Sends the `ScCharBagSetTeam` ACK **first** so the client knows the new
 /// composition before processing the scene update.
 pub async fn on_cs_char_bag_set_team(ctx: &mut NetContext<'_>, req: CsCharBagSetTeam) {
-    let uid = ctx.player.uid;
+    let uid = ctx.player.uid.clone();
     let team_index = req.team_index as usize;
 
     debug!(
