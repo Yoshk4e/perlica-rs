@@ -46,7 +46,7 @@
 //! }
 //! ```
 
-use crate::handlers::{bitset, character, login, movement, ping, scene, weapon};
+use crate::handlers::{bitset, character, login, mission, movement, ping, scene, weapon};
 use byteorder::{LittleEndian, ReadBytesExt};
 use perlica_proto::{CsHead, CsMergeMsg, prost::Message};
 use std::io::{Cursor, Read};
@@ -139,7 +139,7 @@ macro_rules! handlers {
 // Register all command handlers here.
 // Add new handlers to the appropriate section:
 // - `reply`: For commands that expect a response (most commands)
-// - `no_reply`: For fire-and-forget commands (e.g., status updates)
+// - `no_reply`: For fire-and-forget commands (e.g., status updates) or if you want to have complete control over the wire
 handlers! {
     reply {
         // Core System Commands
@@ -149,7 +149,15 @@ handlers! {
         // Scene Commands
         CsSceneLoadFinish      => scene::on_scene_load_finish,
         CsSceneRevival         => scene::on_cs_scene_revival,
-        CsSceneInteractiveEventTrigger     => scene::on_cs_scene_interactive_event_trigger,
+        //CsSceneInteractiveEventTrigger     => scene::on_cs_scene_interactive_event_trigger,
+        CsSceneSetLastRecordCampid         => scene::on_cs_scene_set_last_record_campid,
+        CsSceneTeleport        => scene::on_cs_scene_teleport,
+        // Entity Lifecycle Commands
+        CsSceneCreateEntity    => scene::on_cs_scene_create_entity,
+        // Level Script Commands
+        CsSceneUpdateLevelScriptProperty => scene::on_cs_scene_update_level_script_property,
+        CsSceneUpdateInteractiveProperty => scene::on_cs_scene_update_interactive_property,
+        CsSceneLevelScriptEventTrigger   => scene::on_cs_scene_level_script_event_trigger,
         // Movement Commands
         CsMoveObjectMove       => movement::on_cs_move_object_move,
         // Character & Team Commands
@@ -164,12 +172,20 @@ handlers! {
         // Bitset Commands
         CsBitsetAdd            => bitset::on_cs_bitset_add,
         CsBitsetRemove         => bitset::on_cs_bitset_remove,
+        // Mission & Guide Commands
+        CsUpdateQuestObjective => mission::on_cs_update_quest_objective,
+        CsCompleteGuideGroupKeyStep => mission::on_cs_complete_guide_group_key_step,
+        CsCompleteGuideGroup   => mission::on_cs_complete_guide_group,
+        CsTrackMission         => mission::on_cs_track_mission,
+        CsStopTrackingMission  => mission::on_cs_stop_tracking_mission,
         // Weapon Commands
         CsWeaponPuton          => weapon::on_cs_weapon_puton,
         CsWeaponAddExp         => weapon::on_cs_weapon_add_exp,
         CsWeaponBreakthrough   => weapon::on_cs_weapon_breakthrough,
         CsWeaponAttachGem      => weapon::on_cs_weapon_attach_gem,
         CsWeaponDetachGem      => weapon::on_cs_weapon_detach_gem,
+        // Dialog or Story related commands
+        CsFinishDialog                   => scene::on_cs_finish_dialog,
     }
     no_reply {
         // Team Composition (self-ACK, controls send order)
@@ -180,6 +196,10 @@ handlers! {
         // Scene Events (no response needed)
         CsSceneKillChar        => scene::on_cs_scene_kill_char,
         CsSceneKillMonster     => scene::on_cs_scene_kill_monster,
+        // Entity/Script fire-and-forget
+        CsSceneDestroyEntity   => scene::on_cs_scene_destroy_entity,
+        CsSceneSetLevelScriptActive => scene::on_cs_scene_set_level_script_active,
+        CsSceneCommitLevelScriptCacheStep => scene::on_cs_scene_commit_level_script_cache_step,
     }
 }
 
@@ -225,7 +245,8 @@ async fn handle_merge_msg(
         let needed = sub_head_size + sub_body_size;
         let available = data.len() - cursor.position() as usize;
 
-        if sub_head_size == 0 || sub_body_size == 0 || needed > available {
+        if sub_head_size == 0 || needed > available {
+            // since some packets can be empty we don't check the body anymore just logging it
             warn!(
                 "Malformed sub-packet Detected, aborting {}, {} , {:?}",
                 sub_head_size, sub_body_size, available

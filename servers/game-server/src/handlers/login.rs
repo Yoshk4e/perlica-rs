@@ -1,4 +1,4 @@
-use crate::handlers::{bitset, char_bag, factory, scene, unlock};
+use crate::handlers::{bitset, char_bag, factory, mission, scene, unlock};
 use crate::net::NetContext;
 use crate::player::LoadingState;
 use crate::sconfig;
@@ -19,6 +19,8 @@ pub async fn on_login(ctx: &mut NetContext<'_>, req: CsLogin) -> ScLogin {
             ctx.player.bitsets = record.bitsets;
             ctx.player.scene.checkpoint = record.checkpoint;
             ctx.player.scene.current_revival_mode = record.revival_mode;
+            ctx.player.missions = record.missions;
+            ctx.player.guides = record.guides;
         }
         Ok(None) => {
             let cfg = sconfig::Config::load();
@@ -63,6 +65,8 @@ enum LoginPhase {
     ItemBag,
     CharBag,
     Unlocks,
+    Guides,
+    Missions,
     CharAttrs,
     CharStatus,
     Factory,
@@ -77,7 +81,9 @@ impl LoginPhase {
             Self::BaseData => Self::ItemBag,
             Self::ItemBag => Self::CharBag,
             Self::CharBag => Self::Unlocks,
-            Self::Unlocks => Self::CharAttrs,
+            Self::Unlocks => Self::Guides,
+            Self::Guides => Self::Missions,
+            Self::Missions => Self::CharAttrs,
             Self::CharAttrs => Self::CharStatus,
             Self::CharStatus => Self::Factory,
             Self::Factory => Self::Bitsets,
@@ -108,6 +114,8 @@ pub(crate) async fn run_login_sequence(ctx: &mut NetContext<'_>) {
             LoginPhase::ItemBag => char_bag::push_item_bag_sync(ctx).await,
             LoginPhase::CharBag => char_bag::push_char_bag(ctx).await,
             LoginPhase::Unlocks => unlock::push_unlocks(ctx).await,
+            LoginPhase::Guides => mission::push_guides(ctx).await,
+            LoginPhase::Missions => mission::push_missions(ctx).await,
             LoginPhase::CharAttrs => char_bag::push_char_attrs(ctx).await,
             LoginPhase::CharStatus => char_bag::push_char_status(ctx).await,
             LoginPhase::Factory => factory::push_factory(ctx).await,
@@ -129,10 +137,9 @@ pub(crate) async fn run_login_sequence(ctx: &mut NetContext<'_>) {
 }
 
 async fn push_base_data(ctx: &mut NetContext<'_>) -> bool {
-    let uid: u64 = ctx.player.uid.parse().unwrap_or(1);
     ctx.notify(ScSyncBaseData {
-        roleid: uid,
-        role_name: ctx.player.uid.clone(),
+        roleid: 1,
+        role_name: "BeyondDefault".to_string(),
         level: ctx.player.world.role_level as u32,
         exp: ctx.player.world.role_exp as u32,
         server_time: now_ms() as i64,

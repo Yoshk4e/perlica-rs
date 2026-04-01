@@ -187,3 +187,119 @@ pub enum AttributeType {
     FusionShardPreserveProb = 43,
     Enum = 44,
 }
+
+#[repr(i32)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub enum ParamRealType {
+    Invalid = 0,
+    Bool = 1,
+    BoolList = 2,
+    Int = 3,
+    IntList = 4,
+    Float = 5,
+    FloatList = 6,
+    String = 7,
+    StringList = 8,
+    Path = 9,
+    PathList = 10,
+    Vector3 = 11,
+    Vector3List = 12,
+    EntityPtr = 13,
+    EntityPtrList = 14,
+    Tag = 15,
+    TagList = 16,
+    UInt = 17,
+    UIntList = 18,
+    FromContextCurrent = 19,
+    FromContextMsg = 20,
+    FromContextInteractive1 = 21,
+    FromContextInteractive2 = 22,
+    FromContextInteractive3 = 23,
+    LevelScriptPtr = 24,
+    LevelScriptPtrList = 25,
+    UInt64 = 26,
+    UInt64List = 27,
+    LangKey = 28,
+    LangKeyList = 29,
+    Node = 30,
+    NodeList = 31,
+    Buff = 32,
+    BuffList = 33,
+    Bytes = 34,
+    E_NUM = 35,
+}
+
+impl From<i32> for ParamRealType {
+    fn from(value: i32) -> Self {
+        match value {
+            0 => ParamRealType::Invalid,
+            1 => ParamRealType::Bool,
+            2 => ParamRealType::BoolList,
+            3 => ParamRealType::Int,
+            4 => ParamRealType::IntList,
+            5 => ParamRealType::Float,
+            6 => ParamRealType::FloatList,
+            7 => ParamRealType::String,
+            8 => ParamRealType::StringList,
+            9 => ParamRealType::Path,
+            10 => ParamRealType::PathList,
+            11 => ParamRealType::Vector3,
+            12 => ParamRealType::Vector3List,
+            13 => ParamRealType::EntityPtr,
+            14 => ParamRealType::EntityPtrList,
+            15 => ParamRealType::Tag,
+            16 => ParamRealType::TagList,
+            17 => ParamRealType::UInt,
+            18 => ParamRealType::UIntList,
+            19 => ParamRealType::FromContextCurrent,
+            20 => ParamRealType::FromContextMsg,
+            21 => ParamRealType::FromContextInteractive1,
+            22 => ParamRealType::FromContextInteractive2,
+            23 => ParamRealType::FromContextInteractive3,
+            24 => ParamRealType::LevelScriptPtr,
+            25 => ParamRealType::LevelScriptPtrList,
+            26 => ParamRealType::UInt64,
+            27 => ParamRealType::UInt64List,
+            28 => ParamRealType::LangKey,
+            29 => ParamRealType::LangKeyList,
+            30 => ParamRealType::Node,
+            31 => ParamRealType::NodeList,
+            32 => ParamRealType::Buff,
+            33 => ParamRealType::BuffList,
+            34 => ParamRealType::Bytes,
+            35 => ParamRealType::E_NUM,
+            _ => ParamRealType::Invalid,
+        }
+    }
+}
+
+#[repr(i32)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub enum ParamValueType {
+    Invalid = 0,
+    Bool = 1,
+    BoolList = 2,
+    Int = 3,
+    IntList = 4,
+    Float = 5,
+    FloatList = 6,
+    String = 7,
+    StringList = 8,
+}
+
+impl From<i32> for ParamValueType {
+    fn from(value: i32) -> Self {
+        match value {
+            0 => ParamValueType::Invalid,
+            1 => ParamValueType::Bool,
+            2 => ParamValueType::BoolList,
+            3 => ParamValueType::Int,
+            4 => ParamValueType::IntList,
+            5 => ParamValueType::Float,
+            6 => ParamValueType::FloatList,
+            7 => ParamValueType::String,
+            8 => ParamValueType::StringList,
+            _ => ParamValueType::Invalid,
+        }
+    }
+}

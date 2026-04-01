@@ -100,8 +100,14 @@ impl LevelDataAssets {
             scene.patrols.extend(file.patrols);
 
             // Interactives — keep all; defaultHide ones are managed by level scripts
-            scene.interactives.extend(file.interactives);
-            scene.npcs.extend(file.npcs);
+            scene
+                .npcs
+                .extend(file.npcs.into_iter().filter(|n| !n.base.default_hide));
+            scene.interactives.extend(
+                file.interactives
+                    .into_iter()
+                    .filter(|i| !i.base.default_hide),
+            );
             scene.level_scripts.extend(file.level_scripts);
             scene.factory_regions.extend(file.factory_regions);
             scene.splines.extend(file.splines);

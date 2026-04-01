@@ -1,6 +1,7 @@
 use crate::error::{DbError, Result};
 use perlica_logic::bitset::BitsetManager;
 use perlica_logic::character::char_bag::CharBag;
+use perlica_logic::mission::{GuideManager, MissionManager};
 use perlica_logic::player::WorldState;
 use perlica_logic::scene::{CheckpointInfo, RevivalMode};
 use serde::{Deserialize, Serialize};
@@ -40,6 +41,46 @@ pub struct PlayerRecord {
     pub checkpoint: Option<CheckpointInfo>,
     #[serde(default)]
     pub revival_mode: RevivalMode,
+    #[serde(default)]
+    pub missions: MissionManager,
+    #[serde(default)]
+    pub guides: GuideManager,
+}
+
+/// A strictly borrowed version of `PlayerRecord` used to avoid allocations
+/// and cloning during the serialization process.
+/// According to DotRh, suggestion of cloning everywhere being a bad idea.
+#[derive(Serialize)]
+pub struct PlayerRecordRef<'a> {
+    pub char_bag: &'a CharBag,
+    pub world: &'a WorldState,
+    pub bitsets: &'a BitsetManager,
+    pub checkpoint: Option<&'a CheckpointInfo>,
+    pub revival_mode: RevivalMode,
+    pub missions: &'a MissionManager,
+    pub guides: &'a GuideManager,
+}
+
+impl<'a> PlayerRecordRef<'a> {
+    pub fn from_parts(
+        char_bag: &'a CharBag,
+        world: &'a WorldState,
+        bitsets: &'a BitsetManager,
+        checkpoint: Option<&'a CheckpointInfo>,
+        revival_mode: RevivalMode,
+        missions: &'a MissionManager,
+        guides: &'a GuideManager,
+    ) -> Self {
+        Self {
+            char_bag,
+            world,
+            bitsets,
+            checkpoint,
+            revival_mode,
+            missions,
+            guides,
+        }
+    }
 }
 
 pub struct PlayerDb {
@@ -78,22 +119,8 @@ impl PlayerDb {
         Ok(Some(record))
     }
 
-    pub async fn save(
-        &self,
-        uid: &str,
-        char_bag: &CharBag,
-        world: &WorldState,
-        bitsets: &BitsetManager,
-        checkpoint: Option<&CheckpointInfo>,
-        revival_mode: RevivalMode,
-    ) -> Result<()> {
-        let bytes = bincode::serialize(&PlayerRecord {
-            char_bag: char_bag.clone(),
-            world: world.clone(),
-            bitsets: bitsets.clone(),
-            checkpoint: checkpoint.cloned(),
-            revival_mode,
-        })?;
+    pub async fn save<'a>(&self, uid: &str, record_ref: PlayerRecordRef<'a>) -> Result<()> {
+        let bytes = bincode::serialize(&record_ref)?;
 
         let path = self.path(uid);
         let tmp = path.with_extension("bin.tmp");
@@ -105,6 +132,7 @@ impl PlayerDb {
             path: path.clone(),
             source: e,
         })?;
+
         Ok(())
     }
 
