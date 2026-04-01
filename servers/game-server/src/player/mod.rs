@@ -49,8 +49,13 @@
 //! ```
 
 use perlica_logic::{
-    bitset::BitsetManager, character::char_bag::CharBag, entity::EntityManager,
-    movement::MovementManager, player::WorldState, scene::SceneManager,
+    bitset::BitsetManager,
+    character::char_bag::CharBag,
+    entity::EntityManager,
+    mission::{GuideManager, MissionManager},
+    movement::MovementManager,
+    player::WorldState,
+    scene::SceneManager,
 };
 
 /// Tracks the player's loading state during the login sequence.
@@ -138,6 +143,18 @@ pub struct Player {
     ///
     /// See `perlica_logic::entity::EntityManager` for details.
     pub entities: EntityManager,
+
+    /// Mission state synchronized to the client mission HUD.
+    /// Tracks active objectives, progress, and completed quest chains.
+    ///
+    /// See `perlica_logic::mission::MissionManager` for details.
+    pub missions: MissionManager,
+
+    /// Guide completion state used for tutorial popups.
+    /// Tracks which "how-to" prompts the player has already seen/dismissed.
+    ///
+    /// See `perlica_logic::mission::GuideManager` for details.
+    pub guides: GuideManager,
 }
 
 impl Player {
@@ -177,6 +194,8 @@ impl Default for Player {
             movement,
             scene,
             entities: EntityManager::new(),
+            missions: MissionManager::default(),
+            guides: GuideManager::default(),
         }
     }
 }

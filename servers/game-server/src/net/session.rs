@@ -7,9 +7,8 @@ use crate::net::{
 };
 use crate::player::Player;
 use config::BeyondAssets;
-use perlica_db::PlayerDb;
+use perlica_db::{PlayerDb, PlayerRecordRef};
 use perlica_proto::{CsHead, prost::Message};
-use std::net::SocketAddr;
 use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
     net::TcpStream,
@@ -22,7 +21,6 @@ pub struct SessionContext {
     pub assets: &'static BeyondAssets,
     pub registry: &'static SessionRegistry,
     pub db: &'static PlayerDb,
-    pub addr: SocketAddr,
 }
 
 /// Handles a new TCP connection from a client.
@@ -31,7 +29,6 @@ pub struct SessionContext {
 /// When the logic loop exits, the write task is awaited to flush remaining outbound data.
 pub async fn handle_connection(
     socket: TcpStream,
-    addr: SocketAddr,
     assets: &'static BeyondAssets,
     registry: &'static SessionRegistry,
     db: &'static PlayerDb,
@@ -49,7 +46,6 @@ pub async fn handle_connection(
         assets,
         registry,
         db,
-        addr,
     };
 
     let result = logic_loop(reader, outbound_tx, notify_rx, handle, ctx).await;
@@ -143,18 +139,17 @@ async fn logic_loop(
         // their actual last location rather than the last movement-packet sync.
         player.movement.sync_to_world(&mut player.world);
 
-        if let Err(e) = ctx
-            .db
-            .save(
-                &player.uid,
-                &player.char_bag,
-                &player.world,
-                &player.bitsets,
-                player.scene.get_checkpoint(),
-                player.scene.current_revival_mode,
-            )
-            .await
-        {
+        let record_ref = PlayerRecordRef {
+            char_bag: &player.char_bag,
+            world: &player.world,
+            bitsets: &player.bitsets,
+            checkpoint: player.scene.get_checkpoint(),
+            revival_mode: player.scene.current_revival_mode,
+            missions: &player.missions,
+            guides: &player.guides,
+        };
+
+        if let Err(e) = ctx.db.save(&player.uid, record_ref).await {
             error!("Save Failed: UID={}, Error={}", player.uid, e);
         }
 
@@ -205,7 +200,7 @@ fn is_clean_disconnect(e: &std::io::Error) -> bool {
     )
 }
 
-/// Dispatches an inbound server notification into the player's session.
+/// Dispatches an inbound server notification into the player\'s session.
 async fn handle_notification(ctx: &mut NetContext<'_>, notification: Notification) {
     match notification {
         #[allow(unreachable_patterns)]

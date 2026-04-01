@@ -884,7 +884,7 @@ impl WeaponDepot {
             // Create and equip the weapon
             let inst_id = self.add_weapon(weapon.weapon_id.clone(), own_time);
 
-            if let Ok(_) = self.equip_weapon(inst_id, *char_id) {
+            if self.equip_weapon(inst_id, *char_id).is_ok() {
                 equipped.push((*char_id, inst_id));
                 info!(
                     "Initialized default weapon {} for char {} (template: {})",

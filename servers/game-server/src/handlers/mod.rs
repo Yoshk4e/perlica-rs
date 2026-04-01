@@ -3,6 +3,7 @@ pub mod char_bag;
 pub mod character;
 pub mod factory;
 pub mod login;
+pub mod mission;
 pub mod movement;
 pub mod ping;
 pub mod scene;

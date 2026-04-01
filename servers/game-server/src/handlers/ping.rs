@@ -15,6 +15,6 @@ pub async fn on_csping(_ctx: &mut NetContext<'_>, req: CsPing) -> ScPing {
 pub async fn on_cs_flush_sync(_ctx: &mut NetContext<'_>, req: CsFlushSync) -> ScFlushSync {
     ScFlushSync {
         client_ts: req.client_ts,
-        server_ts: common::time::now_ms() as u64,
+        server_ts: common::time::now_ms(),
     }
 }

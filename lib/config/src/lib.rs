@@ -2,6 +2,7 @@ pub mod character;
 pub mod error;
 pub mod id_to_str;
 pub mod level_data;
+pub mod mission;
 pub mod skill;
 pub mod str_to_id;
 pub mod tables;
@@ -18,6 +19,7 @@ pub struct BeyondAssets {
     pub char_skills: skill::SkillAssets,
     pub weapons: weapon::WeaponAssets,
     pub level_data: level_data::LevelDataAssets,
+    pub missions: mission::MissionAssets,
     pub str_id_num: StrIdNumAssets,
     pub num_id_str: NumIdStrAssets,
 }
@@ -33,6 +35,7 @@ impl BeyondAssets {
             char_skills: skill::SkillAssets::load(&tables_dir)?,
             weapons: weapon::WeaponAssets::load(&tables_dir)?,
             level_data: level_data::LevelDataAssets::load(&config_dir)?,
+            missions: mission::MissionAssets::load(&tables_dir)?,
             str_id_num: StrIdNumAssets::load(&tables_dir)?,
             num_id_str: NumIdStrAssets::load(&tables_dir)?,
         })
