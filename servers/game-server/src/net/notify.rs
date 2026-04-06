@@ -1,4 +1,5 @@
-use tokio::sync::mpsc;
+use perlica_muip::GmResponse;
+use tokio::sync::{mpsc, oneshot};
 
 /// Events the server can push into a player's logic loop from outside the session.
 ///
@@ -6,13 +7,21 @@ use tokio::sync::mpsc;
 /// request/response cycle (scene broadcasts, world events, GM actions, etc.)
 /// sends a [`Notification`] through the player's [`PlayerHandle`].
 ///
+/// MUIP uses this path to execute live GM mutations against the in-memory
+/// player state
 /// New variants are added here as world systems come online.
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub enum Notification {
-    // Placeholder — variants added as systems are implemented, e.g.:
-    //   BroadcastMove(Vec<MoveInfo>)
-    //   SceneEvent(SceneEventPayload)
-    //   Kick(String)
+    MuipCommand {
+        command: String,
+        respond_to: oneshot::Sender<MuipResult>,
+    },
+}
+
+#[derive(Debug)]
+pub struct MuipResult {
+    pub response: GmResponse,
+    pub disconnect: bool,
 }
 
 /// A cheap, cloneable handle for pushing [`Notification`]s into one player's
@@ -41,11 +50,20 @@ impl PlayerHandle {
         self.tx.send(n).await.is_ok()
     }
 
+    /// Executes a live MUIP GM command against this player's session.
+    pub async fn exec_muip(&self, command: String) -> Option<MuipResult> {
+        let (tx, rx) = oneshot::channel();
+        self.tx
+            .send(Notification::MuipCommand {
+                command,
+                respond_to: tx,
+            })
+            .await
+            .ok()?;
+        rx.await.ok()
+    }
+
     /// Non-blocking variant of [`notify`](Self::notify).
-    ///
-    /// Returns `false` if the channel is full or closed. Prefer this when
-    /// holding a lock (e.g. during a registry broadcast) to avoid blocking the
-    /// lock holder.
     pub fn try_notify(&self, n: Notification) -> bool {
         self.tx.try_send(n).is_ok()
     }

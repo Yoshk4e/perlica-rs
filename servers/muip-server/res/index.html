@@ -1,0 +1,1522 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>MUIP · GM Console</title>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Fira+Code:wght@400;500&display=swap"
+            rel="stylesheet"
+        />
+        <style>
+            *,
+            *::before,
+            *::after {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+
+            :root {
+                --bg: #0e0c18;
+                --bg2: #13111f;
+                --bg3: #1a1729;
+                --bg4: #201d33;
+                --border: rgba(120, 100, 180, 0.15);
+                --border-h: rgba(160, 130, 220, 0.35);
+
+                --lavender: #c4b0f5;
+                --rose: #f0a8c8;
+                --mint: #90dfc8;
+                --sky: #90c8f0;
+                --peach: #f0c890;
+
+                --text: #d8d0f0;
+                --text-sub: #7a6e98;
+                --text-dim: #4a4368;
+
+                --success: #78dbb4;
+                --warn: #f0c060;
+                --error: #f08098;
+
+                --radius-sm: 10px;
+                --radius-md: 16px;
+                --radius-lg: 22px;
+            }
+
+            html,
+            body {
+                min-height: 100vh;
+            }
+
+            body {
+                background: var(--bg);
+                color: var(--text);
+                font-family: "Nunito", sans-serif;
+                font-size: 14px;
+                line-height: 1.5;
+                overflow-x: hidden;
+            }
+
+            .ambient {
+                position: fixed;
+                inset: 0;
+                pointer-events: none;
+                z-index: 0;
+                overflow: hidden;
+            }
+            .amb {
+                position: absolute;
+                border-radius: 50%;
+                filter: blur(100px);
+                opacity: 0.12;
+                animation: ambDrift 20s ease-in-out infinite alternate;
+            }
+            .amb-1 {
+                width: 600px;
+                height: 500px;
+                background: #7c5cbf;
+                top: -150px;
+                left: -100px;
+                animation-delay: 0s;
+            }
+            .amb-2 {
+                width: 500px;
+                height: 450px;
+                background: #c05090;
+                bottom: -100px;
+                right: -80px;
+                animation-delay: -8s;
+            }
+            .amb-3 {
+                width: 380px;
+                height: 380px;
+                background: #3070b0;
+                top: 35%;
+                right: 5%;
+                animation-delay: -14s;
+            }
+            @keyframes ambDrift {
+                from {
+                    transform: translate(0, 0) scale(1);
+                }
+                to {
+                    transform: translate(30px, 40px) scale(1.12);
+                }
+            }
+
+            .shell {
+                position: relative;
+                z-index: 1;
+                min-height: 100vh;
+                display: grid;
+                grid-template-rows: 64px 1fr;
+                grid-template-columns: 240px 1fr 268px;
+                grid-template-areas: "header header header" "left center right";
+            }
+
+            header {
+                grid-area: header;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 0 24px;
+                border-bottom: 1px solid var(--border);
+                background: rgba(13, 11, 22, 0.85);
+                backdrop-filter: blur(20px);
+                position: sticky;
+                top: 0;
+                z-index: 50;
+            }
+            .brand {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            }
+            .brand-gem {
+                width: 34px;
+                height: 34px;
+                border-radius: 10px;
+                background: linear-gradient(135deg, #9b70e8, #e870b8);
+                box-shadow: 0 0 18px rgba(155, 112, 232, 0.4);
+                display: grid;
+                place-items: center;
+                flex-shrink: 0;
+            }
+            .brand-gem svg {
+                width: 19px;
+                height: 19px;
+            }
+            .brand-name {
+                font-size: 1rem;
+                font-weight: 700;
+                color: var(--text);
+                letter-spacing: 0.01em;
+            }
+            .brand-name span {
+                color: var(--lavender);
+            }
+            .brand-tag {
+                font-size: 0.62rem;
+                color: var(--text-dim);
+                letter-spacing: 0.06em;
+                font-weight: 400;
+            }
+
+            .header-center {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+            }
+            .nav-pill {
+                padding: 6px 14px;
+                border-radius: 20px;
+                font-size: 0.75rem;
+                font-weight: 600;
+                color: var(--text-sub);
+                cursor: pointer;
+                transition: all 0.18s;
+                letter-spacing: 0.02em;
+            }
+            .nav-pill:hover {
+                background: var(--bg3);
+                color: var(--text);
+            }
+            .nav-pill.active {
+                background: rgba(155, 112, 232, 0.15);
+                color: var(--lavender);
+            }
+
+            .header-right {
+                display: flex;
+                align-items: center;
+                gap: 14px;
+            }
+            .status-chip {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                padding: 5px 12px;
+                border-radius: 20px;
+                background: rgba(120, 219, 180, 0.08);
+                border: 1px solid rgba(120, 219, 180, 0.2);
+                font-size: 0.7rem;
+                font-weight: 600;
+                color: var(--success);
+                letter-spacing: 0.05em;
+            }
+            .status-dot {
+                width: 6px;
+                height: 6px;
+                border-radius: 50%;
+                background: var(--success);
+                box-shadow: 0 0 6px var(--success);
+                animation: pulse 2.5s ease-in-out infinite;
+            }
+            @keyframes pulse {
+                0%,
+                100% {
+                    opacity: 1;
+                }
+                50% {
+                    opacity: 0.45;
+                }
+            }
+            .avatar {
+                width: 30px;
+                height: 30px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, #9b70e8, #e870b8);
+                display: grid;
+                place-items: center;
+                font-size: 0.7rem;
+                font-weight: 700;
+                color: #fff;
+                box-shadow: 0 2px 10px rgba(155, 112, 232, 0.35);
+            }
+
+            .sidebar-left {
+                grid-area: left;
+                border-right: 1px solid var(--border);
+                background: rgba(13, 11, 22, 0.6);
+                backdrop-filter: blur(12px);
+                overflow-y: auto;
+                padding: 18px 12px;
+                display: flex;
+                flex-direction: column;
+                gap: 2px;
+            }
+            .section-label {
+                font-size: 0.6rem;
+                font-weight: 700;
+                letter-spacing: 0.16em;
+                text-transform: uppercase;
+                color: var(--text-dim);
+                padding: 10px 8px 6px;
+            }
+            .cmd-btn {
+                width: 100%;
+                text-align: left;
+                background: none;
+                border: none;
+                padding: 9px 10px;
+                border-radius: var(--radius-sm);
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                cursor: pointer;
+                color: var(--text-sub);
+                font-family: "Nunito", sans-serif;
+                font-size: 0.8rem;
+                font-weight: 600;
+                transition: all 0.15s;
+                letter-spacing: 0.01em;
+            }
+            .cmd-btn:hover {
+                background: var(--bg3);
+                color: var(--text);
+            }
+            .cmd-btn .icon {
+                width: 28px;
+                height: 28px;
+                border-radius: 8px;
+                display: grid;
+                place-items: center;
+                flex-shrink: 0;
+                font-size: 0.8rem;
+                transition: transform 0.15s;
+            }
+            .cmd-btn:hover .icon {
+                transform: scale(1.1);
+            }
+            .cmd-btn .badge {
+                margin-left: auto;
+                font-size: 0.58rem;
+                padding: 2px 7px;
+                border-radius: 20px;
+                font-weight: 700;
+                letter-spacing: 0.06em;
+            }
+            .icon.purple {
+                background: rgba(155, 112, 232, 0.18);
+                color: var(--lavender);
+            }
+            .icon.rose {
+                background: rgba(240, 128, 152, 0.15);
+                color: var(--rose);
+            }
+            .icon.mint {
+                background: rgba(144, 223, 200, 0.15);
+                color: var(--mint);
+            }
+            .icon.sky {
+                background: rgba(144, 200, 240, 0.15);
+                color: var(--sky);
+            }
+            .icon.peach {
+                background: rgba(240, 200, 144, 0.15);
+                color: var(--peach);
+            }
+            .badge.purple {
+                background: rgba(155, 112, 232, 0.15);
+                color: var(--lavender);
+            }
+            .badge.rose {
+                background: rgba(240, 100, 120, 0.15);
+                color: var(--error);
+            }
+            .badge.mint {
+                background: rgba(120, 219, 180, 0.12);
+                color: var(--success);
+            }
+            .badge.peach {
+                background: rgba(240, 192, 96, 0.12);
+                color: var(--warn);
+            }
+            .sidebar-sep {
+                height: 1px;
+                background: var(--border);
+                margin: 6px 8px;
+            }
+
+            .center-col {
+                grid-area: center;
+                display: flex;
+                flex-direction: column;
+                padding: 20px;
+                gap: 16px;
+                overflow-y: auto;
+            }
+            .stat-row {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 12px;
+            }
+            .stat-card {
+                background: var(--bg2);
+                border: 1px solid var(--border);
+                border-radius: var(--radius-md);
+                padding: 14px 16px;
+                position: relative;
+                overflow: hidden;
+                transition: border-color 0.2s;
+            }
+            .stat-card:hover {
+                border-color: var(--border-h);
+            }
+            .stat-card::after {
+                content: "";
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                height: 2px;
+                border-radius: 0 0 var(--radius-md) var(--radius-md);
+            }
+            .stat-card.c-lav::after {
+                background: linear-gradient(
+                    90deg,
+                    transparent,
+                    var(--lavender),
+                    transparent
+                );
+            }
+            .stat-card.c-mint::after {
+                background: linear-gradient(
+                    90deg,
+                    transparent,
+                    var(--mint),
+                    transparent
+                );
+            }
+            .stat-card.c-rose::after {
+                background: linear-gradient(
+                    90deg,
+                    transparent,
+                    var(--rose),
+                    transparent
+                );
+            }
+            .stat-label {
+                font-size: 0.62rem;
+                font-weight: 700;
+                letter-spacing: 0.12em;
+                text-transform: uppercase;
+                color: var(--text-dim);
+                margin-bottom: 8px;
+            }
+            .stat-val {
+                font-size: 1.6rem;
+                font-weight: 700;
+                line-height: 1;
+                letter-spacing: -0.02em;
+            }
+            .stat-val.lav {
+                color: var(--lavender);
+            }
+            .stat-val.mint {
+                color: var(--mint);
+            }
+            .stat-val.rose {
+                color: var(--rose);
+            }
+            .stat-sub {
+                font-size: 0.67rem;
+                color: var(--text-dim);
+                margin-top: 5px;
+            }
+
+            .terminal-card {
+                background: var(--bg2);
+                border: 1px solid var(--border);
+                border-radius: var(--radius-lg);
+                display: flex;
+                flex-direction: column;
+                flex: 1;
+                min-height: 360px;
+                overflow: hidden;
+            }
+            .terminal-topbar {
+                display: flex;
+                align-items: center;
+                padding: 12px 16px;
+                border-bottom: 1px solid var(--border);
+                gap: 8px;
+            }
+            .tbar-dots {
+                display: flex;
+                gap: 6px;
+            }
+            .tbar-dot {
+                width: 10px;
+                height: 10px;
+                border-radius: 50%;
+            }
+            .tbar-dot.r {
+                background: rgba(240, 128, 152, 0.5);
+            }
+            .tbar-dot.y {
+                background: rgba(240, 192, 96, 0.5);
+            }
+            .tbar-dot.g {
+                background: rgba(120, 219, 180, 0.5);
+            }
+            .tbar-title {
+                font-size: 0.72rem;
+                font-weight: 600;
+                color: var(--text-sub);
+                margin-left: 4px;
+                letter-spacing: 0.04em;
+            }
+            .tbar-count {
+                margin-left: auto;
+                font-size: 0.62rem;
+                color: var(--text-dim);
+                font-family: "Fira Code", monospace;
+            }
+
+            .terminal-log {
+                flex: 1;
+                padding: 14px 16px;
+                overflow-y: auto;
+                display: flex;
+                flex-direction: column;
+                gap: 3px;
+                scrollbar-width: thin;
+                scrollbar-color: var(--bg4) transparent;
+            }
+            .log-line {
+                display: flex;
+                gap: 10px;
+                align-items: baseline;
+                font-family: "Fira Code", monospace;
+                font-size: 0.73rem;
+                line-height: 1.65;
+                animation: lineIn 0.2s ease both;
+            }
+            @keyframes lineIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(3px);
+                }
+                to {
+                    opacity: 1;
+                    transform: none;
+                }
+            }
+            .log-ts {
+                color: var(--text-dim);
+                flex-shrink: 0;
+            }
+            .log-pre {
+                flex-shrink: 0;
+                width: 14px;
+            }
+            .log-msg {
+                word-break: break-word;
+            }
+            .log-line.info .log-msg {
+                color: var(--text);
+            }
+            .log-line.ok .log-msg {
+                color: var(--mint);
+            }
+            .log-line.warn .log-msg {
+                color: var(--warn);
+            }
+            .log-line.err .log-msg {
+                color: var(--error);
+            }
+            .log-line.cmd .log-msg {
+                color: var(--lavender);
+            }
+            .log-line.sys .log-msg {
+                color: var(--sky);
+            }
+            .log-line.info .log-pre {
+                color: var(--text-dim);
+            }
+            .log-line.ok .log-pre {
+                color: var(--mint);
+            }
+            .log-line.warn .log-pre {
+                color: var(--warn);
+            }
+            .log-line.err .log-pre {
+                color: var(--error);
+            }
+            .log-line.cmd .log-pre {
+                color: var(--lavender);
+            }
+            .log-line.sys .log-pre {
+                color: var(--sky);
+            }
+
+            .terminal-input-row {
+                border-top: 1px solid var(--border);
+                background: var(--bg3);
+                display: flex;
+                align-items: center;
+                padding: 0 16px;
+                gap: 10px;
+                border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+            }
+            .input-prompt {
+                font-family: "Fira Code", monospace;
+                font-size: 0.8rem;
+                color: var(--lavender);
+                flex-shrink: 0;
+                user-select: none;
+            }
+            .terminal-input {
+                flex: 1;
+                background: transparent;
+                border: none;
+                outline: none;
+                font-family: "Fira Code", monospace;
+                font-size: 0.8rem;
+                color: #fff;
+                padding: 13px 0;
+                caret-color: var(--lavender);
+            }
+            .terminal-input::placeholder {
+                color: var(--text-dim);
+            }
+            .uid-input-wrap {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                background: var(--bg4);
+                border: 1px solid var(--border);
+                border-radius: 10px;
+                padding: 5px 10px;
+            }
+            .uid-label {
+                font-size: 0.6rem;
+                font-weight: 700;
+                color: var(--text-dim);
+                letter-spacing: 0.1em;
+                white-space: nowrap;
+            }
+            .uid-input {
+                background: transparent;
+                border: none;
+                outline: none;
+                font-family: "Fira Code", monospace;
+                font-size: 0.75rem;
+                color: var(--lavender);
+                width: 88px;
+                caret-color: var(--lavender);
+            }
+            .uid-input::placeholder {
+                color: var(--text-dim);
+            }
+            .exec-btn {
+                background: linear-gradient(135deg, #9b70e8, #d860b0);
+                border: none;
+                border-radius: 10px;
+                padding: 8px 18px;
+                font-family: "Nunito", sans-serif;
+                font-size: 0.75rem;
+                font-weight: 700;
+                color: #fff;
+                cursor: pointer;
+                letter-spacing: 0.04em;
+                transition: all 0.15s;
+                box-shadow: 0 2px 12px rgba(155, 112, 232, 0.3);
+                white-space: nowrap;
+            }
+            .exec-btn:hover {
+                filter: brightness(1.1);
+                transform: translateY(-1px);
+                box-shadow: 0 4px 18px rgba(155, 112, 232, 0.4);
+            }
+            .exec-btn:active {
+                transform: scale(0.97);
+            }
+
+            .history-strip {
+                border-top: 1px solid var(--border);
+                padding: 8px 16px;
+                display: flex;
+                align-items: center;
+                gap: 7px;
+                flex-wrap: wrap;
+                background: rgba(20, 18, 34, 0.5);
+            }
+            .hist-lbl {
+                font-size: 0.6rem;
+                font-weight: 700;
+                color: var(--text-dim);
+                letter-spacing: 0.1em;
+                text-transform: uppercase;
+                flex-shrink: 0;
+            }
+            .hist-chip {
+                font-family: "Fira Code", monospace;
+                font-size: 0.65rem;
+                color: var(--text-sub);
+                padding: 3px 9px;
+                border-radius: 20px;
+                background: var(--bg4);
+                border: 1px solid var(--border);
+                cursor: pointer;
+                transition: all 0.15s;
+                max-width: 160px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+            .hist-chip:hover {
+                border-color: var(--lavender);
+                color: var(--lavender);
+            }
+
+            .sidebar-right {
+                grid-area: right;
+                border-left: 1px solid var(--border);
+                background: rgba(13, 11, 22, 0.6);
+                backdrop-filter: blur(12px);
+                overflow-y: auto;
+                display: flex;
+                flex-direction: column;
+            }
+            .panel-head {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                padding: 14px 16px 10px;
+                font-size: 0.65rem;
+                font-weight: 700;
+                letter-spacing: 0.12em;
+                text-transform: uppercase;
+                color: var(--text-dim);
+                border-bottom: 1px solid var(--border);
+            }
+            .ph-dot {
+                width: 6px;
+                height: 6px;
+                border-radius: 50%;
+            }
+
+            .player-row {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                padding: 10px 16px;
+                border-bottom: 1px solid var(--border);
+                cursor: pointer;
+                transition: background 0.15s;
+            }
+            .player-row:hover {
+                background: rgba(155, 112, 232, 0.05);
+            }
+            .player-row:last-of-type {
+                border-bottom: none;
+            }
+            .p-ava {
+                width: 32px;
+                height: 32px;
+                border-radius: 10px;
+                background: linear-gradient(135deg, var(--pf), var(--pt));
+                display: grid;
+                place-items: center;
+                font-size: 0.7rem;
+                font-weight: 700;
+                color: #fff;
+                flex-shrink: 0;
+            }
+            .p-info {
+                flex: 1;
+                min-width: 0;
+            }
+            .p-name {
+                font-size: 0.8rem;
+                font-weight: 600;
+                color: var(--text);
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+            .p-uid {
+                font-family: "Fira Code", monospace;
+                font-size: 0.62rem;
+                color: var(--text-dim);
+            }
+            .p-online {
+                font-family: "Fira Code", monospace;
+                font-size: 0.65rem;
+                padding: 3px 7px;
+                border-radius: 6px;
+                flex-shrink: 0;
+                font-weight: 500;
+                background: rgba(120, 219, 180, 0.1);
+                color: var(--success);
+            }
+            .players-empty {
+                padding: 16px;
+                font-size: 0.75rem;
+                color: var(--text-dim);
+                text-align: center;
+                font-family: "Fira Code", monospace;
+            }
+
+            .token-panel {
+                padding: 14px 16px;
+                border-bottom: 1px solid var(--border);
+            }
+            .token-label {
+                font-size: 0.6rem;
+                font-weight: 700;
+                letter-spacing: 0.12em;
+                text-transform: uppercase;
+                color: var(--text-dim);
+                margin-bottom: 7px;
+            }
+            .token-input-wrap {
+                display: flex;
+                gap: 6px;
+            }
+            .token-field {
+                flex: 1;
+                background: var(--bg4);
+                border: 1px solid var(--border);
+                border-radius: 10px;
+                padding: 8px 12px;
+                font-family: "Fira Code", monospace;
+                font-size: 0.75rem;
+                color: var(--lavender);
+                outline: none;
+                transition: border-color 0.2s;
+            }
+            .token-field::placeholder {
+                color: var(--text-dim);
+            }
+            .token-field:focus {
+                border-color: rgba(155, 112, 232, 0.5);
+            }
+            .token-eye {
+                background: var(--bg4);
+                border: 1px solid var(--border);
+                border-radius: 10px;
+                padding: 0 10px;
+                cursor: pointer;
+                color: var(--text-sub);
+                transition: all 0.15s;
+                display: grid;
+                place-items: center;
+            }
+            .token-eye:hover {
+                border-color: var(--border-h);
+                color: var(--text);
+            }
+
+            .cfg-row {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 11px 16px;
+                border-bottom: 1px solid var(--border);
+                gap: 10px;
+            }
+            .cfg-row:last-child {
+                border-bottom: none;
+            }
+            .cfg-key {
+                font-size: 0.78rem;
+                color: var(--text-sub);
+                font-weight: 500;
+            }
+            .cfg-val {
+                font-size: 0.75rem;
+                color: var(--text-dim);
+                font-family: "Fira Code", monospace;
+            }
+            .toggle {
+                width: 36px;
+                height: 20px;
+                background: var(--bg4);
+                border: 1px solid var(--border);
+                border-radius: 20px;
+                position: relative;
+                cursor: pointer;
+                transition: all 0.22s;
+                flex-shrink: 0;
+            }
+            .toggle::after {
+                content: "";
+                position: absolute;
+                top: 3px;
+                left: 3px;
+                width: 12px;
+                height: 12px;
+                border-radius: 50%;
+                background: var(--text-dim);
+                transition: all 0.22s;
+                box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+            }
+            .toggle.on {
+                background: rgba(155, 112, 232, 0.2);
+                border-color: rgba(155, 112, 232, 0.5);
+                box-shadow: 0 0 10px rgba(155, 112, 232, 0.2);
+            }
+            .toggle.on::after {
+                left: 19px;
+                background: var(--lavender);
+                box-shadow: 0 0 6px rgba(196, 176, 245, 0.6);
+            }
+
+            ::-webkit-scrollbar {
+                width: 4px;
+            }
+            ::-webkit-scrollbar-track {
+                background: transparent;
+            }
+            ::-webkit-scrollbar-thumb {
+                background: var(--bg4);
+                border-radius: 4px;
+            }
+
+            @media (max-width: 1100px) {
+                .shell {
+                    grid-template-columns: 220px 1fr;
+                    grid-template-areas: "header header" "left center";
+                }
+                .sidebar-right {
+                    display: none;
+                }
+            }
+            @media (max-width: 740px) {
+                .shell {
+                    grid-template-columns: 1fr;
+                    grid-template-areas: "header" "center";
+                }
+                .sidebar-left {
+                    display: none;
+                }
+                .stat-row {
+                    grid-template-columns: 1fr 1fr;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="ambient">
+            <div class="amb amb-1"></div>
+            <div class="amb amb-2"></div>
+            <div class="amb amb-3"></div>
+        </div>
+
+        <div class="shell">
+            <header>
+                <div class="brand">
+                    <div class="brand-gem">
+                        <svg
+                            viewBox="0 0 19 19"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                        >
+                            <polygon
+                                points="9.5,2 5,7 9.5,8.5"
+                                fill="rgba(255,255,255,0.55)"
+                            />
+                            <polygon
+                                points="9.5,2 14,7 9.5,8.5"
+                                fill="rgba(255,255,255,0.3)"
+                            />
+                            <polygon
+                                points="5,7 14,7 11.5,15.5 7.5,15.5"
+                                fill="rgba(255,255,255,0.12)"
+                            />
+                            <polygon
+                                points="7.5,15.5 11.5,15.5 9.5,17.5"
+                                fill="rgba(255,255,255,0.45)"
+                            />
+                            <polygon
+                                points="9.5,2 14,7 11.5,15.5 7.5,15.5 5,7"
+                                stroke="rgba(255,255,255,0.88)"
+                                stroke-width="1.1"
+                                stroke-linejoin="round"
+                            />
+                            <line
+                                x1="7.5"
+                                y1="15.5"
+                                x2="9.5"
+                                y2="17.5"
+                                stroke="rgba(255,255,255,0.88)"
+                                stroke-width="1.1"
+                                stroke-linecap="round"
+                            />
+                            <line
+                                x1="11.5"
+                                y1="15.5"
+                                x2="9.5"
+                                y2="17.5"
+                                stroke="rgba(255,255,255,0.88)"
+                                stroke-width="1.1"
+                                stroke-linecap="round"
+                            />
+                            <line
+                                x1="5"
+                                y1="7"
+                                x2="14"
+                                y2="7"
+                                stroke="rgba(255,255,255,0.35)"
+                                stroke-width="0.6"
+                            />
+                            <line
+                                x1="9.5"
+                                y1="2"
+                                x2="9.5"
+                                y2="17.5"
+                                stroke="rgba(255,255,255,0.2)"
+                                stroke-width="0.5"
+                            />
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="brand-name">MUIP <span>Console</span></div>
+                        <div class="brand-tag">Game Server Interface</div>
+                    </div>
+                </div>
+                <div class="header-center">
+                    <div class="nav-pill active">Terminal</div>
+                    <div class="nav-pill">Players</div>
+                    <div class="nav-pill">Config</div>
+                    <div class="nav-pill">Logs</div>
+                </div>
+                <div class="header-right">
+                    <div class="status-chip" id="status-chip">
+                        <div class="status-dot"></div>
+                        Online
+                    </div>
+                    <div class="avatar">GM</div>
+                </div>
+            </header>
+
+            <aside class="sidebar-left">
+                <div class="section-label">Player</div>
+                <button
+                    class="cmd-btn"
+                    onclick="fillCmd('give weapon chr_weapon_1234')"
+                >
+                    <div class="icon purple">🎁</div>
+                    Give Weapon<span class="badge purple">GM</span>
+                </button>
+                <button
+                    class="cmd-btn"
+                    onclick="fillCmd('tp map01_lv001 469 107 217')"
+                >
+                    <div class="icon sky">✦</div>
+                    Teleport<span class="badge purple">GM</span>
+                </button>
+                <button class="cmd-btn" onclick="fillCmd('heal')">
+                    <div class="icon mint">♡</div>
+                    Heal Player<span class="badge mint">SAFE</span>
+                </button>
+                <button class="cmd-btn" onclick="fillCmd('heal all')">
+                    <div class="icon mint">♡</div>
+                    Heal All<span class="badge mint">SAFE</span>
+                </button>
+                <button class="cmd-btn" onclick="fillCmd('level 80')">
+                    <div class="icon peach">⬆</div>
+                    Set Level<span class="badge peach">MOD</span>
+                </button>
+                <button class="cmd-btn" onclick="fillCmd('kick')">
+                    <div class="icon rose">✕</div>
+                    Kick<span class="badge rose">KICK</span>
+                </button>
+                <div class="sidebar-sep"></div>
+                <div class="section-label">World</div>
+                <button
+                    class="cmd-btn"
+                    onclick="fillCmd('spawn chr_monster_0001')"
+                >
+                    <div class="icon purple">⬡</div>
+                    Spawn Monster
+                </button>
+                <div class="sidebar-sep"></div>
+                <div class="section-label">Server</div>
+                <button class="cmd-btn" onclick="fillCmd('list')">
+                    <div class="icon mint">≡</div>
+                    List Players<span class="badge mint">INFO</span>
+                </button>
+                <button class="cmd-btn" onclick="fillCmd('help')">
+                    <div class="icon sky">?</div>
+                    Help
+                </button>
+            </aside>
+
+            <main class="center-col">
+                <div class="stat-row">
+                    <div class="stat-card c-lav">
+                        <div class="stat-label">Status</div>
+                        <div class="stat-val lav" id="s-status">···</div>
+                        <div class="stat-sub" id="s-status-sub">
+                            connecting…
+                        </div>
+                    </div>
+                    <div class="stat-card c-mint">
+                        <div class="stat-label">Players</div>
+                        <div class="stat-val mint" id="s-players">···</div>
+                        <div class="stat-sub" id="s-players-sub">
+                            awaiting data
+                        </div>
+                    </div>
+                    <div class="stat-card c-rose">
+                        <div class="stat-label">Avg Ping</div>
+                        <div class="stat-val rose" id="s-ping">···</div>
+                        <div class="stat-sub" id="s-ping-sub">measuring</div>
+                    </div>
+                </div>
+
+                <div class="terminal-card">
+                    <div class="terminal-topbar">
+                        <div class="tbar-dots">
+                            <div class="tbar-dot r"></div>
+                            <div class="tbar-dot y"></div>
+                            <div class="tbar-dot g"></div>
+                        </div>
+                        <div class="tbar-title" id="tbar-title">
+                            GM Terminal · /muip/gm
+                        </div>
+                        <div class="tbar-count" id="line-count">0 lines</div>
+                    </div>
+                    <div class="terminal-log" id="terminal-log"></div>
+                    <div class="terminal-input-row">
+                        <span class="input-prompt">❯</span>
+                        <input
+                            class="terminal-input"
+                            id="cmd-input"
+                            type="text"
+                            placeholder="type a command…"
+                            autocomplete="off"
+                            spellcheck="false"
+                        />
+                        <div class="uid-input-wrap">
+                            <span class="uid-label">UID</span>
+                            <!-- Changed from type="number" to type="text" to allow alphanumeric UIDs -->
+                            <input
+                                class="uid-input"
+                                id="uid-input"
+                                type="text"
+                                placeholder="100000001"
+                                autocomplete="off"
+                                spellcheck="false"
+                            />
+                        </div>
+                        <button class="exec-btn" onclick="sendCmd()">
+                            Run
+                        </button>
+                    </div>
+                    <div class="history-strip">
+                        <span class="hist-lbl">History</span>
+                        <div id="hist-chips"></div>
+                    </div>
+                </div>
+            </main>
+
+            <aside class="sidebar-right">
+                <div class="panel-head">
+                    <div
+                        class="ph-dot"
+                        style="
+                            background: var(--rose);
+                            box-shadow: 0 0 6px var(--rose);
+                        "
+                    ></div>
+                    Auth Token
+                </div>
+                <div class="token-panel">
+                    <div class="token-label">GM Token</div>
+                    <div class="token-input-wrap">
+                        <input
+                            class="token-field"
+                            id="token-field"
+                            type="password"
+                            placeholder="enter token…"
+                        />
+                        <button class="token-eye" onclick="toggleTok()">
+                            <svg
+                                id="tok-eye"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="1.8"
+                                stroke-linecap="round"
+                                width="15"
+                                height="15"
+                            >
+                                <path
+                                    d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
+                                />
+                                <circle cx="12" cy="12" r="3" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="panel-head">
+                    <div
+                        class="ph-dot"
+                        style="
+                            background: var(--lavender);
+                            box-shadow: 0 0 6px var(--lavender);
+                        "
+                    ></div>
+                    Active Players
+                </div>
+                <div id="player-list">
+                    <div class="players-empty">no players online</div>
+                </div>
+
+                <div class="panel-head" style="margin-top: 4px">
+                    <div
+                        class="ph-dot"
+                        style="
+                            background: var(--peach);
+                            box-shadow: 0 0 6px var(--peach);
+                        "
+                    ></div>
+                    Server Config
+                </div>
+                <div class="cfg-row">
+                    <span class="cfg-key">GM Commands</span>
+                    <div
+                        class="toggle on"
+                        onclick="this.classList.toggle('on')"
+                    ></div>
+                </div>
+                <div class="cfg-row">
+                    <span class="cfg-key">Auto-save</span>
+                    <div
+                        class="toggle on"
+                        onclick="this.classList.toggle('on')"
+                    ></div>
+                </div>
+                <div class="cfg-row">
+                    <span class="cfg-key">Verbose Log</span>
+                    <div
+                        class="toggle"
+                        onclick="this.classList.toggle('on')"
+                    ></div>
+                </div>
+            </aside>
+        </div>
+
+        <script>
+            const logEl = document.getElementById("terminal-log");
+            const cmdInp = document.getElementById("cmd-input");
+            const histEl = document.getElementById("hist-chips");
+            let cmdHistory = [],
+                histIdx = -1,
+                lineCount = 0;
+            let pingHistory = [];
+
+            // Commands that do not require a UID to execute
+            const NO_UID_CMDS = ["help", "list", "status", "version"];
+
+            function requiresUid(cmd) {
+                const base = cmd.trim().toLowerCase().split(/\s+/)[0];
+                return !NO_UID_CMDS.includes(base);
+            }
+
+            const AVATAR_PALETTES = [
+                ["#9b70e8", "#c870d8"],
+                ["#5898e8", "#70c8e8"],
+                ["#d870a8", "#f09878"],
+                ["#58b890", "#80d8b0"],
+                ["#e87060", "#f0a870"],
+                ["#7090e8", "#90b8f0"],
+            ];
+            function paletteFor(uid) {
+                let h = 0;
+                for (const c of String(uid))
+                    h = (h * 31 + c.charCodeAt(0)) & 0xffff;
+                return AVATAR_PALETTES[h % AVATAR_PALETTES.length];
+            }
+            function initials(uid) {
+                const s = String(uid);
+                return s.length >= 2 ? s.slice(-2) : s;
+            }
+
+            function ts() {
+                return new Date().toLocaleTimeString("en-GB", {
+                    hour12: false,
+                });
+            }
+            function esc(s) {
+                return s
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;");
+            }
+            function addLine(msg, type = "info", pre = "·") {
+                lineCount++;
+                const d = document.createElement("div");
+                d.className = `log-line ${type}`;
+                d.innerHTML = `<span class="log-ts">[${ts()}]</span><span class="log-pre">${pre}</span><span class="log-msg">${esc(msg)}</span>`;
+                logEl.appendChild(d);
+                logEl.scrollTop = logEl.scrollHeight;
+                document.getElementById("line-count").textContent =
+                    `${lineCount} lines`;
+            }
+
+            function updatePingStat(ms) {
+                pingHistory.push(ms);
+                if (pingHistory.length > 10) pingHistory.shift();
+                const avg = Math.round(
+                    pingHistory.reduce((a, b) => a + b, 0) / pingHistory.length,
+                );
+                const el = document.getElementById("s-ping");
+                el.innerHTML = `${avg}<span style="font-size:1rem;opacity:.6">ms</span>`;
+                document.getElementById("s-ping-sub").textContent =
+                    avg < 60
+                        ? "↑ excellent"
+                        : avg < 150
+                          ? "↑ stable"
+                          : "↓ high latency";
+            }
+
+            function setOnline(online) {
+                document.getElementById("s-status").textContent = "Online";
+                document.getElementById("s-status").className = "stat-val lav";
+                document.getElementById("s-status-sub").textContent =
+                    window.location.host;
+                document.getElementById("status-chip").innerHTML =
+                    '<div class="status-dot"></div>Online';
+            }
+
+            function setOffline() {
+                document.getElementById("s-status").textContent = "Offline";
+                document.getElementById("s-status").className = "stat-val rose";
+                document.getElementById("s-status-sub").textContent =
+                    "unreachable";
+                document.getElementById("s-ping").textContent = "—";
+                document.getElementById("s-ping-sub").textContent =
+                    "no response";
+                document.getElementById("s-players").textContent = "—";
+                document.getElementById("s-players-sub").textContent =
+                    "no data";
+                document.getElementById("status-chip").innerHTML =
+                    '<div class="status-dot" style="background:var(--error);box-shadow:0 0 6px var(--error)"></div>Offline';
+            }
+
+            function renderPlayers(uids) {
+                const el = document.getElementById("player-list");
+                if (!uids || uids.length === 0) {
+                    el.innerHTML =
+                        '<div class="players-empty">no players online</div>';
+                    return;
+                }
+                el.innerHTML = uids
+                    .map((uid) => {
+                        const [pf, pt] = paletteFor(uid);
+                        return `<div class="player-row" onclick="setUid('${esc(uid)}')">
+                        <div class="p-ava" style="--pf:${pf};--pt:${pt}">${initials(uid)}</div>
+                        <div class="p-info">
+                            <div class="p-name">Player</div>
+                            <div class="p-uid">${esc(uid)}</div>
+                        </div>
+                        <div class="p-online">●</div>
+                    </div>`;
+                    })
+                    .join("");
+            }
+
+            async function fetchStats(silent = false) {
+                const t0 = performance.now();
+                try {
+                    await fetch("/", {
+                        method: "HEAD",
+                        cache: "no-store",
+                        signal: AbortSignal.timeout(5000),
+                    });
+                    const ms = Math.round(performance.now() - t0);
+                    setOnline();
+                    updatePingStat(ms);
+
+                    const res = await fetch("/api/status", {
+                        cache: "no-store",
+                        signal: AbortSignal.timeout(4000),
+                    });
+                    if (res.ok) {
+                        const data = await res.json();
+                        const count = data.playerCount ?? data.online ?? "?";
+                        document.getElementById("s-players").textContent =
+                            count;
+                        document.getElementById("s-players-sub").textContent =
+                            "online now";
+                    }
+
+                    const pr = await fetch("/api/players", {
+                        cache: "no-store",
+                        signal: AbortSignal.timeout(4000),
+                    });
+                    if (pr.ok) {
+                        const data = await pr.json();
+                        renderPlayers(data.players ?? []);
+                    }
+                } catch (e) {
+                    setOffline();
+                    if (!silent)
+                        addLine(
+                            `Health check failed: ${e.message}`,
+                            "warn",
+                            "⚠",
+                        );
+                }
+            }
+
+            fetchStats(false);
+            setInterval(() => fetchStats(true), 15000);
+
+            function toggleTok() {
+                const f = document.getElementById("token-field");
+                f.type = f.type === "password" ? "text" : "password";
+            }
+
+            function setUid(uid) {
+                document.getElementById("uid-input").value = uid;
+                cmdInp.focus();
+            }
+
+            async function sendCmd() {
+                const cmd = cmdInp.value.trim();
+                const uid = document.getElementById("uid-input").value.trim();
+                const tok = document.getElementById("token-field").value.trim();
+                if (!cmd) return;
+
+                addLine(cmd, "cmd", "❯");
+                pushHist(cmd);
+                cmdInp.value = "";
+                histIdx = -1;
+
+                if (!tok) {
+                    addLine(
+                        "No token set — enter it in the sidebar.",
+                        "warn",
+                        "⚠",
+                    );
+                    return;
+                }
+
+                // Only enforce UID for commands that actually need one
+                if (requiresUid(cmd) && !uid) {
+                    addLine(
+                        "No UID — click a player or type one.",
+                        "warn",
+                        "⚠",
+                    );
+                    return;
+                }
+
+                try {
+                    const params = new URLSearchParams({
+                        token: tok,
+                        command: cmd,
+                    });
+                    // Only attach player_uid when present
+                    if (uid) params.set("player_uid", uid);
+
+                    const t0 = performance.now();
+                    const res = await fetch(`/muip/gm?${params}`, {
+                        method: "GET",
+                        headers: { Accept: "application/json" },
+                        signal: AbortSignal.timeout(10000),
+                    });
+                    const ms = Math.round(performance.now() - t0);
+                    updatePingStat(ms);
+
+                    let data;
+                    const text = await res.text();
+                    try {
+                        data = JSON.parse(text);
+                    } catch (_) {
+                        data = {
+                            retcode: res.ok ? 0 : res.status,
+                            message: text || res.statusText,
+                        };
+                    }
+
+                    if (
+                        res.ok &&
+                        (data.retcode === 0 || data.retcode === undefined)
+                    ) {
+                        addLine(
+                            data.message || `HTTP ${res.status} OK`,
+                            "ok",
+                            "✓",
+                        );
+                    } else {
+                        addLine(
+                            `[${data.retcode ?? res.status}] ${data.message || "Error"}`,
+                            "err",
+                            "✕",
+                        );
+                    }
+                } catch (e) {
+                    if (e.name === "TimeoutError")
+                        addLine("Request timed out (10s).", "err", "✕");
+                    else if (e.name === "TypeError")
+                        addLine(`Network error: ${e.message}`, "err", "✕");
+                    else addLine(`Request failed: ${e}`, "err", "✕");
+                }
+            }
+
+            function fillCmd(cmd) {
+                cmdInp.value = cmd;
+                cmdInp.focus();
+            }
+
+            function pushHist(cmd) {
+                cmdHistory.unshift(cmd);
+                if (cmdHistory.length > 10) cmdHistory.pop();
+                histEl.innerHTML = "";
+                cmdHistory.slice(0, 6).forEach((c) => {
+                    const ch = document.createElement("span");
+                    ch.className = "hist-chip";
+                    ch.textContent = c;
+                    ch.title = c;
+                    ch.onclick = () => {
+                        cmdInp.value = c;
+                        cmdInp.focus();
+                    };
+                    histEl.appendChild(ch);
+                });
+            }
+
+            cmdInp.addEventListener("keydown", (e) => {
+                if (e.key === "Enter") {
+                    sendCmd();
+                    return;
+                }
+                if (e.key === "ArrowUp") {
+                    histIdx = Math.min(histIdx + 1, cmdHistory.length - 1);
+                    cmdInp.value = cmdHistory[histIdx] || "";
+                    e.preventDefault();
+                }
+                if (e.key === "ArrowDown") {
+                    histIdx = Math.max(histIdx - 1, -1);
+                    cmdInp.value = histIdx < 0 ? "" : cmdHistory[histIdx];
+                    e.preventDefault();
+                }
+            });
+
+            [
+                [0, "MUIP GM Console ready", "sys", "★"],
+                [300, "Connected to local game server", "ok", "✓"],
+                [700, "Stats refresh every 15s automatically", "info", "·"],
+                [
+                    1100,
+                    "Enter token in sidebar · click player for UID",
+                    "info",
+                    "·",
+                ],
+            ].forEach(([t, m, ty, p]) =>
+                setTimeout(() => addLine(m, ty, p), t),
+            );
+        </script>
+    </body>
+</html>
+<!-- Shout-out Claude (lmao) -->

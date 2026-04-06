@@ -147,12 +147,12 @@ pub async fn on_cs_scene_kill_char(ctx: &mut NetContext<'_>, req: CsSceneKillCha
     }
 }
 
-/// Handles `CsSceneRevival` — revives all dead characters in the current team
+/// Handles `CsSceneRevival`, revives all dead characters in the current team
 /// at 50 % HP.
-///
+/// ORDER MATTERS!!
 /// Send order:
-/// 1. `ScCharSyncStatus` × N — HP per revived char
-/// 2. `ScSelfSceneInfo` with `revive_chars` — triggers client revival logic
+/// 1. `ScCharSyncStatus` × N, HP per revived char
+/// 2. `ScSelfSceneInfo` with `revive_chars`, triggers client revival logic
 /// 3. `ScSceneRevival` — revival UI/effect
 /// 4. `ScObjectEnterView` — reply, re-enters chars into the scene
 pub async fn on_cs_scene_revival(
@@ -604,15 +604,16 @@ pub async fn on_cs_scene_teleport(
         req.scene_name, req.position, req.rotation, req.teleport_reason
     );
 
+    // Only wipe and re-initialise level-script state when we are actually
+    // moving to a *different* scene. Intra-scene warps (reason=1, same
+    // scene name) must preserve all existing script runtime.
+    let is_scene_change = ctx.player.scene.current_scene != req.scene_name;
+
     ctx.player.world.last_scene = req.scene_name.clone();
     ctx.player.scene.current_scene = req.scene_name.clone();
-    // Only wipe and re-initialise level-script state when we are actually
-    // moving to a *different* scene.  Intra-scene warps (reason=1, same
-    // scene name) must preserve all existing script runtime, resetting
-    // would re-initialise every shape-triggered script to Active, forcing
-    // the client to immediately resend a flood of deactivation packets.
-    let is_scene_change = ctx.player.scene.current_scene != req.scene_name;
     if is_scene_change {
+        ctx.player.entities.clear();
+        ctx.player.scene.dead_entities.clear();
         ctx.player
             .scene
             .level_scripts
@@ -669,5 +670,6 @@ pub async fn on_cs_scene_teleport(
         Some(rotation_vec),
         common::time::now_ms() as u32,
         req.teleport_reason,
+        None,
     )
 }

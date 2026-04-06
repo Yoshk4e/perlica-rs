@@ -2,5 +2,7 @@ target/
 *.proto
 saves/
 Config.toml
+assets/config/level_data/*.py
 assets/config/level_data/*.json
+assets/config/level_data/script/*
 !assets/config/level_data/map01_lv001_lv_data_sub01.json
