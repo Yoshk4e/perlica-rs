@@ -816,7 +816,6 @@ impl SceneManager {
             assets,
         )
     }
-
     pub fn teleport(
         &self,
         obj_id_list: Vec<u64>,
@@ -824,10 +823,11 @@ impl SceneManager {
         rotation: Option<Vector>,
         server_time: u32,
         teleport_reason: i32,
+        scene_name: Option<String>, // new parameter
     ) -> ScSceneTeleport {
         ScSceneTeleport {
             obj_id_list,
-            scene_name: self.current_scene.clone(),
+            scene_name: scene_name.unwrap_or(self.current_scene.clone()),
             position: Some(position),
             rotation,
             server_time,

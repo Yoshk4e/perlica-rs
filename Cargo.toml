@@ -25,6 +25,7 @@ config = { path = "lib/config" }
 perlica-proto = { path = "lib/proto" }
 perlica-logic = { path = "lib/logic" }
 perlica-db = { path = "lib/db" }
+perlica-muip = { path = "lib/muip" }
 
 
 [profile.release]

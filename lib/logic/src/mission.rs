@@ -6,6 +6,7 @@ use perlica_proto::{
 };
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashMap};
+use tracing::error;
 
 pub const PROLOGUE_MISSION_ID: &str = "mission_mai_e0m1";
 pub const PROLOGUE_FIRST_QUEST_ID: &str = "mission_mai_e0m1_q#2";
@@ -106,7 +107,7 @@ impl MissionManager {
             return;
         }
 
-        let first_quest_id = mission_assets
+        let target_quest_id = mission_assets
             .get(&mission_id)
             .and_then(|mission| mission.quests.first())
             .map(|quest| quest.quest_id.clone())
@@ -119,27 +120,49 @@ impl MissionManager {
         self.missions.insert(
             mission_id.clone(),
             MissionProgress {
-                mission_id,
+                mission_id: mission_id.clone(),
                 mission_state: MissionState::Msprocessing,
                 succeed_id: 0,
             },
         );
 
-        let quest_progress = mission_assets
-            .get(self.track_mission_id())
-            .and_then(|mission| {
-                mission
-                    .quests
-                    .iter()
-                    .find(|quest| quest.quest_id == first_quest_id)
-            })
-            .map(build_quest_progress)
-            .unwrap_or_else(|| QuestProgress {
-                quest_id: first_quest_id.clone(),
-                quest_state: QuestState::Qsprocessing,
-                objectives: BTreeMap::new(),
-            });
-        self.current_quests.insert(first_quest_id, quest_progress);
+        let Some(mission) = mission_assets.get(&mission_id) else {
+            error!(
+                "Mission definition for '{}' not found. Cannot bootstrap quests.",
+                mission_id
+            );
+            return;
+        };
+
+        let mut successfully_inserted = false;
+
+        for quest in &mission.quests {
+            if quest.objective_keys.is_empty() {
+                error!(
+                    "Quest '{}' in mission '{}' is missing objective keys. Ignoring and continuing.",
+                    quest.quest_id, mission_id
+                );
+                continue;
+            }
+
+            if quest.quest_id == target_quest_id || !successfully_inserted {
+                let quest_progress = build_quest_progress(quest);
+
+                if !quest_progress.objectives.is_empty() {
+                    self.current_quests
+                        .insert(quest.quest_id.clone(), quest_progress);
+                    successfully_inserted = true;
+                    break; // Successfully got one and "sent" it to state, stop looking
+                }
+            }
+        }
+
+        if !successfully_inserted {
+            error!(
+                "Failed to bootstrap any valid quests for mission '{}'. All were missing or errored.",
+                mission_id
+            );
+        }
     }
 
     pub fn sync_packet(&self) -> ScSyncAllMission {
@@ -310,8 +333,18 @@ fn build_quest_progress(quest_definition: &QuestDefinition) -> QuestProgress {
         objectives: quest_definition
             .objective_keys
             .iter()
-            .cloned()
-            .map(|objective_key| (objective_key.clone(), empty_objective(&objective_key)))
+            .filter_map(|objective_key| {
+                if objective_key.trim().is_empty() {
+                    error!(
+                        "Missing or empty objective key in quest '{}'. Ignoring and continuing.",
+                        quest_definition.quest_id
+                    );
+                    None
+                } else {
+                    Some((objective_key.clone(), empty_objective(objective_key)))
+                    // Keep valid ones
+                }
+            })
             .collect(),
     }
 }
@@ -321,6 +354,6 @@ fn empty_objective(condition_id: &str) -> QuestObjective {
         condition_id: condition_id.to_string(),
         extra_details: HashMap::new(),
         is_complete: false,
-        values: HashMap::from([(OBJECTIVE_PROGRESS_KEY.to_string(), 0)]),
+        values: HashMap::from([(OBJECTIVE_PROGRESS_KEY.to_string(), 1)]),
     }
 }

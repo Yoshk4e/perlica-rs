@@ -36,7 +36,7 @@ impl NetworkConfig {
             addr: "127.0.0.1".to_string(),
             port: 1337,
             sdkenv: 2,
-            channel: "inner".to_string(),
+            channel: "prod".to_string(),
             asset: "https://beyond.hg-cdn.com/asset/".to_string(),
             eventlogid: "event_log_id_xyz".to_string(),
             netlogurl: "http://127.0.0.1:3000/log".to_string(),

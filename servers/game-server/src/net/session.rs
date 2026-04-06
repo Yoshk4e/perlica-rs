@@ -1,13 +1,15 @@
 use crate::error::ServerError;
+use crate::handlers::gm;
 use crate::net::{
     context::NetContext,
-    notify::{Notification, PlayerHandle},
+    notify::{MuipResult, Notification, PlayerHandle},
     registry::SessionRegistry,
     router::handle_command,
 };
 use crate::player::Player;
 use config::BeyondAssets;
 use perlica_db::{PlayerDb, PlayerRecordRef};
+use perlica_muip::GmResponse;
 use perlica_proto::{CsHead, prost::Message};
 use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
@@ -87,7 +89,7 @@ async fn logic_loop(
     let mut server_seq_id = 0u64;
     let mut registered = false;
 
-    info!("Session Started");
+    info!("Session started");
 
     let result = loop {
         tokio::select! {
@@ -103,17 +105,17 @@ async fn logic_loop(
                             &mut server_seq_id,
                         );
                         if let Err(e) = handle_command(&mut net_ctx, cmd_id, body).await {
-                            warn!("Command Error: CmdId={}, Error={}", cmd_id, e);
+                            warn!("Command error: CmdId={cmd_id}, Error={e}");
                         }
 
                         if !registered && !player.uid.is_empty() {
                             ctx.registry.register(player.uid.clone(), handle.clone());
-                            info!("Player Online: UID={}, OnlineCount={}", player.uid, ctx.registry.online());
+                            info!("Player online: UID={}, count={}", player.uid, ctx.registry.online());
                             registered = true;
                         }
                     }
                     Err(e) if is_clean_disconnect(&e) => {
-                        debug!("Disconnected");
+                        debug!("Client disconnected cleanly");
                         break Ok(());
                     }
                     Err(e) => break Err(e.into()),
@@ -129,14 +131,14 @@ async fn logic_loop(
                     0,
                     &mut server_seq_id,
                 );
-                handle_notification(&mut net_ctx, notification).await;
+                if handle_notification(&mut net_ctx, notification).await {
+                    break Ok(());
+                }
             }
         }
     };
 
     if registered {
-        // Flush latest position into WorldState so the player respawns at
-        // their actual last location rather than the last movement-packet sync.
         player.movement.sync_to_world(&mut player.world);
 
         let record_ref = PlayerRecordRef {
@@ -150,28 +152,21 @@ async fn logic_loop(
         };
 
         if let Err(e) = ctx.db.save(&player.uid, record_ref).await {
-            error!("Save Failed: UID={}, Error={}", player.uid, e);
+            error!("Save failed: UID={}, Error={e}", player.uid);
         }
 
         ctx.registry.unregister(&player.uid);
         info!(
-            "Player Offline: UID={}, OnlineCount={}",
+            "Player offline: UID={}, count={}",
             player.uid,
             ctx.registry.online()
         );
     }
+
     result
 }
 
 /// Reads a single framed packet from the client socket.
-///
-/// Packet format:
-/// - 1 byte: header size
-/// - 2 bytes: body size (little-endian)
-/// - N bytes: header (protobuf encoded CsHead)
-/// - M bytes: body (command payload)
-///
-/// Returns the command ID, body bytes, and client sequence ID.
 async fn read_packet(
     reader: &mut tokio::net::tcp::OwnedReadHalf,
 ) -> std::io::Result<(i32, Vec<u8>, u64)> {
@@ -200,10 +195,28 @@ fn is_clean_disconnect(e: &std::io::Error) -> bool {
     )
 }
 
-/// Dispatches an inbound server notification into the player\'s session.
-async fn handle_notification(ctx: &mut NetContext<'_>, notification: Notification) {
+/// Dispatches an inbound server notification into the player's session.
+/// Returns `true` if the session should be terminated after handling.
+async fn handle_notification(ctx: &mut NetContext<'_>, notification: Notification) -> bool {
     match notification {
-        #[allow(unreachable_patterns)]
-        _ => {}
+        Notification::MuipCommand {
+            command,
+            respond_to,
+        } => {
+            let result = match gm::execute(ctx, &command).await {
+                Ok(outcome) => MuipResult {
+                    response: GmResponse::ok(outcome.message),
+                    disconnect: outcome.disconnect,
+                },
+                Err(message) => MuipResult {
+                    response: GmResponse::err(400, message),
+                    disconnect: false,
+                },
+            };
+
+            let disconnect = result.disconnect;
+            let _ = respond_to.send(result);
+            disconnect
+        }
     }
 }

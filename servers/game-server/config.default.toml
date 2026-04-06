@@ -39,3 +39,15 @@ team = [
 #"chr_0004_pelica"	|	"chr_0009_azrila"	|
 #"chr_0005_chen"	|	"chr_0011_seraph"	|
 #"chr_0006_wolfgd"	|	"chr_0012_avywen"	|
+
+[muip_gm]
+host = "127.0.0.1"
+port = 2338
+enabled = true
+
+[muip]
+host = "0.0.0.0"
+port = 8080
+token = "change-me"
+gm_host = "127.0.0.1"
+gm_port = 2338

@@ -2,6 +2,7 @@ pub mod bitset;
 pub mod char_bag;
 pub mod character;
 pub mod factory;
+pub mod gm;
 pub mod login;
 pub mod mission;
 pub mod movement;

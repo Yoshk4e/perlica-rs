@@ -1,4 +1,5 @@
 mod error;
+mod gm;
 mod handlers;
 mod net;
 mod player;
@@ -25,28 +26,32 @@ async fn main() -> Result<(), error::ServerError> {
     let registry: &'static SessionRegistry = Box::leak(Box::new(registry));
 
     let db = PlayerDb::open("saves")?;
-
     let db: &'static PlayerDb = Box::leak(Box::new(db));
+
+    if cfg.muip.enabled {
+        let admin_addr = cfg.muip.addr();
+        tokio::spawn(async move {
+            if let Err(error) = gm::run_gm_listener(admin_addr, registry).await {
+                error!("MUIP GM listener failed: {}", error);
+            }
+        });
+    }
 
     let listener = TcpListener::bind(cfg.server.addr()).await?;
     info!("Listening {}", listener.local_addr()?);
 
     loop {
         match listener.accept().await {
-            // New connection! Who dis?
             Ok((socket, addr)) => {
-                // If it's all good, let's handle this connection.
                 info!("Connected {}", addr);
                 tokio::spawn(async move {
-                    if let Err(e) = net::handle_connection(socket, assets, registry, db).await
-                    // Let the session begin! Hope it's a good one.
-                    {
-                        error!("Connection Error {}, {}", addr, e); // Uh oh, something went wrong. Better log it.
+                    if let Err(e) = net::handle_connection(socket, assets, registry, db).await {
+                        error!("Connection Error {}, {}", addr, e);
                     }
                 });
             }
             Err(e) => {
-                warn!("Accept Failed: {}", e); // Connection failed. Probably just a rando bot, lol.
+                warn!("Accept Failed: {}", e);
             }
         }
     }

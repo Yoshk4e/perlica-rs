@@ -79,11 +79,9 @@ impl MissionAssets {
                 continue;
             }
 
-            if let Some(mission_id) = key.strip_suffix("_description") {
-                if !mission_id.starts_with("mission_") || mission_id.contains("_q#") {
-                    continue;
-                }
-
+            if let Some(mission_id) = key.strip_suffix("_description").filter(|mission_id| {
+                mission_id.starts_with("mission_") && !mission_id.contains("_q#")
+            }) {
                 missions
                     .entry(mission_id.to_string())
                     .or_insert_with(|| MissionDefinition {
@@ -96,6 +94,7 @@ impl MissionAssets {
                     .description_key = Some(key.clone());
                 continue;
             }
+            // quest _description keys fall through to parse_quest_key below
 
             let Some((mission_id, quest_definition)) = parse_quest_key(&key) else {
                 continue;
@@ -116,7 +115,9 @@ impl MissionAssets {
                 .iter_mut()
                 .find(|quest| quest.quest_id == quest_definition.quest_id)
             {
-                Some(existing) => existing.objective_keys.push(key.clone()),
+                Some(existing) => existing
+                    .objective_keys
+                    .push(key.strip_suffix("_description").unwrap_or(&key).to_string()),
                 None => mission.quests.push(quest_definition),
             }
         }
@@ -247,6 +248,7 @@ fn parse_quest_key(key: &str) -> Option<(String, QuestDefinition)> {
     let (ordinal_text, _) = tail.split_once("_obj_")?;
     let mission_id = mission_prefix.to_string();
     let quest_id = format!("{mission_prefix}_q#{ordinal_text}");
+    let condition_id = key.strip_suffix("_description").unwrap_or(key).to_string();
 
     Some((
         mission_id,
@@ -254,7 +256,7 @@ fn parse_quest_key(key: &str) -> Option<(String, QuestDefinition)> {
             quest_id,
             ordinal_key: ordinal_text.to_string(),
             numeric_ordinal: ordinal_text.parse::<u32>().ok(),
-            objective_keys: vec![key.to_string()],
+            objective_keys: vec![condition_id],
         },
     ))
 }

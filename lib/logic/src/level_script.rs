@@ -286,7 +286,7 @@ impl LevelScriptManager {
 fn script_initial_state(script: &LvLevelScript, scene_name: &str) -> LevelScriptState {
     let script_id = script.script_id as i32;
     match (scene_name, script_id) {
-        ("map01_dg003", 5) => LevelScriptState::Active,
+        /*("map01_dg003", 5) => LevelScriptState::Active,*/
         ("map01_dg003", 19) => LevelScriptState::Active,
         ("map01_lv001", 70001) => LevelScriptState::Active,
         ("map01_lv001", 70010) => LevelScriptState::Active,

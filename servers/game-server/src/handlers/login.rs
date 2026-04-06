@@ -131,7 +131,6 @@ pub(crate) async fn run_login_sequence(ctx: &mut NetContext<'_>) {
                 "Login sequence failed: uid={}, phase={:?}",
                 ctx.player.uid, phase
             );
-            break;
         }
     }
 }

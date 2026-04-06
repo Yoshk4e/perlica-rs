@@ -21,10 +21,6 @@ impl SessionRegistry {
     }
 
     /// Registers a newly authenticated player.
-    ///
-    /// Called once the player's UID is known (i.e. after a successful login).
-    /// If a handle for the same UID already exists it is overwritten — this
-    /// handles reconnect scenarios where a stale entry may remain.
     pub fn register(&self, uid: String, handle: PlayerHandle) {
         self.sessions.write().unwrap().insert(uid, handle);
     }
@@ -46,15 +42,22 @@ impl SessionRegistry {
         self.sessions.read().unwrap().len()
     }
 
+    /// Returns a sorted list of all online player UIDs.
+    pub fn list_uids(&self) -> Vec<String> {
+        let mut players: Vec<String> = self.sessions.read().unwrap().keys().cloned().collect();
+        players.sort();
+        players
+    }
+
     /// Broadcasts a notification to every connected player.
-    ///
-    /// Uses the non-blocking [`PlayerHandle::try_notify`] so a full or closed
-    /// channel for one player never stalls the broadcast for others.
-    #[allow(dead_code, unreachable_code)]
-    pub fn broadcast(&self, n: Notification) {
+    #[allow(dead_code)]
+    pub fn broadcast<F>(&self, mut build: F)
+    where
+        F: FnMut() -> Notification,
+    {
         let sessions = self.sessions.read().unwrap();
         for handle in sessions.values() {
-            handle.try_notify(n.clone());
+            handle.try_notify(build());
         }
     }
 }

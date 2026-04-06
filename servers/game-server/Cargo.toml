@@ -18,3 +18,7 @@ perlica-logic.workspace = true
 perlica-db.workspace = true
 byteorder.workspace = true
 toml.workspace = true
+perlica-muip.workspace = true
+rsa.workspace = true
+chacha20.workspace = true
+once_cell.workspace = true
