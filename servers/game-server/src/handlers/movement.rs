@@ -3,15 +3,8 @@ use perlica_logic::movement::MovementManager;
 use perlica_proto::{CsMoveObjectMove, ScMoveObjectMove};
 use tracing::debug;
 
-/// Handles `CsMoveObjectMove` — the authoritative position update from the client.
-///
-/// Only the team leader's motion is tracked server-side; other character positions
-/// are driven entirely by the client. The leader's new position and rotation are
-/// stored in the [`MovementManager`] and synced back to [`WorldState`] so they
-/// persist across sessions.
-///
-/// The packet is echoed back as-is with `server_notify: true` so that any
-/// future peer-broadcasting path can re-use the same message.
+/// Updates the team leader's server-side position. Only the leader is tracked; other positions are client-authoritative.
+/// Echoed back with `server_notify: true` for future peer broadcasting.
 pub async fn on_cs_move_object_move(
     ctx: &mut NetContext<'_>,
     req: CsMoveObjectMove,

@@ -12,10 +12,7 @@ use perlica_proto::{
 };
 use tracing::{debug, error, info};
 
-/// Sends `ScEnterSceneNotify` to push the player into their last known scene.
-///
-/// Called during the login sequence before the client has acknowledged loading.
-/// Returns `false` if the notification could not be sent.
+/// Pushes `ScEnterSceneNotify` during login before the client has finished loading.
 pub async fn notify_enter_scene(ctx: &mut NetContext<'_>) -> bool {
     let msg = ScEnterSceneNotify {
         role_id: 1,
@@ -42,13 +39,7 @@ pub async fn notify_enter_scene(ctx: &mut NetContext<'_>) -> bool {
     true
 }
 
-/// Handles `CsSceneLoadFinish` — the client confirming it has finished loading
-/// the scene.
-///
-/// Finalises the server-side scene state, then sends `ScObjectEnterView` for
-/// all characters and monsters before returning `ScSelfSceneInfo`. Also pushes
-/// character attributes and status so the client is fully in sync from the
-/// moment gameplay begins.
+/// Handles `CsSceneLoadFinish`. Finalises scene state and syncs all entities and character state.
 pub async fn on_scene_load_finish(
     ctx: &mut NetContext<'_>,
     req: CsSceneLoadFinish,
@@ -91,15 +82,13 @@ pub async fn on_scene_load_finish(
     self_info
 }
 
-/// Pushes character attributes and HP/is_dead status after a scene load.
 async fn post_load_sync(ctx: &mut NetContext<'_>) -> bool {
     let ok_attrs = super::char_bag::push_char_attrs(ctx).await;
     let ok_status = super::char_bag::push_char_status(ctx).await;
     ok_attrs && ok_status
 }
 
-/// Handles `CsSceneKillMonster` — removes the entity from the manager and
-/// notifies the client with `ScSceneDestroyEntity`.
+/// Removes a monster entity and notifies the client with `ScSceneDestroyEntity`.
 pub async fn on_cs_scene_kill_monster(ctx: &mut NetContext<'_>, req: CsSceneKillMonster) {
     debug!("Monster killed: {}", req.id);
 
@@ -125,11 +114,7 @@ pub async fn on_cs_scene_kill_monster(ctx: &mut NetContext<'_>, req: CsSceneKill
     }
 }
 
-/// Handles `CsSceneKillChar` — marks the character as dead and notifies the
-/// client with `ScSceneDestroyEntity`.
-///
-/// The character remains in the [`CharBag`] so it can be revived later; only
-/// the scene entity is destroyed from the client's perspective.
+/// Marks a character dead and destroys the scene entity. The `CharBag` entry is preserved for revival.
 pub async fn on_cs_scene_kill_char(ctx: &mut NetContext<'_>, req: CsSceneKillChar) {
     debug!("Character killed: {}", req.id);
 
@@ -182,7 +167,6 @@ pub async fn on_cs_scene_revival(
     enter_view
 }
 
-/// Pushes `ScCharSyncStatus` for every alive character in the current team.
 async fn send_revival_status_updates(ctx: &mut NetContext<'_>) {
     let team_idx = ctx.player.char_bag.meta.curr_team_index as usize;
     let team = &ctx.player.char_bag.teams[team_idx];
@@ -221,10 +205,8 @@ async fn send_revival_status_updates(ctx: &mut NetContext<'_>) {
     }
 }
 
-/// Dynamically spawns a monster entity and returns the create/enter-view data.
-///
-/// `ScSceneCreateEntity` carries only `{scene_name, id}` — all entity detail
-/// goes in the `SceneMonster` which the caller wraps in `ScObjectEnterView`.
+/// Spawns a monster and returns the create/enter-view pair.
+/// `ScSceneCreateEntity` carries only the ID; full detail goes in `ScObjectEnterView`.
 pub fn spawn_dynamic_monster(
     ctx: &mut NetContext<'_>,
     template_id: String,
@@ -269,13 +251,10 @@ pub fn spawn_dynamic_monster(
     (create, monster)
 }
 
-/// Returns `true` if the entity with the given ID is currently tracked in the
-/// player's [`EntityManager`].
 pub fn entity_exists(ctx: &NetContext<'_>, entity_id: u64) -> bool {
     ctx.player.entities.contains(entity_id)
 }
 
-/// Returns the name of the scene the player is currently in.
 pub fn current_scene_name<'a>(ctx: &'a NetContext<'_>) -> &'a str {
     ctx.player.scene.scene_name()
 }
@@ -344,11 +323,7 @@ pub fn current_scene_name<'a>(ctx: &'a NetContext<'_>) -> &'a str {
 }*/
 //this was commented out because it really doesn't work
 
-/// Handles `CsSceneSetLastRecordCampid` — the client records the last campfire
-/// the player interacted with.
-///
-/// This stores the campfire's position as the current checkpoint so that
-/// revival and repatriation can return the player to the campfire location.
+/// Stores the campfire as the current checkpoint so revival/repatriation return here.
 ///
 /// Send order:
 ///   1. `ScSceneSetLastRecordCampid` — ACK echoing the camp id back.
@@ -377,16 +352,7 @@ pub async fn on_cs_scene_set_last_record_campid(
     }
 }
 
-/// Handles `CsSceneCreateEntity` — the client notifies the server
-/// that it has spawned one or more entities locally (e.g. player-placed
-/// interactives, summons, traps).
-///
-/// For each entity in the request the server registers a lightweight tracking
-/// entry and echoes back `ScSceneCreateEntity` so the client knows the server
-/// has acknowledged the entity with its canonical ID.
-///
-/// Only the first entity id is echoed in the reply; clients that send multiple
-/// entities in a single packet will receive one reply per call site.
+/// Registers client-spawned entities server-side and echoes back `ScSceneCreateEntity`.
 pub async fn on_cs_scene_create_entity(
     ctx: &mut NetContext<'_>,
     req: CsSceneCreateEntity,
@@ -396,8 +362,6 @@ pub async fn on_cs_scene_create_entity(
         req.scene_name, req.entity_infos
     );
 
-    // Track each declared entity in the entity manager so the server can
-    // refer to it later (e.g. for targeted destruction or queries).
     for info in &req.entity_infos {
         if info.id != 0 && !ctx.player.entities.contains(info.id) {
             ctx.player
@@ -420,8 +384,7 @@ pub async fn on_cs_scene_create_entity(
     ctx.player.scene.create_entity(echo_id)
 }
 
-/// Handles `CsSceneDestroyEntity` — the client reports that one or
-/// more entities should be removed from the scene.
+/// Removes entities reported destroyed by the client.
 pub async fn on_cs_scene_destroy_entity(ctx: &mut NetContext<'_>, req: CsSceneDestroyEntity) {
     debug!(
         "Scene destroy entities: scene={}, ids={:?}, reason={}",
@@ -464,13 +427,8 @@ pub async fn on_cs_scene_set_level_script_active(
     }
 }
 
-/// Handles `CsSceneUpdateLevelScriptProperty` — the client pushes
-/// a property delta for a specific level script.
-///
-/// The server echoes all updated properties back via
-/// `ScSceneUpdateLevelScriptProperty` with `client_operate = true`, signalling
-/// to the client that it was the originator of this change.
-/// although i'm still not sure if this is right but that's according to the disassembly
+/// Updates level script properties and echoes them back with `client_operate = true`.
+/// (per disassembly, confirms the client as originator)
 pub async fn on_cs_scene_update_level_script_property(
     ctx: &mut NetContext<'_>,
     req: CsSceneUpdateLevelScriptProperty,

@@ -76,10 +76,7 @@ pub async fn on_cs_char_bag_set_team_leader(
     }
 }
 
-/// Switches the player's active team to a different slot.
-///
-/// Sends the `ScCharBagSetCurrTeamIndex` ACK **first**, then the scene diff
-/// (leave/enter/self_info) for the same reason as [`on_cs_char_bag_set_team`].
+/// Switches active team. ACK is sent first so the client processes the index change before the scene diff.
 pub async fn on_cs_char_bag_set_curr_team_index(
     ctx: &mut NetContext<'_>,
     req: CsCharBagSetCurrTeamIndex,
@@ -182,10 +179,7 @@ pub async fn on_cs_char_bag_set_curr_team_index(
     super::char_bag::push_char_status_for_ids(ctx, &new_team_ids).await;
 }
 
-/// Sets the composition of a team slot.
-///
-/// Sends the `ScCharBagSetTeam` ACK **first** so the client knows the new
-/// composition before processing the scene update.
+/// Sets team composition. ACK goes first so the client sees the new roster before the scene diff.
 pub async fn on_cs_char_bag_set_team(ctx: &mut NetContext<'_>, req: CsCharBagSetTeam) {
     let uid = ctx.player.uid.clone();
     let team_index = req.team_index as usize;
@@ -299,11 +293,7 @@ pub async fn on_cs_char_bag_set_team(ctx: &mut NetContext<'_>, req: CsCharBagSet
     }
 }
 
-/// Renames a team slot.
-///
-/// Echoes the new name back via [`ScCharBagSetTeamName`]. If the index is out of
-/// range the name is not applied and the response carries an empty string so the
-/// client can detect the rejection.
+/// Renames a team. Echoes an empty string if the team index is out of range.
 pub async fn on_cs_char_bag_set_team_name(
     ctx: &mut NetContext<'_>,
     req: CsCharBagSetTeamName,
@@ -338,12 +328,7 @@ pub async fn on_cs_char_bag_set_team_name(
     }
 }
 
-/// Levels up a character by consuming item fodder.
-///
-/// Advances the character's level up to the cap imposed by their current
-/// `break_stage`. Sends back [`ScCharSyncLevelExp`] with the new level/exp
-/// values and [`ScSyncAttr`] to refresh client-side stat display, then returns
-/// the `ScCharLevelUp` acknowledgement.
+/// Levels up a character. Level is capped by `break_stage`. Pushes updated attrs before the ACK.
 pub async fn on_cs_char_level_up(ctx: &mut NetContext<'_>, req: CsCharLevelUp) -> ScCharLevelUp {
     debug!(
         "Character level up request: uid={}, char_id={}, item_count={}",
@@ -432,10 +417,7 @@ pub async fn on_cs_char_level_up(ctx: &mut NetContext<'_>, req: CsCharLevelUp) -
     }
 }
 
-/// Advances a character's break stage (ascension).
-///
-/// Increases `break_stage` by one if the character is at the level cap for the
-/// current stage. Pushes updated [`ScSyncAttr`] after a successful breakthrough.
+/// Advances break stage by one if the character is at the current level cap.
 pub async fn on_cs_char_break(ctx: &mut NetContext<'_>, req: CsCharBreak) -> ScCharBreak {
     debug!(
         "Character break request: uid={}, char_id={}, target_stage={}",
@@ -502,9 +484,7 @@ pub async fn on_cs_char_break(ctx: &mut NetContext<'_>, req: CsCharBreak) -> ScC
     }
 }
 
-/// Sets the active normal skill for a character.
-///
-/// Stores the selection and echoes it back so the client can update its UI.
+/// Sets the active normal skill and echoes the selection back.
 pub async fn on_cs_char_set_normal_skill(
     ctx: &mut NetContext<'_>,
     req: CsCharSetNormalSkill,
@@ -537,10 +517,7 @@ pub async fn on_cs_char_set_normal_skill(
     }
 }
 
-/// Levels up a specific skill for a character.
-///
-/// Increments the skill's level by one, capped at the max defined in the skill
-/// config. Returns [`ScCharSkillLevelUp`] with the updated [`SkillLevelInfo`].
+/// Increments a skill's level by one, capped at the config max.
 pub async fn on_cs_char_skill_level_up(
     ctx: &mut NetContext<'_>,
     req: CsCharSkillLevelUp,
@@ -596,10 +573,7 @@ pub async fn on_cs_char_skill_level_up(
     }
 }
 
-/// Assigns a skill to a team slot for a character (team skill binding).
-///
-/// Stores the binding and echoes it back. `team_idx` identifies which team slot
-/// the binding applies to.
+/// Binds a skill to a team slot and echoes the binding back.
 pub async fn on_cs_char_set_team_skill(
     ctx: &mut NetContext<'_>,
     req: CsCharSetTeamSkill,

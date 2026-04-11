@@ -5,11 +5,7 @@ use perlica_proto::{
 };
 use tracing::{debug, info, warn};
 
-/// Sets one or more bits in a named bitset.
-///
-/// Bitsets are used to track boolean flags across many systems (items found,
-/// areas visited, wiki entries read, etc.). Unknown type IDs are silently
-/// skipped with a warning rather than disconnecting the client.
+/// Sets bits in a named bitset. Unknown type IDs are silently skipped.
 pub async fn on_cs_bitset_add(ctx: &mut NetContext<'_>, req: CsBitsetAdd) -> ScBitsetAdd {
     let type_name = BitsetType::from_i32(req.r#type)
         .map(|t| format!("{:?}", t))
@@ -42,10 +38,7 @@ pub async fn on_cs_bitset_add(ctx: &mut NetContext<'_>, req: CsBitsetAdd) -> ScB
     }
 }
 
-/// Clears one or more bits in a named bitset.
-///
-/// Only bits that were previously set are affected; clearing an already-clear
-/// bit is a no-op. Unknown type IDs are silently skipped.
+/// Clears bits in a named bitset. Clearing an already-clear bit is a no-op.
 pub async fn on_cs_bitset_remove(ctx: &mut NetContext<'_>, req: CsBitsetRemove) -> ScBitsetRemove {
     let type_name = BitsetType::from_i32(req.r#type)
         .map(|t| format!("{:?}", t))
@@ -76,12 +69,7 @@ pub async fn on_cs_bitset_remove(ctx: &mut NetContext<'_>, req: CsBitsetRemove) 
     }
 }
 
-/// Pushes the full bitset state as `ScSyncAllBitset`.
-///
-/// Iterates over all known [`BitsetType`] values and bundles their current bit
-/// sets into a single notification. Called once during the login sequence.
-///
-/// Returns `false` if the send channel is closed.
+/// Pushes the full bitset state as `ScSyncAllBitset`. Called once during login.
 pub async fn push_bitsets(ctx: &mut NetContext<'_>) -> bool {
     let bitset: Vec<BitsetData> = (1..20)
         .map(|t| {

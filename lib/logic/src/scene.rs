@@ -350,7 +350,6 @@ impl SceneManager {
     ) -> (ScObjectEnterView, ScSelfSceneInfo) {
         self.loading_state = SceneLoadingState::Active;
 
-        // Update scene info
         self.scene_id = assets
             .str_id_num
             .get_scene_id(&self.current_scene)
@@ -481,7 +480,7 @@ impl SceneManager {
         }
     }
 
-    // this should be called when you receive CS_SCENE_SET_REPATRIATE_POINT or change mode :)
+    // Called on CS_SCENE_SET_REPATRIATE_POINT or when the revival mode changes.
     pub fn set_revival_mode(&mut self, mode: RevivalMode) {
         self.current_revival_mode = mode;
     }
@@ -516,7 +515,6 @@ impl SceneManager {
         if let Some(mode) = revival_mode {
             self.set_revival_mode(mode);
         }
-        // Find all dead characters in current team
         let team = &char_bag.teams[char_bag.meta.curr_team_index as usize];
         let revive_chars: Vec<u64> = team
             .char_team
@@ -526,7 +524,6 @@ impl SceneManager {
             .map(|idx| idx.object_id())
             .collect();
 
-        // Revive them (restore 50% HP)
         for &objid in &revive_chars {
             let idx = CharIndex::from_object_id(objid);
             if let Some(char) = char_bag.chars.get_mut(idx.as_usize()) {
@@ -539,7 +536,6 @@ impl SceneManager {
             }
         }
 
-        // Pack scene objects
         let char_list = self.pack_scene_chars(char_bag, movement);
         let monster_list = self.pack_scene_monsters(assets, entities);
         let interactive_list = pack_interactives(&self.current_scene, assets);
@@ -792,7 +788,7 @@ impl SceneManager {
         let mut char_list = self.pack_scene_chars_for_ids(&alive_ids, char_bag, movement);
         let monster_list = self.pack_monsters_from_manager(entities, assets);
 
-        // Put leader first if it's part of this new_team_ids.
+        // leader always goes first
         let leader_id = char_bag.teams[char_bag.meta.curr_team_index as usize]
             .leader_index
             .object_id();
@@ -857,7 +853,6 @@ impl SceneManager {
             z: movement.rot_z,
         };
 
-        // Collect in original order
         let mut chars: Vec<SceneCharacter> = team
             .char_team
             .iter()
@@ -879,7 +874,6 @@ impl SceneManager {
             })
             .collect();
 
-        // Move leader to the front if present
         let leader_id = team.leader_index.object_id();
         if let Some(pos) = chars
             .iter()
@@ -916,7 +910,6 @@ impl SceneManager {
 
         let now = common::time::now_ms();
 
-        // Cleanup expired dead entities
         self.dead_entities
             .retain(|_, &mut time| now - time < RESPAWN_COOLDOWN_MS);
 
@@ -932,12 +925,10 @@ impl SceneManager {
             let dist_sq = dx * dx + dy * dy + dz * dz;
 
             if dist_sq <= ENTER_RADIUS * ENTER_RADIUS {
-                // Should be in view. Is it already?
                 let already_exists = entities
                     .monsters()
                     .any(|e| e.level_logic_id == enemy.base.level_logic_id);
 
-                // Is it on respawn cooldown?
                 let is_on_cooldown = self.dead_entities.contains_key(&enemy.base.level_logic_id);
 
                 if !already_exists && !is_on_cooldown {
@@ -1034,7 +1025,7 @@ impl SceneManager {
         }
     }
 
-    // Pack a single character for dynamic spawning (e.g., multiplayer peer(wink, wink))
+    // Pack a single character for dynamic spawning (multiplayer peer, future use)
     pub fn pack_single_char(
         &self,
         objid: u64,
@@ -1073,7 +1064,6 @@ impl SceneManager {
         self.checkpoint.as_ref()
     }
 
-    // Update scene from world state (call on login/restore)
     pub fn update_from_world(&mut self, world: &crate::player::WorldState, assets: &BeyondAssets) {
         self.current_scene = world.last_scene.clone();
         self.scene_id = assets

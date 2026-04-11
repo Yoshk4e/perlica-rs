@@ -9,11 +9,7 @@ use perlica_proto::{
 };
 use tracing::{debug, error};
 
-/// Equips a weapon to a character, swapping any previously equipped weapon.
-///
-/// If the weapon was already equipped on a different character, it is first
-/// unequipped from that character. Returns a zero `weaponid` on failure so the
-/// client can detect the rejection without a disconnect.
+/// Equips a weapon, unequipping it from its previous owner first. Returns zero `weaponid` on failure.
 pub async fn on_cs_weapon_puton(ctx: &mut NetContext<'_>, req: CsWeaponPuton) -> ScWeaponPuton {
     debug!(
         "Weapon put-on request: uid={}, char_id={}, weapon_id={}",
@@ -37,10 +33,7 @@ pub async fn on_cs_weapon_puton(ctx: &mut NetContext<'_>, req: CsWeaponPuton) ->
     })
 }
 
-/// Feeds fodder weapons into a target weapon to gain experience and levels.
-///
-/// Consumed fodder weapons are removed from the depot. Returns the weapon's new
-/// exp and level; on failure the original values are echoed with zeroed fields.
+/// Feeds fodder weapons into a target weapon. Consumed weapons are removed from the depot.
 pub async fn on_cs_weapon_add_exp(ctx: &mut NetContext<'_>, req: CsWeaponAddExp) -> ScWeaponAddExp {
     debug!(
         "Weapon add-exp request: uid={}, weapon_id={}, fodder_count={}",
@@ -70,10 +63,7 @@ pub async fn on_cs_weapon_add_exp(ctx: &mut NetContext<'_>, req: CsWeaponAddExp)
     })
 }
 
-/// Advances a weapon's breakthrough level by one stage.
-///
-/// Requires the weapon to be at its current level cap. Returns the new
-/// breakthrough level; on failure level `1` is returned to indicate no change.
+/// Advances breakthrough level by one. Weapon must be at its current level cap.
 pub async fn on_cs_weapon_breakthrough(
     ctx: &mut NetContext<'_>,
     req: CsWeaponBreakthrough,
@@ -98,11 +88,7 @@ pub async fn on_cs_weapon_breakthrough(
     })
 }
 
-/// Attaches a gem to a weapon.
-///
-/// If the gem is already attached to a different weapon it is detached first.
-/// Any gem previously on the target weapon is unslotted and its ID is echoed
-/// in `detach_gemid`.
+/// Attaches a gem, detaching it from any previous weapon first. Previous gem on target is echoed in `detach_gemid`.
 pub async fn on_cs_weapon_attach_gem(
     ctx: &mut NetContext<'_>,
     req: CsWeaponAttachGem,
@@ -129,10 +115,7 @@ pub async fn on_cs_weapon_attach_gem(
     })
 }
 
-/// Removes the gem currently socketed in a weapon and returns it to the bag.
-///
-/// The detached gem's ID is echoed in `detach_gemid` so the client can update
-/// its item-bag UI.
+/// Removes the socketed gem; detached ID is echoed in `detach_gemid`.
 pub async fn on_cs_weapon_detach_gem(
     ctx: &mut NetContext<'_>,
     req: CsWeaponDetachGem,

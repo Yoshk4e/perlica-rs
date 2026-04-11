@@ -71,8 +71,7 @@ pub struct Char {
     pub is_dead: bool,
     pub hp: f64,
     pub ultimate_sp: f32,
-    // this is just for cache
-    // Use weapon_depot.get_equipped_weapon(char_obj_id) to get actual weapon
+    // cached; always read from weapon_depot.get_equipped_weapon(char_obj_id)
     #[serde(skip)]
     pub cached_weapon_inst_id: Option<WeaponInstId>,
     pub own_time: i64,
@@ -124,7 +123,6 @@ pub struct TeamSyncState {
 }
 
 impl CharBag {
-    // Creates a fully initialized bag for a new player
     pub fn new(assets: &BeyondAssets, default_team: &[String; 4]) -> Result<Self> {
         let mut bag = Self {
             weapon_depot: WeaponDepot::new(),
@@ -222,7 +220,6 @@ impl CharBag {
             }
         }
 
-        // Create default team
         let mut team = Team::default();
         team.name = "Team 1".to_string();
         let mut slot = 0;
@@ -288,18 +285,15 @@ impl CharBag {
     pub fn equip_weapon(&mut self, char_id: u64, weapon_inst_id: u64) -> Result<ScWeaponPuton> {
         let weapon_inst_id = WeaponInstId::new(weapon_inst_id);
 
-        // Verify character exists
         let _char = self
             .get_char_by_objid(char_id)
             .ok_or_else(|| LogicError::NotFound("Character not found".into()))?;
 
-        // Get currently equipped weapon for this character (if any)
         let prev_weapon_id = self
             .weapon_depot
             .get_equipped_weapon_id(char_id)
             .map(|id| id.as_u64());
 
-        // Get previous owner of the weapon we're equipping (if any)
         let weapon = self
             .weapon_depot
             .get(weapon_inst_id)
@@ -310,7 +304,6 @@ impl CharBag {
             None
         };
 
-        // Perform the equip operation
         let off_weapon_id = self
             .weapon_depot
             .equip_weapon(weapon_inst_id, char_id)?
@@ -376,7 +369,6 @@ impl CharBag {
         let char_info = char_states
             .into_iter()
             .map(|c| {
-                // Get equipped weapon data
                 let weapon_data = self.get_weapon_data_for_char(c.objid);
                 let weapon_id = weapon_data.as_ref().map(|w| w.inst_id).unwrap_or(0);
 
@@ -520,7 +512,6 @@ impl CharBag {
                     })
                     .collect();
 
-                // Get weapon inst_id from depot
                 let weapon_id = self
                     .weapon_depot
                     .get_equipped_weapon_id(objid)
@@ -559,16 +550,13 @@ impl CharBag {
             .unwrap_or_default()
     }
 
-    // Validate and repair data after loading
     pub fn validate_after_load(&mut self) {
         self.weapon_depot.validate_equipped_weapons();
 
-        // Ensure all characters have valid weapon references
         for i in 0..self.chars.len() {
             let char_obj_id = CharIndex::from_usize(i).object_id();
             let char = &self.chars[i];
 
-            // Check if weapon reference is consistent
             if let Some(weapon) = self.weapon_depot.get_equipped_weapon(char_obj_id) {
                 if weapon.equip_char_id != char_obj_id {
                     warn!(
@@ -586,12 +574,10 @@ impl CharBag {
         );
     }
 
-    // Get weapon depot reference for external operations
     pub fn weapon_depot(&self) -> &WeaponDepot {
         &self.weapon_depot
     }
 
-    // Get mutable weapon depot reference for external operations
     pub fn weapon_depot_mut(&mut self) -> &mut WeaponDepot {
         &mut self.weapon_depot
     }
@@ -685,7 +671,6 @@ pub fn handle_weapon_attach_gem(
         .map(|w| w.inst_id);
 
     let detached_gem_id = if let Some(other_weapon_id) = detached_from_weapon {
-        // Detach from other weapon first
         char_bag.weapon_depot.detach_gem(other_weapon_id)?;
         Some(gem_id)
     } else {
