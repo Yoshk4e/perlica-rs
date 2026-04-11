@@ -1,13 +1,7 @@
 use crate::net::NetContext;
 use tracing::{debug, error};
 
-/// Pushes the full character bag to the client as `ScSyncCharBagInfo`.
-///
-/// Includes all character metadata, team compositions, skill info, and the
-/// current team index. Called during the login sequence and whenever the bag
-/// state needs a full resync.
-///
-/// Returns `false` if serialisation fails or the send channel is closed.
+/// Pushes `ScSyncCharBagInfo`, full character/team/skill snapshot. Returns `false` on send failure.
 pub async fn push_char_bag(ctx: &mut NetContext<'_>) -> bool {
     match ctx.player.char_bag.char_bag_info(ctx.assets) {
         Ok(msg) => {
@@ -29,22 +23,14 @@ pub async fn push_char_bag(ctx: &mut NetContext<'_>) -> bool {
     }
 }
 
-/// Pushes the item bag (weapons and gems) as `ScItemBagSync`.
-///
-/// Called once during the login sequence so the client can display the player's
-/// weapon inventory. Also call this after any operation that adds or removes
-/// items (e.g. weapon foddering).
+/// Pushes `ScItemBagSync`. Call after login and after any add/remove operation.
 pub async fn push_item_bag_sync(ctx: &mut NetContext<'_>) -> bool {
     let msg = ctx.player.char_bag.item_bag_sync();
     debug!("Pushing item bag sync: uid={}", ctx.player.uid);
     ctx.notify(msg).await.is_ok()
 }
 
-/// Pushes `ScSyncAttr` for every character in the bag.
-///
-/// Each message contains the full derived stat list (HP, ATK, DEF, etc.) for
-/// one character at its current level and break stage. Sent during login and
-/// after level-up or breakthrough operations.
+/// Pushes `ScSyncAttr` for every character (full derived stats). Sent on login and after level/break changes.
 pub async fn push_char_attrs(ctx: &mut NetContext<'_>) -> bool {
     let msgs = ctx.player.char_bag.char_attrs(ctx.assets);
     debug!(
@@ -66,11 +52,7 @@ pub async fn push_char_attrs(ctx: &mut NetContext<'_>) -> bool {
     true
 }
 
-/// Pushes `ScCharSyncStatus` for every character in the bag.
-///
-/// Each message contains the character's current HP, ultimate SP, and `is_dead`
-/// flag. Sent during login and after any event that changes combat state (death,
-/// revival, team switch).
+/// Pushes `ScCharSyncStatus` for every character (HP, SP, is_dead). Sent on login and after combat-state changes.
 pub async fn push_char_status(ctx: &mut NetContext<'_>) -> bool {
     let msgs = ctx.player.char_bag.char_status();
     debug!(
@@ -92,11 +74,7 @@ pub async fn push_char_status(ctx: &mut NetContext<'_>) -> bool {
     true
 }
 
-/// Pushes [`ScCharSyncStatus`] for a specific set of character object IDs.
-///
-/// Used after a team composition or active-team change to immediately sync each
-/// member's HP and `is_dead` flag. Characters whose object ID is not found in
-/// the bag are silently skipped.
+/// Pushes `ScCharSyncStatus` for a specific set of characters. Unknown IDs are silently skipped.
 pub async fn push_char_status_for_ids(ctx: &mut NetContext<'_>, obj_ids: &[u64]) -> bool {
     use perlica_proto::{BattleInfo, ScCharSyncStatus};
 

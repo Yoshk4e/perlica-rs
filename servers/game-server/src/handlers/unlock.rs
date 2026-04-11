@@ -3,12 +3,7 @@ use perlica_logic::enums::UnlockSystemType;
 use perlica_proto::ScSyncAllUnlock;
 use tracing::{debug, error};
 
-/// Pushes the full unlock state as `ScSyncAllUnlock`.
-///
-/// Sends every [`UnlockSystemType`] variant as unlocked so all game systems are
-/// accessible from the start. Called once during the login sequence.
-///
-/// Returns `false` if the send channel is closed.
+/// Pushes `ScSyncAllUnlock` with every system unlocked. Called once during login.
 pub async fn push_unlocks(ctx: &mut NetContext<'_>) -> bool {
     let msg = ScSyncAllUnlock {
         unlock_systems: UnlockSystemType::all(),

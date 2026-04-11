@@ -10,7 +10,6 @@ use perlica_proto::{
     ScWeaponDetachGem, ScWeaponPuton, ScdItemDepot, ScdItemGrid, WeaponData, item_inst::InstImpl,
 };
 
-// Unique identifier for weapon instances
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
 pub struct WeaponInstId(u64);
 
@@ -24,35 +23,28 @@ impl WeaponInstId {
     }
 }
 
-/// A single weapon instance in the depot
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WeaponInstance {
-    /// Unique instance ID (not to be confused with template_id)
+    /// Runtime instance ID, distinct from `template_id`, which is the weapon type.
     pub inst_id: WeaponInstId,
-    /// Template ID referencing the weapon configuration
     pub template_id: String,
-    /// Current experience points
     pub exp: u64,
-    /// Current weapon level
     pub weapon_lv: u64,
-    /// Refinement level (superimpose)
+    /// In-game term: "superimpose"
     pub refine_lv: u64,
-    /// Breakthrough level (ascension)
+    /// In-game term: "ascension"
     pub breakthrough_lv: u64,
-    /// Character ID this weapon is equipped to (0 if unequipped)
+    /// 0 means not equipped to anyone.
     pub equip_char_id: u64,
-    /// Attached gem instance ID (0 if none)
+    /// 0 means no gem socketed.
     pub attach_gem_id: u64,
-    /// Locked status - prevents accidental deletion/use as fodder
+    /// Locked weapons can't be used as fodder or deleted.
     pub is_lock: bool,
-    /// New item flag
     pub is_new: bool,
-    /// Timestamp when acquired (for sorting)
     pub own_time: i64,
 }
 
 impl WeaponInstance {
-    // Create a new weapon instance with default values
     pub fn new(inst_id: WeaponInstId, template_id: String, own_time: i64) -> Self {
         Self {
             inst_id,
@@ -105,22 +97,19 @@ impl WeaponInstance {
     }
 }
 
-/// Manages all weapon instances for a player
-/// Weapons are stored in depot type 1
+/// Holds all weapon instances for a player. Depot type 1 in the item bag protocol.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct WeaponDepot {
-    /// All weapon instances keyed by inst_id
     weapons: HashMap<WeaponInstId, WeaponInstance>,
-    /// Counter for generating unique instance IDs
+    // inst_ids start at 1; 0 is the sentinel for "no weapon"
     next_inst_id: u64,
-    /// Reverse mapping: char_id -> weapon_inst_id for quick lookups
+    // reverse map: char_id -> inst_id for O(1) equipped-weapon lookups
     equipped_weapons: HashMap<u64, WeaponInstId>,
 }
 
 impl WeaponDepot {
     pub const DEPOT_TYPE: i32 = 1;
 
-    // Create a new empty weapon depot
     pub fn new() -> Self {
         Self {
             weapons: HashMap::new(),
@@ -157,15 +146,12 @@ impl WeaponDepot {
         inst_id
     }
 
-    // Add a fully initialized weapon (for initialization/loading)
     pub fn insert_weapon(&mut self, weapon: WeaponInstance) {
-        // Update equipped tracking
         if weapon.is_equipped() {
             self.equipped_weapons
                 .insert(weapon.equip_char_id, weapon.inst_id);
         }
 
-        // Update next_inst_id if necessary
         let id_val = weapon.inst_id.as_u64();
         if id_val >= self.next_inst_id {
             self.next_inst_id = id_val + 1;
@@ -174,19 +160,14 @@ impl WeaponDepot {
         self.weapons.insert(weapon.inst_id, weapon);
     }
 
-    /// Get a weapon by instance ID
     pub fn get(&self, inst_id: WeaponInstId) -> Option<&WeaponInstance> {
         self.weapons.get(&inst_id)
     }
 
-    /// Get a mutable weapon by instance ID
     pub fn get_mut(&mut self, inst_id: WeaponInstId) -> Option<&mut WeaponInstance> {
         self.weapons.get_mut(&inst_id)
     }
 
-    /// Remove a weapon from the depot
-    /// Returns the removed weapon if found
-    /// Fails if the weapon is equipped or locked
     pub fn remove_weapon(&mut self, inst_id: WeaponInstId) -> Result<WeaponInstance> {
         let weapon = self
             .weapons
@@ -230,21 +211,16 @@ impl WeaponDepot {
         self.weapons.is_empty()
     }
 
-    /// Equip a weapon to a character
-    /// Automatically unequips any weapon previously equipped to this character
-    /// Returns the previous weapon's inst_id if one was unequipped
     pub fn equip_weapon(
         &mut self,
         weapon_inst_id: WeaponInstId,
         char_id: u64,
     ) -> Result<Option<WeaponInstId>> {
-        // Verify weapon exists and get its current equipped status
         let weapon = self
             .weapons
             .get(&weapon_inst_id)
             .ok_or_else(|| LogicError::NotFound("Weapon not found".into()))?;
 
-        // Check if already equipped to this character
         if weapon.equip_char_id == char_id {
             return Err(LogicError::InvalidOperation(
                 "Weapon already equipped to this character".into(),
@@ -253,10 +229,8 @@ impl WeaponDepot {
 
         let prev_char_id = weapon.equip_char_id;
 
-        // Unequip any weapon currently on this character
         let prev_weapon = self.unequip_from_char(char_id);
 
-        // Unequip from previous character if equipped elsewhere
         if prev_char_id != 0 {
             self.equipped_weapons.remove(&prev_char_id);
             if let Some(w) = self.weapons.get_mut(&weapon_inst_id) {
@@ -269,7 +243,6 @@ impl WeaponDepot {
             );
         }
 
-        // Equip to new character
         let weapon = self
             .weapons
             .get_mut(&weapon_inst_id)
@@ -288,8 +261,6 @@ impl WeaponDepot {
         Ok(prev_weapon)
     }
 
-    /// Unequip a weapon from its character
-    /// Returns true if a weapon was unequipped
     pub fn unequip_weapon(&mut self, weapon_inst_id: WeaponInstId) -> Result<bool> {
         let weapon = self
             .weapons
@@ -313,8 +284,6 @@ impl WeaponDepot {
         Ok(true)
     }
 
-    /// Unequip any weapon from a specific character
-    /// Returns the weapon inst_id that was unequipped, if any
     fn unequip_from_char(&mut self, char_id: u64) -> Option<WeaponInstId> {
         if let Some(&inst_id) = self.equipped_weapons.get(&char_id) {
             if let Some(weapon) = self.weapons.get_mut(&inst_id) {
@@ -327,24 +296,20 @@ impl WeaponDepot {
         }
     }
 
-    /// Get the weapon equipped to a character
     pub fn get_equipped_weapon(&self, char_id: u64) -> Option<&WeaponInstance> {
         self.equipped_weapons
             .get(&char_id)
             .and_then(|&inst_id| self.weapons.get(&inst_id))
     }
 
-    /// Get the weapon inst_id equipped to a character
     pub fn get_equipped_weapon_id(&self, char_id: u64) -> Option<WeaponInstId> {
         self.equipped_weapons.get(&char_id).copied()
     }
 
-    /// Check if a character has a weapon equipped
     pub fn has_equipped_weapon(&self, char_id: u64) -> bool {
         self.equipped_weapons.contains_key(&char_id)
     }
 
-    /// Set the lock status of a weapon
     pub fn set_lock(&mut self, inst_id: WeaponInstId, is_lock: bool) -> Result<()> {
         let weapon = self
             .weapons
@@ -356,7 +321,6 @@ impl WeaponDepot {
         Ok(())
     }
 
-    /// Mark a weapon as no longer new
     pub fn clear_new_flag(&mut self, inst_id: WeaponInstId) -> Result<()> {
         let weapon = self
             .weapons
@@ -367,8 +331,6 @@ impl WeaponDepot {
         Ok(())
     }
 
-    /// Calculate the EXP value of a weapon for use as fodder
-    /// Based on weapon rarity and level
     fn calculate_fodder_exp(
         weapon: &WeaponInstance,
         weapon_config: Option<&config::tables::weapon::Weapon>,
@@ -384,14 +346,11 @@ impl WeaponDepot {
             None => 400,
         };
 
-        // Level bonus: each level adds 10% of base
         let level_bonus = (weapon.weapon_lv as f64 * 0.1 * base_exp as f64) as u64;
 
         base_exp + level_bonus
     }
 
-    /// Calculate weapon level from total EXP
-    /// Simple formula: each level requires more exp (linear scaling)
     fn calculate_level_from_exp(
         exp: u64,
         weapon_config: Option<&config::tables::weapon::Weapon>,
@@ -422,7 +381,6 @@ impl WeaponDepot {
         level.min(max_level as u64)
     }
 
-    /// Get the required level for a breakthrough stage
     fn get_breakthrough_required_level(
         &self,
         weapon_template_id: &str,
@@ -441,15 +399,12 @@ impl WeaponDepot {
             .map(|e| e.breakthrough_show_lv as u64)
     }
 
-    /// Add experience to a weapon, consuming fodder weapons
-    /// Returns the new exp and level
     pub fn add_exp(
         &mut self,
         target_inst_id: WeaponInstId,
         fodder_inst_ids: &[WeaponInstId],
         assets: &BeyondAssets,
     ) -> Result<(u64, u64)> {
-        // Validate target exists and is not locked
         let target = self
             .weapons
             .get(&target_inst_id)
@@ -463,7 +418,6 @@ impl WeaponDepot {
 
         let target_template_id = target.template_id.clone();
 
-        // Calculate total exp from fodder weapons
         let mut total_exp: u64 = 0;
         let fodder_count = fodder_inst_ids.len();
 
@@ -491,19 +445,16 @@ impl WeaponDepot {
                 ));
             }
 
-            // Calculate fodder exp value
             let fodder_exp =
                 Self::calculate_fodder_exp(fodder, assets.weapons.get(&fodder.template_id));
 
             total_exp += fodder_exp;
         }
 
-        // Remove fodder weapons
         for &fodder_id in fodder_inst_ids {
             self.weapons.remove(&fodder_id);
         }
 
-        // Apply exp to target weapon
         let target = self
             .weapons
             .get_mut(&target_inst_id)
@@ -511,7 +462,6 @@ impl WeaponDepot {
 
         target.exp += total_exp;
 
-        // Calculate new level based on exp
         let new_level =
             Self::calculate_level_from_exp(target.exp, assets.weapons.get(&target_template_id));
 
@@ -530,7 +480,6 @@ impl WeaponDepot {
         Ok((target.exp, target.weapon_lv))
     }
 
-    /// Perform breakthrough on a weapon
     pub fn breakthrough(&mut self, inst_id: WeaponInstId, assets: &BeyondAssets) -> Result<u64> {
         // Validate weapon exists and is not locked
         let weapon = self
@@ -548,7 +497,6 @@ impl WeaponDepot {
         let current_breakthrough = weapon.breakthrough_lv;
         let weapon_lv = weapon.weapon_lv;
 
-        // Get max breakthrough from config
         let max_breakthrough = assets.weapons.get_max_breakthrough_lv(&template_id);
 
         if current_breakthrough >= max_breakthrough {
@@ -557,7 +505,6 @@ impl WeaponDepot {
             ));
         }
 
-        // Get required level for next breakthrough
         let required_level = self
             .get_breakthrough_required_level(&template_id, current_breakthrough + 1, assets)
             .unwrap_or(1);
@@ -586,7 +533,6 @@ impl WeaponDepot {
         Ok(weapon.breakthrough_lv)
     }
 
-    // Get max refinement level for a weapon
     fn get_max_refine(weapon_config: Option<&config::tables::weapon::Weapon>) -> u64 {
         match weapon_config {
             Some(w) => match w.rarity {
@@ -600,8 +546,6 @@ impl WeaponDepot {
         }
     }
 
-    /// Refine a weapon (superimpose)
-    /// Consumes another weapon of the same template
     pub fn refine(
         &mut self,
         target_inst_id: WeaponInstId,
@@ -636,7 +580,6 @@ impl WeaponDepot {
             ));
         }
 
-        // Must be same template
         if target.template_id != fodder.template_id {
             return Err(LogicError::InvalidOperation(
                 "Refinement requires weapons of the same type".into(),
@@ -645,7 +588,6 @@ impl WeaponDepot {
 
         let target_template = target.template_id.clone();
 
-        // Get max refine based on rarity
         let max_refine = Self::get_max_refine(assets.weapons.get(&target_template));
 
         if target.refine_lv >= max_refine {
@@ -654,10 +596,8 @@ impl WeaponDepot {
             ));
         }
 
-        // Remove fodder
         self.weapons.remove(&fodder_inst_id);
 
-        // Apply refinement
         let target = self
             .weapons
             .get_mut(&target_inst_id)
@@ -675,8 +615,6 @@ impl WeaponDepot {
         Ok(target.refine_lv)
     }
 
-    /// Attach a gem to a weapon
-    /// Returns the previously attached gem ID if any
     pub fn attach_gem(
         &mut self,
         weapon_inst_id: WeaponInstId,
@@ -711,8 +649,6 @@ impl WeaponDepot {
         Ok(prev_gem)
     }
 
-    /// Detach gem from a weapon
-    /// Returns the detached gem ID
     pub fn detach_gem(&mut self, weapon_inst_id: WeaponInstId) -> Result<u64> {
         let weapon = self
             .weapons
@@ -826,8 +762,6 @@ impl WeaponDepot {
         }
     }
 
-    /// Get all equipped weapon template IDs for a set of characters
-    /// Used during CharBag initialization to ensure characters have their weapons
     pub fn get_equipped_templates_for_chars(&self, char_ids: &[u64]) -> HashMap<u64, String> {
         char_ids
             .iter()
@@ -838,8 +772,6 @@ impl WeaponDepot {
             .collect()
     }
 
-    /// Initialize default weapons for characters that don't have one
-    /// Called during CharBag::new to ensure every character has a weapon
     pub fn init_default_weapons_for_chars(
         &mut self,
         char_template_ids: &[(u64, String)],
@@ -849,12 +781,10 @@ impl WeaponDepot {
         let own_time = now_ms() as i64;
 
         for (char_id, char_template_id) in char_template_ids {
-            // Skip if character already has a weapon equipped
             if self.has_equipped_weapon(*char_id) {
                 continue;
             }
 
-            // Get character's weapon type from config
             let char_data = match assets.characters.get(char_template_id) {
                 Some(data) => data,
                 None => {
@@ -863,7 +793,6 @@ impl WeaponDepot {
                 }
             };
 
-            // Find best default weapon for this character
             let weapon = assets
                 .weapons
                 .get_best_for_char(char_data.weapon_type)
@@ -881,7 +810,6 @@ impl WeaponDepot {
                         .expect("Default weapon must exist")
                 });
 
-            // Create and equip the weapon
             let inst_id = self.add_weapon(weapon.weapon_id.clone(), own_time);
 
             if self.equip_weapon(inst_id, *char_id).is_ok() {
@@ -896,13 +824,10 @@ impl WeaponDepot {
         equipped
     }
 
-    /// Validate and repair weapon-character relationships
-    /// Should be called after loading save data
     pub fn validate_equipped_weapons(&mut self) {
         let mut to_fix: Vec<(u64, WeaponInstId)> = Vec::new();
         let mut orphaned_weapons: Vec<WeaponInstId> = Vec::new();
 
-        // Check for inconsistencies
         for (&char_id, &inst_id) in &self.equipped_weapons {
             if let Some(weapon) = self.weapons.get(&inst_id) {
                 if weapon.equip_char_id != char_id {
@@ -924,7 +849,6 @@ impl WeaponDepot {
             }
         }
 
-        // Check for weapons that claim to be equipped but aren't in equipped_weapons
         for (&inst_id, weapon) in &self.weapons {
             if weapon.is_equipped() && !self.equipped_weapons.contains_key(&weapon.equip_char_id) {
                 warn!(
@@ -936,14 +860,12 @@ impl WeaponDepot {
             }
         }
 
-        // Fix orphaned weapons
         for inst_id in orphaned_weapons {
             if let Some(w) = self.weapons.get_mut(&inst_id) {
                 w.equip_char_id = 0;
             }
         }
 
-        // Remove invalid entries
         for (char_id, _) in to_fix {
             self.equipped_weapons.remove(&char_id);
         }
@@ -958,29 +880,24 @@ mod tests {
     fn test_weapon_lifecycle() {
         let mut depot = WeaponDepot::new();
 
-        // Add weapon
         let inst_id = depot.add_weapon("wpn_test_001".to_string(), 1234567890);
         assert!(depot.contains(inst_id));
         assert_eq!(depot.len(), 1);
 
-        // Get weapon
         let weapon = depot.get(inst_id).unwrap();
         assert_eq!(weapon.template_id, "wpn_test_001");
         assert_eq!(weapon.weapon_lv, 1);
         assert!(!weapon.is_equipped());
 
-        // Equip to character
         depot.equip_weapon(inst_id, 1001).unwrap();
         let weapon = depot.get(inst_id).unwrap();
         assert!(weapon.is_equipped());
         assert_eq!(weapon.equip_char_id, 1001);
 
-        // Unequip
         depot.unequip_weapon(inst_id).unwrap();
         let weapon = depot.get(inst_id).unwrap();
         assert!(!weapon.is_equipped());
 
-        // Remove
         depot.remove_weapon(inst_id).unwrap();
         assert!(!depot.contains(inst_id));
         assert_eq!(depot.len(), 0);
@@ -993,16 +910,13 @@ mod tests {
         let w1 = depot.add_weapon("wpn_001".to_string(), 1);
         let w2 = depot.add_weapon("wpn_002".to_string(), 1);
 
-        // Equip w1 to char 1001
         depot.equip_weapon(w1, 1001).unwrap();
         assert_eq!(depot.get_equipped_weapon(1001).unwrap().inst_id, w1);
 
-        // Equip w2 to same char - should unequip w1
         depot.equip_weapon(w2, 1001).unwrap();
         assert_eq!(depot.get_equipped_weapon(1001).unwrap().inst_id, w2);
         assert!(!depot.get(w1).unwrap().is_equipped());
 
-        // w1 should be unequipped
         let w1_data = depot.get(w1).unwrap();
         assert_eq!(w1_data.equip_char_id, 0);
     }
@@ -1012,13 +926,10 @@ mod tests {
         let mut depot = WeaponDepot::new();
         let inst_id = depot.add_weapon("wpn_test".to_string(), 1);
 
-        // Lock weapon
         depot.set_lock(inst_id, true).unwrap();
 
-        // Should fail to remove
         assert!(depot.remove_weapon(inst_id).is_err());
 
-        // Unlock and remove
         depot.set_lock(inst_id, false).unwrap();
         depot.remove_weapon(inst_id).unwrap();
     }
@@ -1030,7 +941,6 @@ mod tests {
 
         depot.equip_weapon(inst_id, 1001).unwrap();
 
-        // Should fail to remove equipped weapon
         assert!(depot.remove_weapon(inst_id).is_err());
 
         depot.unequip_weapon(inst_id).unwrap();

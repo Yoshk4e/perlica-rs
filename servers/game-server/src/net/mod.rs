@@ -1,67 +1,16 @@
-//! Network module for the game server.
+//! Networking layer for the game server.
 //!
-//! This module provides the networking layer for handling client connections
-//! and routing game commands. It implements a custom binary protocol over TCP.
+//! Custom binary protocol over TCP. Each packet is framed as:
+//! `[head_size: u8][body_size: u16][head: CsHead][body: protobuf]`
 //!
-//! # Architecture Overview
+//! Multiple commands can be batched inside a `CsMergeMsg`; the router unpacks
+//! them and dispatches each individually.
 //!
-//! ```text
-//! +-----------------+     +----------------+     +------------------+
-//! |     Client      | --> |  TcpListener   | --> |  handle_connection
-//! +-----------------+     +----------------+     +------------------+
-//!                                                        |
-//!                        +-------------------------------+
-//!                        |
-//!                        v
-//!                 +----------------+
-//!                 |  logic_loop    | <--- Main game loop per player
-//!                 +----------------+
-//!                        |
-//!         +--------------+--------------+
-//!         |              |              |
-//!         v              v              v
-//!    read_packet   notify_rx      handle_command
-//!         |              |              |
-//!         v              |              v
-//!    handle_command     |       handlers::*
-//!         |              |
-//!         v              v
-//!    NetContext    handle_notification
-//!         |
-//!         v
-//!    send() / notify()
-//!         |
-//!         v
-//!    write_loop --> Client
-//! ```
-//!
-//! # Protocol
-//!
-//! ## Packet Format
-//!
-//! Each packet uses a simple framing format:
-//! ```text
-//! [head_size: u8][body_size: u16][head: bytes][body: bytes]
-//! ```
-//!
-//! - `head_size`: Size of the header in bytes (max 255)
-//! - `body_size`: Size of the body in bytes (max 65535)
-//! - `head`: Protobuf-encoded `CsHead` containing `msgid` and `up_seqid`
-//! - `body`: Protobuf-encoded message body specific to `msgid`
-//!
-//! ## Merge Packets
-//!
-//! Multiple commands can be bundled into a single `CsMergeMsg` packet
-//! for efficiency. The router unpacks these and dispatches each command
-//! individually.
-//!
-//! # Modules
-//!
-//! - **context**: `NetContext` struct for request handling
-//! - **registry**: Session management for player lookup by UID
-//! - **router**: Command routing and handler dispatch
-//! - **session**: Connection handling and lifecycle management
-//! - **notify**: Notification system for server-initiated messages
+//! - **context** — `NetContext` passed into every handler
+//! - **session** — per-connection read/write loops and lifecycle
+//! - **router**  — maps command IDs to handler functions
+//! - **registry** — lets other systems look up a live session by UID
+//! - **notify**  — server-push notifications outside the request cycle
 
 pub mod context;
 pub mod notify;
@@ -69,7 +18,6 @@ pub mod registry;
 pub mod router;
 pub mod session;
 
-// Re-export commonly used types for convenience
 pub use context::NetContext;
 #[allow(unused_imports)]
 pub use notify::{Notification, PlayerHandle};

@@ -18,17 +18,13 @@ use tokio::{
 };
 use tracing::{debug, error, info, warn};
 
-/// Session context holding all state for a connected client.
 pub struct SessionContext {
     pub assets: &'static BeyondAssets,
     pub registry: &'static SessionRegistry,
     pub db: &'static PlayerDb,
 }
 
-/// Handles a new TCP connection from a client.
-///
-/// Sets up the session channels, spawns the write loop, and runs the main logic loop.
-/// When the logic loop exits, the write task is awaited to flush remaining outbound data.
+/// Accepts a TCP connection, spawns the write loop, and runs the session to completion.
 pub async fn handle_connection(
     socket: TcpStream,
     assets: &'static BeyondAssets,
@@ -57,10 +53,7 @@ pub async fn handle_connection(
     result
 }
 
-/// Writes outbound frames to the client socket.
-///
-/// Continuously reads from the outbound channel and writes each pre-encoded frame.
-/// Exits gracefully when the sender (logic loop) is dropped and the channel is drained.
+/// Drains the outbound channel and writes each frame to the socket.
 async fn write_loop(
     mut writer: tokio::net::tcp::OwnedWriteHalf,
     mut rx: mpsc::Receiver<Vec<u8>>,
@@ -71,13 +64,8 @@ async fn write_loop(
     Ok(())
 }
 
-/// Main session logic loop for a connected player.
-///
-/// Handles two types of events:
-/// - Incoming packets from the client (commands)
-/// - Internal server notifications (push messages)
-///
-/// On exit, saves player data to the database and unregisters from the session registry.
+/// Per-connection event loop: routes incoming commands and server notifications,
+/// saves player data to DB on clean exit.
 async fn logic_loop(
     mut reader: tokio::net::tcp::OwnedReadHalf,
     outbound_tx: mpsc::Sender<Vec<u8>>,
@@ -166,7 +154,6 @@ async fn logic_loop(
     result
 }
 
-/// Reads a single framed packet from the client socket.
 async fn read_packet(
     reader: &mut tokio::net::tcp::OwnedReadHalf,
 ) -> std::io::Result<(i32, Vec<u8>, u64)> {
@@ -185,7 +172,6 @@ async fn read_packet(
     Ok((head.msgid, body_buf, head.up_seqid))
 }
 
-/// Returns true if the error represents a clean client disconnect.
 fn is_clean_disconnect(e: &std::io::Error) -> bool {
     matches!(
         e.kind(),
@@ -195,8 +181,7 @@ fn is_clean_disconnect(e: &std::io::Error) -> bool {
     )
 }
 
-/// Dispatches an inbound server notification into the player's session.
-/// Returns `true` if the session should be terminated after handling.
+// Returns true if the session should terminate after this notification.
 async fn handle_notification(ctx: &mut NetContext<'_>, notification: Notification) -> bool {
     match notification {
         Notification::MuipCommand {
