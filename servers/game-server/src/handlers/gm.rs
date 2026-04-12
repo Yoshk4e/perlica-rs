@@ -333,7 +333,8 @@ async fn give_command(ctx: &mut NetContext<'_>, args: &[&str]) -> Result<GmOutco
             let template_id = args[1].to_string();
             ctx.player
                 .char_bag
-                .weapon_depot_mut()
+                .item_manager
+                .weapons
                 .add_weapon(template_id.clone(), now_ms() as i64);
 
             if !char_bag::push_item_bag_sync(ctx).await {

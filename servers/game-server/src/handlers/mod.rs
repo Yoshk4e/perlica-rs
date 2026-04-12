@@ -1,6 +1,7 @@
 pub mod bitset;
 pub mod char_bag;
 pub mod character;
+pub mod equip;
 pub mod factory;
 pub mod gm;
 pub mod login;
@@ -9,4 +10,5 @@ pub mod movement;
 pub mod ping;
 pub mod scene;
 pub mod unlock;
+pub mod wallet;
 pub mod weapon;

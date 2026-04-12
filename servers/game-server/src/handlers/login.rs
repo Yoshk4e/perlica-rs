@@ -1,4 +1,4 @@
-use crate::handlers::{bitset, char_bag, factory, mission, scene, unlock};
+use crate::handlers::{bitset, char_bag, factory, mission, scene, unlock, wallet};
 use crate::net::NetContext;
 use crate::player::LoadingState;
 use crate::sconfig;
@@ -62,6 +62,7 @@ pub async fn on_login(ctx: &mut NetContext<'_>, req: CsLogin) -> ScLogin {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum LoginPhase {
     BaseData,
+    Wallet,
     ItemBag,
     CharBag,
     Unlocks,
@@ -78,7 +79,8 @@ enum LoginPhase {
 impl LoginPhase {
     fn next(self) -> Self {
         match self {
-            Self::BaseData => Self::ItemBag,
+            Self::BaseData => Self::Wallet,
+            Self::Wallet => Self::ItemBag,
             Self::ItemBag => Self::CharBag,
             Self::CharBag => Self::Unlocks,
             Self::Unlocks => Self::Guides,
@@ -111,6 +113,7 @@ pub(crate) async fn run_login_sequence(ctx: &mut NetContext<'_>) {
 
         let ok = match phase {
             LoginPhase::BaseData => push_base_data(ctx).await,
+            LoginPhase::Wallet => wallet::push_wallet(ctx).await,
             LoginPhase::ItemBag => char_bag::push_item_bag_sync(ctx).await,
             LoginPhase::CharBag => char_bag::push_char_bag(ctx).await,
             LoginPhase::Unlocks => unlock::push_unlocks(ctx).await,

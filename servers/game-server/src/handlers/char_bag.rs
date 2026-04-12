@@ -25,7 +25,7 @@ pub async fn push_char_bag(ctx: &mut NetContext<'_>) -> bool {
 
 /// Pushes `ScItemBagSync`. Call after login and after any add/remove operation.
 pub async fn push_item_bag_sync(ctx: &mut NetContext<'_>) -> bool {
-    let msg = ctx.player.char_bag.item_bag_sync();
+    let msg = ctx.player.char_bag.item_bag_sync(ctx.assets);
     debug!("Pushing item bag sync: uid={}", ctx.player.uid);
     ctx.notify(msg).await.is_ok()
 }

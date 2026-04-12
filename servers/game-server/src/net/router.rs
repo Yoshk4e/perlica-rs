@@ -5,7 +5,7 @@
 //! the `reply` or `no_reply` block in the `handlers!` macro below.
 //! Use `reply` when the handler returns a response; `no_reply` for fire-and-forget.
 
-use crate::handlers::{bitset, character, login, mission, movement, ping, scene, weapon};
+use crate::handlers::{bitset, character, equip, login, mission, movement, ping, scene, weapon};
 use byteorder::{LittleEndian, ReadBytesExt};
 use perlica_proto::{CsHead, CsMergeMsg, prost::Message};
 use std::io::{Cursor, Read};
@@ -112,6 +112,11 @@ handlers! {
         CsWeaponBreakthrough   => weapon::on_cs_weapon_breakthrough,
         CsWeaponAttachGem      => weapon::on_cs_weapon_attach_gem,
         CsWeaponDetachGem      => weapon::on_cs_weapon_detach_gem,
+        // Equipment Commands
+        CsEquipPuton           => equip::on_cs_equip_puton,
+        CsEquipPutoff          => equip::on_cs_equip_putoff,
+        // Item Tag Commands
+        CsRemoveItemNewTags    => equip::on_cs_remove_item_new_tags,
         // Dialog or Story related commands
         CsFinishDialog                   => scene::on_cs_finish_dialog,
     }
