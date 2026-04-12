@@ -1,4 +1,5 @@
 use crate::error::{LogicError, Result};
+use crate::item::ItemManager;
 use common::time::now_ms;
 use config::BeyondAssets;
 use perlica_proto::{
@@ -88,7 +89,7 @@ pub struct CharBag {
     pub teams: Vec<Team>,
     pub chars: Vec<Char>,
     pub meta: Meta,
-    pub weapon_depot: WeaponDepot,
+    pub item_manager: ItemManager,
 }
 
 #[derive(Debug, Clone)]
@@ -124,8 +125,9 @@ pub struct TeamSyncState {
 
 impl CharBag {
     pub fn new(assets: &BeyondAssets, default_team: &[String; 4]) -> Result<Self> {
+        let own_time = common::time::now_ms() as i64;
         let mut bag = Self {
-            weapon_depot: WeaponDepot::new(),
+            item_manager: ItemManager::init_for_new_player(assets, own_time),
             ..Default::default()
         };
 
@@ -201,10 +203,15 @@ impl CharBag {
                 });
 
             let weapon_inst_id = bag
-                .weapon_depot
+                .item_manager
+                .weapons
                 .add_weapon(weapon.weapon_id.clone(), own_time);
 
-            if let Err(e) = bag.weapon_depot.equip_weapon(weapon_inst_id, char_obj_id) {
+            if let Err(e) = bag
+                .item_manager
+                .weapons
+                .equip_weapon(weapon_inst_id, char_obj_id)
+            {
                 warn!(
                     "Failed to equip default weapon to char {}: {}",
                     char_obj_id, e
@@ -290,12 +297,14 @@ impl CharBag {
             .ok_or_else(|| LogicError::NotFound("Character not found".into()))?;
 
         let prev_weapon_id = self
-            .weapon_depot
+            .item_manager
+            .weapons
             .get_equipped_weapon_id(char_id)
             .map(|id| id.as_u64());
 
         let weapon = self
-            .weapon_depot
+            .item_manager
+            .weapons
             .get(weapon_inst_id)
             .ok_or_else(|| LogicError::NotFound("Weapon not found".into()))?;
         let prev_owner = if weapon.is_equipped() && weapon.equip_char_id != char_id {
@@ -305,7 +314,8 @@ impl CharBag {
         };
 
         let off_weapon_id = self
-            .weapon_depot
+            .item_manager
+            .weapons
             .equip_weapon(weapon_inst_id, char_id)?
             .map(|id| id.as_u64());
 
@@ -317,14 +327,17 @@ impl CharBag {
             prev_owner
         );
 
-        Ok(self
-            .weapon_depot
-            .to_weapon_puton_sc(char_id, weapon_inst_id, off_weapon_id, prev_owner))
+        Ok(self.item_manager.weapons.to_weapon_puton_sc(
+            char_id,
+            weapon_inst_id,
+            off_weapon_id,
+            prev_owner,
+        ))
     }
 
     pub fn unequip_weapon(&mut self, char_id: u64) -> Result<Option<WeaponInstId>> {
-        if let Some(weapon_inst_id) = self.weapon_depot.get_equipped_weapon_id(char_id) {
-            self.weapon_depot.unequip_weapon(weapon_inst_id)?;
+        if let Some(weapon_inst_id) = self.item_manager.weapons.get_equipped_weapon_id(char_id) {
+            self.item_manager.weapons.unequip_weapon(weapon_inst_id)?;
             info!("Unequipped weapon from char {}", char_id);
             Ok(Some(weapon_inst_id))
         } else {
@@ -333,7 +346,7 @@ impl CharBag {
     }
 
     pub fn get_equipped_weapon(&self, char_id: u64) -> Option<&WeaponInstance> {
-        self.weapon_depot.get_equipped_weapon(char_id)
+        self.item_manager.weapons.get_equipped_weapon(char_id)
     }
 
     fn get_weapon_data_for_char(&self, char_id: u64) -> Option<WeaponData> {
@@ -446,8 +459,8 @@ impl CharBag {
             .collect()
     }
 
-    pub fn item_bag_sync(&self) -> ScItemBagSync {
-        self.weapon_depot.build_item_bag_sync()
+    pub fn item_bag_sync(&self, assets: &config::BeyondAssets) -> ScItemBagSync {
+        self.item_manager.build_full_bag_sync(assets)
     }
 
     fn team_sync_states(&self, assets: &BeyondAssets) -> Vec<TeamSyncState> {
@@ -513,7 +526,8 @@ impl CharBag {
                     .collect();
 
                 let weapon_id = self
-                    .weapon_depot
+                    .item_manager
+                    .weapons
                     .get_equipped_weapon_id(objid)
                     .map(|id| id.as_u64())
                     .unwrap_or(0);
@@ -551,13 +565,13 @@ impl CharBag {
     }
 
     pub fn validate_after_load(&mut self) {
-        self.weapon_depot.validate_equipped_weapons();
+        self.item_manager.weapons.validate_equipped_weapons();
 
         for i in 0..self.chars.len() {
             let char_obj_id = CharIndex::from_usize(i).object_id();
             let char = &self.chars[i];
 
-            if let Some(weapon) = self.weapon_depot.get_equipped_weapon(char_obj_id) {
+            if let Some(weapon) = self.item_manager.weapons.get_equipped_weapon(char_obj_id) {
                 if weapon.equip_char_id != char_obj_id {
                     warn!(
                         "Char {} has mismatched weapon reference: weapon claims char {}",
@@ -570,16 +584,16 @@ impl CharBag {
         info!(
             "CharBag validation complete: {} chars, {} weapons",
             self.chars.len(),
-            self.weapon_depot.len()
+            self.item_manager.weapons.len()
         );
     }
 
-    pub fn weapon_depot(&self) -> &WeaponDepot {
-        &self.weapon_depot
+    pub fn item_manager_weapons(&self) -> &WeaponDepot {
+        &self.item_manager.weapons
     }
 
-    pub fn weapon_depot_mut(&mut self) -> &mut WeaponDepot {
-        &mut self.weapon_depot
+    pub fn item_manager_weapons_mut(&mut self) -> &mut WeaponDepot {
+        &mut self.item_manager.weapons
     }
 }
 
@@ -631,11 +645,13 @@ pub fn handle_weapon_add_exp(
         .collect();
 
     char_bag
-        .weapon_depot
+        .item_manager
+        .weapons
         .add_exp(target_id, &fodder_ids, assets)?;
 
     char_bag
-        .weapon_depot
+        .item_manager
+        .weapons
         .to_add_exp_sc(target_id)
         .ok_or_else(|| LogicError::NotFound("Weapon not found after add_exp".into()))
 }
@@ -647,10 +663,14 @@ pub fn handle_weapon_breakthrough(
 ) -> Result<ScWeaponBreakthrough> {
     let inst_id = WeaponInstId::new(weapon_id);
 
-    char_bag.weapon_depot.breakthrough(inst_id, assets)?;
+    char_bag
+        .item_manager
+        .weapons
+        .breakthrough(inst_id, assets)?;
 
     char_bag
-        .weapon_depot
+        .item_manager
+        .weapons
         .to_breakthrough_sc(inst_id)
         .ok_or_else(|| LogicError::NotFound("Weapon not found after breakthrough".into()))
 }
@@ -664,14 +684,15 @@ pub fn handle_weapon_attach_gem(
 
     // Check if gem is attached to another weapon
     let detached_from_weapon = char_bag
-        .weapon_depot
+        .item_manager
+        .weapons
         .all_weapons()
         .values()
         .find(|w| w.attach_gem_id == gem_id)
         .map(|w| w.inst_id);
 
     let detached_gem_id = if let Some(other_weapon_id) = detached_from_weapon {
-        char_bag.weapon_depot.detach_gem(other_weapon_id)?;
+        char_bag.item_manager.weapons.detach_gem(other_weapon_id)?;
         Some(gem_id)
     } else {
         None
@@ -679,7 +700,8 @@ pub fn handle_weapon_attach_gem(
 
     // Detach any existing gem from target weapon
     let weapon = char_bag
-        .weapon_depot
+        .item_manager
+        .weapons
         .get(weapon_inst_id)
         .ok_or_else(|| LogicError::NotFound("Weapon not found".into()))?;
     let prev_gem_id = if weapon.attach_gem_id != 0 {
@@ -688,10 +710,14 @@ pub fn handle_weapon_attach_gem(
         None
     };
 
-    char_bag.weapon_depot.attach_gem(weapon_inst_id, gem_id)?;
+    char_bag
+        .item_manager
+        .weapons
+        .attach_gem(weapon_inst_id, gem_id)?;
 
     char_bag
-        .weapon_depot
+        .item_manager
+        .weapons
         .to_attach_gem_sc(
             weapon_inst_id,
             prev_gem_id,
@@ -706,10 +732,11 @@ pub fn handle_weapon_detach_gem(
 ) -> Result<ScWeaponDetachGem> {
     let weapon_inst_id = WeaponInstId::new(weapon_id);
 
-    let gem_id = char_bag.weapon_depot.detach_gem(weapon_inst_id)?;
+    let gem_id = char_bag.item_manager.weapons.detach_gem(weapon_inst_id)?;
 
     Ok(char_bag
-        .weapon_depot
+        .item_manager
+        .weapons
         .to_detach_gem_sc(weapon_inst_id, gem_id))
 }
 

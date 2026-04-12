@@ -1,11 +1,13 @@
 use crate::error::{ConfigError, Result};
-use crate::tables::weapon::{BreakthroughTemplate, Weapon, WeaponTable};
+use crate::tables::weapon::{BreakthroughTemplate, UpgradeTemplateSum, Weapon, WeaponTable};
 use std::collections::HashMap;
 use std::path::Path;
 
 pub struct WeaponAssets {
     data: HashMap<String, Weapon>,
     breakthrough: HashMap<String, BreakthroughTemplate>,
+    upgrade_sum: HashMap<String, UpgradeTemplateSum>,
+    weapon_exp_by_item_id: HashMap<String, u64>,
 }
 
 impl WeaponAssets {
@@ -22,9 +24,18 @@ impl WeaponAssets {
                 source: e,
             })?;
 
+        let weapon_exp_by_item_id = table
+            .weapon_exp_item_table
+            .values()
+            .filter(|e| !e.exp_item_id.is_empty())
+            .map(|e| (e.exp_item_id.clone(), e.weapon_exp as u64))
+            .collect();
+
         Ok(Self {
             data: table.weapon_basic_table,
             breakthrough: table.weapon_break_through_template_table,
+            upgrade_sum: table.weapon_upgrade_template_sum_table,
+            weapon_exp_by_item_id,
         })
     }
 
@@ -121,5 +132,47 @@ impl WeaponAssets {
             *map.entry(w.weapon_type).or_insert(0) += 1;
         }
         map
+    }
+
+    pub fn get_upgrade_sum(&self, template_id: &str) -> Option<&UpgradeTemplateSum> {
+        self.upgrade_sum.get(template_id)
+    }
+
+    /// Returns the weapon exp granted by consuming one unit of `item_id`.
+    ///
+    /// Returns 0 for items not present in `weaponExpItemTable`.
+    #[inline]
+    pub fn weapon_exp_for_item(&self, item_id: &str) -> u64 {
+        self.weapon_exp_by_item_id
+            .get(item_id)
+            .copied()
+            .unwrap_or(0)
+    }
+
+    /// Returns the weapon level corresponding to `total_exp`, capped at `weapon.maxLv`.
+    ///
+    /// Uses the `weaponUpgradeTemplateSumTable` curve. Falls back to level 1 if the
+    /// weapon or its level template cannot be found.
+    pub fn weapon_level_from_exp(&self, weapon_id: &str, total_exp: u64) -> u64 {
+        let Some(weapon) = self.data.get(weapon_id) else {
+            return 1;
+        };
+        let max_lv = weapon.max_lv as u64;
+        let Some(sum_table) = self.upgrade_sum.get(&weapon.level_template_id) else {
+            return 1;
+        };
+        let mut level = 1u64;
+        for entry in &sum_table.list {
+            let lv = entry.weapon_lv as u64;
+            if lv > max_lv {
+                break;
+            }
+            if (entry.lv_up_exp_sum as u64) <= total_exp {
+                level = lv;
+            } else {
+                break;
+            }
+        }
+        level
     }
 }
