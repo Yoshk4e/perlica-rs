@@ -130,18 +130,14 @@ impl CharBag {
             item_manager: ItemManager::init_for_new_player(assets, own_time),
             ..Default::default()
         };
-
         let mut index_map: HashMap<String, CharIndex> = HashMap::new();
         let own_time = now_ms() as i64;
-
         info!("Starting CharBag population with all characters");
-
         for (template_id, _char_data) in assets.characters.iter() {
             if assets.char_skills.get_char_skills(template_id).is_empty() {
                 debug!("Skipping placeholder char: {}", template_id);
                 continue;
             }
-
             let attrs = match assets.characters.get_stats(template_id, 1, 0) {
                 Some(a) => a,
                 None => {
@@ -149,7 +145,6 @@ impl CharBag {
                     continue;
                 }
             };
-
             let skill_levels: HashMap<String, u32> = assets
                 .char_skills
                 .get_char_skills(template_id)
@@ -157,7 +152,6 @@ impl CharBag {
                 .filter_map(|b| b.entries.first())
                 .map(|e| (e.skill_id.clone(), 1u32))
                 .collect();
-
             let char = Char {
                 template_id: template_id.clone(),
                 level: attrs.level,
@@ -170,21 +164,16 @@ impl CharBag {
                 own_time,
                 skill_levels,
             };
-
             let idx = bag.add_char(char);
             index_map.insert(template_id.clone(), idx);
         }
-
         debug!("Populated {} characters in CharBag", index_map.len());
-
         for (template_id, char_idx) in &index_map {
             let char_obj_id = char_idx.object_id();
-
             let char_data = match assets.characters.get(template_id) {
                 Some(data) => data,
                 None => continue,
             };
-
             let weapon = assets
                 .weapons
                 .get_best_for_char(char_data.weapon_type)
@@ -201,12 +190,10 @@ impl CharBag {
                         .get("wpn_0002")
                         .expect("Default weapon must exist")
                 });
-
             let weapon_inst_id = bag
                 .item_manager
                 .weapons
                 .add_weapon(weapon.weapon_id.clone(), own_time);
-
             if let Err(e) = bag
                 .item_manager
                 .weapons
@@ -226,14 +213,12 @@ impl CharBag {
                 );
             }
         }
-
         let mut team = Team {
             name: "Team 1".to_string(),
             ..Default::default()
         };
         let mut slot = 0;
         let mut leader = None;
-
         for template_id in default_team {
             if let Some(&idx) = index_map
                 .get(template_id)
@@ -246,10 +231,16 @@ impl CharBag {
         }
         team.leader_index = leader.unwrap_or_default();
         bag.teams.push(team);
+        // Add 4 empty placeholder teams so the client's squadManager has squads for all indexes (otherwise it will crash)
+        for i in 1..5 {
+            bag.teams.push(Team {
+                name: format!("Team {}", i + 1),
+                ..Default::default()
+            });
+        }
+
         bag.meta.curr_team_index = 0;
-
         info!("Default team created with leader: {:?}", leader);
-
         Ok(bag)
     }
 
