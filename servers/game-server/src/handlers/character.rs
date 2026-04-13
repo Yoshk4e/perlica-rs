@@ -178,6 +178,24 @@ pub async fn on_cs_char_bag_set_team(ctx: &mut NetContext<'_>, req: CsCharBagSet
         };
     }
     ctx.player.char_bag.teams[team_index].char_team = new_slots;
+
+    {
+        let team = &mut ctx.player.char_bag.teams[team_index];
+        let leader_still_in_team = team
+            .char_team
+            .iter()
+            .filter_map(|s| s.char_index())
+            .any(|idx| idx == team.leader_index);
+
+        if !leader_still_in_team {
+            team.leader_index = team
+                .char_team
+                .iter()
+                .find_map(|s| s.char_index())
+                .unwrap_or_default();
+        }
+    }
+
     if let Err(e) = ctx
         .send(ScCharBagSetTeam {
             team_index: req.team_index,
