@@ -43,6 +43,7 @@ struct ScriptRuntimeState {
 
 #[derive(Debug, Clone)]
 struct ScriptTriggerSet {
+    #[allow(dead_code)]
     initial_state: LevelScriptState,
     triggers: Vec<TriggerKind>,
 }

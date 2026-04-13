@@ -34,14 +34,12 @@ fn generate_net_message_impls() {
     // Extract all struct names from the generated prost file
     let mut struct_names = std::collections::HashSet::new();
     for line in prost_output.lines() {
-        if line.trim().starts_with("pub struct ") {
-            if let Some(name) = line
-                .trim()
-                .strip_prefix("pub struct ")
-                .and_then(|s| s.split_whitespace().next())
-            {
-                struct_names.insert(name.to_string());
-            }
+        if let Some(name) = line
+            .trim()
+            .strip_prefix("pub struct ")
+            .and_then(|s| s.split_whitespace().next())
+        {
+            struct_names.insert(name.to_string());
         }
     }
 

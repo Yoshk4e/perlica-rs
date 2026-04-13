@@ -251,10 +251,12 @@ pub fn spawn_dynamic_monster(
     (create, monster)
 }
 
+#[allow(dead_code)]
 pub fn entity_exists(ctx: &NetContext<'_>, entity_id: u64) -> bool {
     ctx.player.entities.contains(entity_id)
 }
 
+#[allow(dead_code)]
 pub fn current_scene_name<'a>(ctx: &'a NetContext<'_>) -> &'a str {
     ctx.player.scene.scene_name()
 }

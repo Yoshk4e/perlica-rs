@@ -3,10 +3,10 @@ use perlica_logic::character::char_bag::{CharIndex, Team, TeamSlot};
 use perlica_proto::{
     CsCharBagSetCurrTeamIndex, CsCharBagSetTeam, CsCharBagSetTeamLeader, CsCharBagSetTeamName,
     CsCharBreak, CsCharLevelUp, CsCharSetBattleInfo, CsCharSetNormalSkill, CsCharSetTeamSkill,
-    CsCharSkillLevelUp, MoneyInfo, ScCharBagSetCurrTeamIndex, ScCharBagSetTeam,
-    ScCharBagSetTeamLeader, ScCharBagSetTeamName, ScCharBreak, ScCharLevelUp, ScCharSetNormalSkill,
-    ScCharSetTeamSkill, ScCharSkillLevelUp, ScCharSyncLevelExp, ScItemBagSyncModify, ScSyncWallet,
-    ScdItemDepotModify, SkillLevelInfo,
+    CsCharSkillLevelUp, ScCharBagSetCurrTeamIndex, ScCharBagSetTeam, ScCharBagSetTeamLeader,
+    ScCharBagSetTeamName, ScCharBreak, ScCharLevelUp, ScCharSetNormalSkill, ScCharSetTeamSkill,
+    ScCharSkillLevelUp, ScCharSyncLevelExp, ScItemBagSyncModify, ScdItemDepotModify,
+    SkillLevelInfo,
 };
 use std::collections::HashMap;
 use tracing::{debug, error, info, warn};
@@ -277,10 +277,6 @@ pub async fn on_cs_char_level_up(ctx: &mut NetContext<'_>, req: CsCharLevelUp) -
 
     // Exp the character still needs to advance from their current level.
     let cum_at_current = cumulative_exp(level_up_exp, current_level);
-    let exp_to_next_level = {
-        let cum_next = cumulative_exp(level_up_exp, current_level + 1);
-        (cum_next - cum_at_current - current_exp).max(0)
-    };
 
     let mut total_exp_gained: i64 = 0;
     let mut consumed: HashMap<String, u32> = HashMap::new();
@@ -368,9 +364,10 @@ pub async fn on_cs_char_level_up(ctx: &mut NetContext<'_>, req: CsCharLevelUp) -
         .into_iter()
         .find(|a| a.obj_id == req.char_obj_id)
     {
-        if let Err(e) = ctx.notify(attr_msg).await {
-            error!("Failed to sync attrs after level up: {:?}", e);
-        }
+        let _ = ctx
+            .notify(attr_msg)
+            .await
+            .inspect_err(|e| error!("Failed to sync attrs after level up: {:?}", e));
     }
 
     if let Err(e) = ctx

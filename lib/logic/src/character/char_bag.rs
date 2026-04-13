@@ -227,20 +227,21 @@ impl CharBag {
             }
         }
 
-        let mut team = Team::default();
-        team.name = "Team 1".to_string();
+        let mut team = Team {
+            name: "Team 1".to_string(),
+            ..Default::default()
+        };
         let mut slot = 0;
         let mut leader = None;
 
         for template_id in default_team {
-            if let Some(&idx) = index_map.get(template_id) {
-                if slot < Team::SLOTS_COUNT {
-                    team.char_team[slot] = TeamSlot::Occupied(idx);
-                    if leader.is_none() {
-                        leader = Some(idx);
-                    }
-                    slot += 1;
-                }
+            if let Some(&idx) = index_map
+                .get(template_id)
+                .filter(|_| slot < Team::SLOTS_COUNT)
+            {
+                team.char_team[slot] = TeamSlot::Occupied(idx);
+                leader.get_or_insert(idx);
+                slot += 1;
             }
         }
         team.leader_index = leader.unwrap_or_default();
@@ -295,12 +296,6 @@ impl CharBag {
         let _char = self
             .get_char_by_objid(char_id)
             .ok_or_else(|| LogicError::NotFound("Character not found".into()))?;
-
-        let prev_weapon_id = self
-            .item_manager
-            .weapons
-            .get_equipped_weapon_id(char_id)
-            .map(|id| id.as_u64());
 
         let weapon = self
             .item_manager
@@ -569,15 +564,17 @@ impl CharBag {
 
         for i in 0..self.chars.len() {
             let char_obj_id = CharIndex::from_usize(i).object_id();
-            let char = &self.chars[i];
 
-            if let Some(weapon) = self.item_manager.weapons.get_equipped_weapon(char_obj_id) {
-                if weapon.equip_char_id != char_obj_id {
-                    warn!(
-                        "Char {} has mismatched weapon reference: weapon claims char {}",
-                        char_obj_id, weapon.equip_char_id
-                    );
-                }
+            if let Some(weapon) = self
+                .item_manager
+                .weapons
+                .get_equipped_weapon(char_obj_id)
+                .filter(|w| w.equip_char_id != char_obj_id)
+            {
+                warn!(
+                    "Char {} has mismatched weapon reference: weapon claims char {}",
+                    char_obj_id, weapon.equip_char_id
+                );
             }
         }
 
@@ -691,12 +688,9 @@ pub fn handle_weapon_attach_gem(
         .find(|w| w.attach_gem_id == gem_id)
         .map(|w| w.inst_id);
 
-    let detached_gem_id = if let Some(other_weapon_id) = detached_from_weapon {
+    if let Some(other_weapon_id) = detached_from_weapon {
         char_bag.item_manager.weapons.detach_gem(other_weapon_id)?;
-        Some(gem_id)
-    } else {
-        None
-    };
+    }
 
     // Detach any existing gem from target weapon
     let weapon = char_bag

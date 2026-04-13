@@ -1,5 +1,4 @@
 use crate::net::NetContext;
-use config::item::ItemDepotType;
 use perlica_logic::{
     character::char_bag::{
         handle_weapon_attach_gem, handle_weapon_breakthrough, handle_weapon_detach_gem,
@@ -13,7 +12,7 @@ use perlica_proto::{
     ScWeaponDetachGem, ScWeaponPuton, ScdItemDepotModify,
 };
 use std::collections::HashMap;
-use tracing::{debug, error, info, warn};
+use tracing::{debug, error, warn};
 
 /// Equips a weapon, unequipping it from its previous owner first.
 /// Returns zero `weaponid` on failure.
@@ -32,7 +31,7 @@ pub async fn on_cs_weapon_puton(ctx: &mut NetContext<'_>, req: CsWeaponPuton) ->
         );
     }
 
-    response.unwrap_or_else(|_| ScWeaponPuton {
+    response.unwrap_or(ScWeaponPuton {
         charid: req.charid,
         weaponid: 0,
         offweaponid: 0,
@@ -270,48 +269,6 @@ pub async fn on_cs_weapon_add_exp(ctx: &mut NetContext<'_>, req: CsWeaponAddExp)
     }
 }
 
-fn cumulative_exp(level_up_exp_table: &[u32], level: u64) -> i64 {
-    if level <= 1 {
-        return 0;
-    }
-    // Sum exp needed for all levels below current
-    level_up_exp_table
-        .iter()
-        .take((level - 1) as usize)
-        .map(|&e| e as i64)
-        .sum()
-}
-
-fn calculate_level_from_total_exp(
-    level_up_exp_table: &[u32],
-    current_level: u64,
-    new_total_exp: i64,
-    max_level: i32,
-) -> (i32, i64) {
-    let mut level = 1;
-    let mut accumulated_exp: i64 = 0;
-
-    for &exp_to_next in level_up_exp_table {
-        if level >= max_level {
-            break;
-        }
-        if new_total_exp < accumulated_exp + exp_to_next as i64 {
-            return (level, new_total_exp - accumulated_exp);
-        }
-        accumulated_exp += exp_to_next as i64;
-        level += 1;
-    }
-
-    (
-        level,
-        if level >= max_level {
-            0
-        } else {
-            new_total_exp - accumulated_exp
-        },
-    )
-}
-
 /// Advances breakthrough level by one. Weapon must be at its current level cap.
 pub async fn on_cs_weapon_breakthrough(
     ctx: &mut NetContext<'_>,
@@ -331,7 +288,7 @@ pub async fn on_cs_weapon_breakthrough(
         );
     }
 
-    response.unwrap_or_else(|_| ScWeaponBreakthrough {
+    response.unwrap_or(ScWeaponBreakthrough {
         weaponid: req.weaponid,
         breakthrough_lv: 1,
     })
@@ -356,7 +313,7 @@ pub async fn on_cs_weapon_attach_gem(
         );
     }
 
-    response.unwrap_or_else(|_| ScWeaponAttachGem {
+    response.unwrap_or(ScWeaponAttachGem {
         weaponid: req.weaponid,
         gemid: 0,
         detach_gemid: 0,
@@ -383,7 +340,7 @@ pub async fn on_cs_weapon_detach_gem(
         );
     }
 
-    response.unwrap_or_else(|_| ScWeaponDetachGem {
+    response.unwrap_or(ScWeaponDetachGem {
         weaponid: req.weaponid,
         detach_gemid: 0,
     })

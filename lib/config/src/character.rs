@@ -1,5 +1,5 @@
 use crate::error::{ConfigError, Result};
-use crate::tables::character::{Attributes, Character, CharacterTable};
+use crate::tables::character::{Attributes, Character};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::Path;
