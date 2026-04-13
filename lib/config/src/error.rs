@@ -20,6 +20,9 @@ pub enum ConfigError {
         source: std::io::Error,
     },
 
+    #[error("Invalid structure in {path}: {message}")]
+    InvalidStructure { path: PathBuf, message: String },
+
     #[error(transparent)]
     Io(#[from] std::io::Error),
 }

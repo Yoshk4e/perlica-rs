@@ -172,12 +172,12 @@ fn collect_mission_keys(tables_dir: &Path) -> Result<BTreeSet<String>> {
             path: text_table_path.clone(),
             source,
         })?;
-    let entries = text_table.as_object().ok_or_else(|| {
-        ConfigError::Io(std::io::Error::new(
-            std::io::ErrorKind::InvalidData,
-            "TextTable.json root is not an object",
-        ))
-    })?;
+    let entries = text_table
+        .as_object()
+        .ok_or_else(|| ConfigError::InvalidStructure {
+            path: text_table_path.clone(),
+            message: "root is not a JSON object".to_string(),
+        })?;
 
     let mut keys = BTreeSet::new();
     for (key, value) in entries {
