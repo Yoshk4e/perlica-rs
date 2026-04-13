@@ -66,6 +66,7 @@ impl Default for Player {
 }
 
 impl Player {
+    #[allow(dead_code)]
     pub fn get_char_by_objid(
         &self,
         objid: u64,
@@ -73,6 +74,7 @@ impl Player {
         self.char_bag.get_char_by_objid(objid)
     }
 
+    #[allow(dead_code)]
     pub fn get_char_by_objid_mut(
         &mut self,
         objid: u64,

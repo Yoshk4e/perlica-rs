@@ -226,7 +226,7 @@ pub enum ParamRealType {
     Buff = 32,
     BuffList = 33,
     Bytes = 34,
-    E_NUM = 35,
+    ENum = 35,
 }
 
 impl From<i32> for ParamRealType {
@@ -267,7 +267,7 @@ impl From<i32> for ParamRealType {
             32 => ParamRealType::Buff,
             33 => ParamRealType::BuffList,
             34 => ParamRealType::Bytes,
-            35 => ParamRealType::E_NUM,
+            35 => ParamRealType::ENum,
             _ => ParamRealType::Invalid,
         }
     }

@@ -7,10 +7,9 @@ use tracing::{debug, info, warn};
 
 use config::BeyondAssets;
 use perlica_proto::{
-    EquipData, GemData, ItemInst, ScItemBagSync, ScItemBagSyncModify, ScWeaponAddExp,
-    ScWeaponAttachGem, ScWeaponBreakthrough, ScWeaponDetachGem, ScWeaponPuton, ScdItemBag,
-    ScdItemDepot, ScdItemDepotModify, ScdItemGrid, ScdItemUseBlackboard, WeaponData,
-    item_inst::InstImpl,
+    EquipData, GemData, ItemInst, ScItemBagSync, ScWeaponAddExp, ScWeaponAttachGem,
+    ScWeaponBreakthrough, ScWeaponDetachGem, ScWeaponPuton, ScdItemBag, ScdItemDepot,
+    ScdItemDepotModify, ScdItemGrid, ScdItemUseBlackboard, WeaponData, item_inst::InstImpl,
 };
 
 macro_rules! inst_id_newtype {

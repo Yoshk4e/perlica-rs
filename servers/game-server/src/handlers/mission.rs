@@ -5,7 +5,7 @@ use perlica_proto::{
     CsUpdateQuestObjective, MissionState, QuestState, RoleBaseInfo, ScCompleteGuideGroup,
     ScCompleteGuideGroupKeyStep, ScQuestObjectivesUpdate, ScTrackMissionChange,
 };
-use tracing::{debug, error, warn};
+use tracing::{debug, warn};
 
 pub async fn push_missions(ctx: &mut NetContext<'_>) -> bool {
     ctx.player.missions.ensure_bootstrap(&ctx.assets.missions);

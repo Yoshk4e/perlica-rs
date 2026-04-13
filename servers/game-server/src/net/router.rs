@@ -5,7 +5,9 @@
 //! the `reply` or `no_reply` block in the `handlers!` macro below.
 //! Use `reply` when the handler returns a response; `no_reply` for fire-and-forget.
 
-use crate::handlers::{bitset, character, equip, login, mission, movement, ping, scene, weapon};
+use crate::handlers::{
+    bitset, character, equip, heartbeat, login, mission, movement, scene, weapon,
+};
 use byteorder::{LittleEndian, ReadBytesExt};
 use perlica_proto::{CsHead, CsMergeMsg, prost::Message};
 use std::io::{Cursor, Read};
@@ -72,8 +74,8 @@ handlers! {
     reply {
         // Core System Commands
         CsLogin                => login::on_login,
-        CsPing                 => ping::on_csping,
-        CsFlushSync            => ping::on_cs_flush_sync,
+        CsPing                 => heartbeat::on_csping,
+        CsFlushSync            => heartbeat::on_cs_flush_sync,
         // Scene Commands
         CsSceneLoadFinish      => scene::on_scene_load_finish,
         CsSceneRevival         => scene::on_cs_scene_revival,

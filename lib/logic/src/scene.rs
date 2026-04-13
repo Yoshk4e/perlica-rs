@@ -114,7 +114,7 @@ fn lv_property_to_dynamic_param(prop: &LvProperty) -> DynamicParameter {
     };
 
     match real_type {
-        ParamRealType::Invalid | ParamRealType::E_NUM => DynamicParameter {
+        ParamRealType::Invalid | ParamRealType::ENum => DynamicParameter {
             value_type: ParamValueType::Invalid as i32,
             real_type: real_type_int,
             ..Default::default()
@@ -230,6 +230,26 @@ pub(crate) fn lv_props_to_map(props: &[LvProperty]) -> HashMap<String, DynamicPa
         .iter()
         .map(|p| (p.key.clone(), lv_property_to_dynamic_param(p)))
         .collect()
+}
+
+pub struct SceneEntityLists {
+    pub chars: Vec<SceneCharacter>,
+    pub monsters: Vec<SceneMonster>,
+    pub interactives: Vec<SceneInteractive>,
+    pub npcs: Vec<SceneNpc>,
+}
+
+/// Rotates `leader_id` to the front of `chars` if it isn't already there.
+fn move_leader_to_front(chars: &mut [SceneCharacter], leader_id: u64) {
+    if let Some(pos) = chars
+        .iter()
+        .position(|c| c.common_info.as_ref().map(|ci| ci.id) == Some(leader_id))
+        .filter(|&p| p != 0)
+    {
+        // rotate_right(1) on [0..=pos] shifts everything right and wraps
+        // the last element (currently at `pos`) around to index 0.
+        chars[0..=pos].rotate_right(1);
+    }
 }
 
 // Interactive and NPC entity IDs start above the monster ID range to avoid collisions.
@@ -378,10 +398,12 @@ impl SceneManager {
         );
         let self_info = self.self_scene_info(
             SelfInfoReason::EnterScene,
-            char_list,
-            monster_list,
-            interactive_list,
-            npc_list,
+            SceneEntityLists {
+                chars: char_list,
+                monsters: monster_list,
+                interactives: interactive_list,
+                npcs: npc_list,
+            },
             vec![],
             assets,
         );
@@ -448,10 +470,7 @@ impl SceneManager {
     pub fn self_scene_info(
         &self,
         reason: SelfInfoReason,
-        char_list: Vec<SceneCharacter>,
-        monster_list: Vec<SceneMonster>,
-        interactive_list: Vec<SceneInteractive>,
-        npc_list: Vec<SceneNpc>,
+        lists: SceneEntityLists,
         revive_chars: Vec<u64>,
         assets: &BeyondAssets,
     ) -> ScSelfSceneInfo {
@@ -463,10 +482,10 @@ impl SceneManager {
             scene_name: self.current_scene.clone(),
             scene_id: self.scene_id,
             detail: Some(SceneObjectDetailContainer {
-                char_list,
-                monster_list,
-                interactive_list,
-                npc_list,
+                char_list: lists.chars,
+                monster_list: lists.monsters,
+                interactive_list: lists.interactives,
+                npc_list: lists.npcs,
                 summon_list: vec![],
             }),
             last_camp_id: 0,
@@ -558,10 +577,12 @@ impl SceneManager {
         );
         let self_info = self.self_scene_info(
             SelfInfoReason::ReviveDead,
-            char_list,
-            monster_list,
-            interactive_list,
-            npc_list,
+            SceneEntityLists {
+                chars: char_list,
+                monsters: monster_list,
+                interactives: interactive_list,
+                npcs: npc_list,
+            },
             revive_chars,
             assets,
         );
@@ -647,23 +668,17 @@ impl SceneManager {
         let leader_id = char_bag.teams[char_bag.meta.curr_team_index as usize]
             .leader_index
             .object_id();
-        if let Some(pos) = char_list
-            .iter()
-            .position(|c| c.common_info.as_ref().map(|ci| ci.id) == Some(leader_id))
-        {
-            if pos != 0 {
-                let leader_char = char_list.remove(pos);
-                char_list.insert(0, leader_char);
-            }
-        }
+        move_leader_to_front(&mut char_list, leader_id);
 
         let monster_list = self.pack_monsters_from_manager(entities, assets);
         let self_info = self.self_scene_info(
             SelfInfoReason::ChangeTeam,
-            char_list,
-            monster_list,
-            vec![],
-            vec![],
+            SceneEntityLists {
+                chars: char_list,
+                monsters: monster_list,
+                interactives: vec![],
+                npcs: vec![],
+            },
             vec![],
             assets,
         );
@@ -792,22 +807,16 @@ impl SceneManager {
         let leader_id = char_bag.teams[char_bag.meta.curr_team_index as usize]
             .leader_index
             .object_id();
-        if let Some(pos) = char_list
-            .iter()
-            .position(|c| c.common_info.as_ref().map(|ci| ci.id) == Some(leader_id))
-        {
-            if pos != 0 {
-                let leader_char = char_list.remove(pos);
-                char_list.insert(0, leader_char);
-            }
-        }
+        move_leader_to_front(&mut char_list, leader_id);
 
         self.self_scene_info(
             SelfInfoReason::ChangeTeam,
-            char_list,
-            monster_list,
-            vec![],
-            vec![],
+            SceneEntityLists {
+                chars: char_list,
+                monsters: monster_list,
+                interactives: vec![],
+                npcs: vec![],
+            },
             vec![],
             assets,
         )
@@ -819,7 +828,7 @@ impl SceneManager {
         rotation: Option<Vector>,
         server_time: u32,
         teleport_reason: i32,
-        scene_name: Option<String>, // new parameter
+        scene_name: Option<String>,
     ) -> ScSceneTeleport {
         ScSceneTeleport {
             obj_id_list,
@@ -875,15 +884,7 @@ impl SceneManager {
             .collect();
 
         let leader_id = team.leader_index.object_id();
-        if let Some(pos) = chars
-            .iter()
-            .position(|c| c.common_info.as_ref().map(|ci| ci.id) == Some(leader_id))
-        {
-            if pos != 0 {
-                let leader_char = chars.remove(pos);
-                chars.insert(0, leader_char);
-            }
-        }
+        move_leader_to_front(&mut chars, leader_id);
 
         chars
     }
