@@ -1112,10 +1112,11 @@ impl StackableDepot {
     pub fn consume(&mut self, template_id: &str, count: u32) -> Result<u32> {
         let cur = self.counts.get(template_id).copied().unwrap_or(0);
         if cur < count {
-            return Err(LogicError::InvalidOperation(format!(
-                "Insufficient {}: have {}, need {}",
-                template_id, cur, count
-            )));
+            return Err(LogicError::Insufficient {
+                item_id: template_id.to_string(),
+                have: cur,
+                need: count,
+            });
         }
         let rem = cur - count;
         if rem == 0 {
