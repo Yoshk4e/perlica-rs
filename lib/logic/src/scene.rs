@@ -252,26 +252,6 @@ fn move_leader_to_front(chars: &mut [SceneCharacter], leader_id: u64) {
     }
 }
 
-// Interactive and NPC entity IDs start above the monster ID range to avoid collisions.
-pub const INTERACTIVE_ID_BASE: u64 = 0x0004_0000_0000_0000;
-const NPC_ID_BASE: u64 = 0x0005_0000_0000_0000;
-
-fn interactive_id(level_logic_id: u64) -> u64 {
-    INTERACTIVE_ID_BASE | level_logic_id
-}
-
-/// Extracts the `level_logic_id` from a full interactive entity ID.
-///
-/// This reverses [`interactive_id`] by masking off the
-/// [`INTERACTIVE_ID_BASE`] prefix.
-pub fn level_logic_id_from_interactive(entity_id: u64) -> u64 {
-    entity_id & !INTERACTIVE_ID_BASE
-}
-
-fn npc_id(level_logic_id: u64) -> u64 {
-    NPC_ID_BASE | level_logic_id
-}
-
 fn pack_interactives(scene_id: &str, assets: &BeyondAssets) -> Vec<SceneInteractive> {
     assets
         .level_data
@@ -279,7 +259,7 @@ fn pack_interactives(scene_id: &str, assets: &BeyondAssets) -> Vec<SceneInteract
         .iter()
         .map(|i| SceneInteractive {
             common_info: Some(SceneObjectCommonInfo {
-                id: interactive_id(i.base.level_logic_id),
+                id: i.base.level_logic_id,
                 r#type: i.base.entity_type,
                 templateid: i.base.template_id.clone(),
                 position: Some(Vector {
@@ -307,7 +287,7 @@ fn pack_npcs(scene_id: &str, assets: &BeyondAssets) -> Vec<SceneNpc> {
         .iter()
         .map(|n| SceneNpc {
             common_info: Some(SceneObjectCommonInfo {
-                id: npc_id(n.base.level_logic_id),
+                id: n.base.level_logic_id,
                 r#type: n.base.entity_type,
                 templateid: n.base.template_id.clone(),
                 position: Some(Vector {
@@ -933,7 +913,7 @@ impl SceneManager {
                 let is_on_cooldown = self.dead_entities.contains_key(&enemy.base.level_logic_id);
 
                 if !already_exists && !is_on_cooldown {
-                    let id = entities.next_monster_id();
+                    let id = enemy.base.level_logic_id;
                     entities.insert(SceneEntity {
                         id,
                         template_id: enemy.base.template_id.clone(),
