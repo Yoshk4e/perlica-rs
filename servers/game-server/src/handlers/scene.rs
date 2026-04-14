@@ -399,7 +399,7 @@ pub async fn on_cs_scene_destroy_entity(ctx: &mut NetContext<'_>, req: CsSceneDe
         let msg = ctx
             .player
             .scene
-            .destroy_entity(id, EntityDestroyReason::Immediately);
+            .destroy_entity(id, EntityDestroyReason::Dead);
 
         if let Err(error) = ctx.notify(msg).await {
             error!(
