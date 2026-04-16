@@ -5,6 +5,7 @@ pub mod enums;
 pub mod error;
 pub mod item;
 pub mod level_script;
+pub mod mail;
 pub mod mission;
 pub mod movement;
 pub mod player;

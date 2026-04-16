@@ -1,4 +1,4 @@
-use crate::handlers::{bitset, char_bag, factory, mission, scene, unlock, wallet};
+use crate::handlers::{bitset, char_bag, factory, mail, mission, scene, unlock, wallet};
 use crate::net::NetContext;
 use crate::player::LoadingState;
 use crate::sconfig;
@@ -11,7 +11,7 @@ pub async fn on_login(ctx: &mut NetContext<'_>, req: CsLogin) -> ScLogin {
     ctx.player.on_login(req.uid.clone());
     debug!("Login requested: uid={}", req.uid);
 
-    match ctx.db.load(&ctx.player.uid).await {
+    let is_new_player = match ctx.db.load(&ctx.player.uid).await {
         Ok(Some(record)) => {
             debug!("Loaded player data from database: uid={}", ctx.player.uid);
             ctx.player.char_bag = record.char_bag;
@@ -21,6 +21,8 @@ pub async fn on_login(ctx: &mut NetContext<'_>, req: CsLogin) -> ScLogin {
             ctx.player.scene.current_revival_mode = record.revival_mode;
             ctx.player.missions = record.missions;
             ctx.player.guides = record.guides;
+            ctx.player.mail = record.mail;
+            false
         }
         Ok(None) => {
             let cfg = sconfig::Config::load();
@@ -29,6 +31,7 @@ pub async fn on_login(ctx: &mut NetContext<'_>, req: CsLogin) -> ScLogin {
                 CharBag::new(ctx.assets, &cfg.as_ref().unwrap().default_team.team.clone())
                     .unwrap_or_default();
             ctx.player.world = cfg.as_ref().unwrap().world_state.clone();
+            true
         }
         Err(error) => {
             let cfg = sconfig::Config::load();
@@ -39,10 +42,11 @@ pub async fn on_login(ctx: &mut NetContext<'_>, req: CsLogin) -> ScLogin {
             ctx.player.char_bag =
                 CharBag::new(ctx.assets, &cfg.as_ref().unwrap().default_team.team.clone())
                     .unwrap_or_default();
+            true
         }
-    }
-
-    ctx.player.movement = perlica_logic::movement::MovementManager::from_world(&ctx.player.world);
+    };
+    ctx.player.is_new_player = is_new_player;
+    ctx.player.movement = perlica_logic::movement::MovementManager::from(&ctx.player.world);
     ctx.player
         .scene
         .update_from_world(&ctx.player.world, ctx.assets);
@@ -72,6 +76,7 @@ enum LoginPhase {
     CharStatus,
     Factory,
     Bitsets,
+    Mail,
     EnterScene,
     Done,
 }
@@ -89,7 +94,8 @@ impl LoginPhase {
             Self::CharAttrs => Self::CharStatus,
             Self::CharStatus => Self::Factory,
             Self::Factory => Self::Bitsets,
-            Self::Bitsets => Self::EnterScene,
+            Self::Bitsets => Self::Mail,
+            Self::Mail => Self::EnterScene,
             Self::EnterScene => Self::Done,
             Self::Done => Self::Done,
         }
@@ -98,19 +104,16 @@ impl LoginPhase {
 
 pub(crate) async fn run_login_sequence(ctx: &mut NetContext<'_>) {
     let mut phase = LoginPhase::BaseData;
-
     loop {
         if phase == LoginPhase::Done {
             ctx.player.loading_state = LoadingState::Complete;
             debug!("Login sequence complete: uid={}", ctx.player.uid);
             break;
         }
-
         debug!(
             "Login sequence phase: uid={}, phase={:?}",
             ctx.player.uid, phase
         );
-
         let ok = match phase {
             LoginPhase::BaseData => push_base_data(ctx).await,
             LoginPhase::Wallet => wallet::push_wallet(ctx).await,
@@ -123,10 +126,16 @@ pub(crate) async fn run_login_sequence(ctx: &mut NetContext<'_>) {
             LoginPhase::CharStatus => char_bag::push_char_status(ctx).await,
             LoginPhase::Factory => factory::push_factory(ctx).await,
             LoginPhase::Bitsets => bitset::push_bitsets(ctx).await,
+            LoginPhase::Mail => {
+                let sync_ok = mail::push_mail_sync(ctx).await;
+                if sync_ok {
+                    mail::deliver_login_mails(ctx, ctx.player.is_new_player).await;
+                }
+                sync_ok
+            }
             LoginPhase::EnterScene => scene::notify_enter_scene(ctx).await,
             LoginPhase::Done => unreachable!(),
         };
-
         if ok {
             phase = phase.next();
         } else {

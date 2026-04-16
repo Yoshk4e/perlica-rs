@@ -1,5 +1,5 @@
 use crate::error::{LogicError, Result};
-use crate::item::ItemManager;
+use crate::item::{ItemManager, WeaponAttachGemArgs, WeaponDetachGemArgs, WeaponPutonArgs};
 use common::time::now_ms;
 use config::BeyondAssets;
 use perlica_proto::{
@@ -312,13 +312,7 @@ impl CharBag {
             off_weapon_id,
             prev_owner
         );
-
-        Ok(self.item_manager.weapons.to_weapon_puton_sc(
-            char_id,
-            weapon_inst_id,
-            off_weapon_id,
-            prev_owner,
-        ))
+        Ok(WeaponPutonArgs(char_id, weapon_inst_id, off_weapon_id, prev_owner).into())
     }
 
     pub fn unequip_weapon(&mut self, char_id: u64) -> Result<Option<WeaponInstId>> {
@@ -336,8 +330,7 @@ impl CharBag {
     }
 
     fn get_weapon_data_for_char(&self, char_id: u64) -> Option<WeaponData> {
-        self.get_equipped_weapon(char_id)
-            .map(|w| w.to_weapon_data())
+        self.get_equipped_weapon(char_id).map(|w| w.into())
     }
 
     pub fn char_bag_info(&self, assets: &BeyondAssets) -> Result<ScSyncCharBagInfo> {
@@ -640,7 +633,8 @@ pub fn handle_weapon_add_exp(
     char_bag
         .item_manager
         .weapons
-        .to_add_exp_sc(target_id)
+        .get(target_id)
+        .map(|w| w.into())
         .ok_or_else(|| LogicError::NotFound("Weapon not found after add_exp".into()))
 }
 
@@ -659,7 +653,8 @@ pub fn handle_weapon_breakthrough(
     char_bag
         .item_manager
         .weapons
-        .to_breakthrough_sc(inst_id)
+        .get(inst_id)
+        .map(|w| w.into())
         .ok_or_else(|| LogicError::NotFound("Weapon not found after breakthrough".into()))
 }
 
@@ -700,15 +695,18 @@ pub fn handle_weapon_attach_gem(
         .weapons
         .attach_gem(weapon_inst_id, gem_id)?;
 
-    char_bag
+    let weapon = char_bag
         .item_manager
         .weapons
-        .to_attach_gem_sc(
-            weapon_inst_id,
-            prev_gem_id,
-            detached_from_weapon.map(|id| id.as_u64()),
-        )
-        .ok_or_else(|| LogicError::NotFound("Weapon not found".into()))
+        .get(weapon_inst_id)
+        .ok_or_else(|| LogicError::NotFound("Weapon not found".into()))?;
+
+    Ok(WeaponAttachGemArgs(
+        weapon,
+        prev_gem_id,
+        detached_from_weapon.map(|id| id.as_u64()),
+    )
+    .into())
 }
 
 pub fn handle_weapon_detach_gem(
@@ -719,10 +717,7 @@ pub fn handle_weapon_detach_gem(
 
     let gem_id = char_bag.item_manager.weapons.detach_gem(weapon_inst_id)?;
 
-    Ok(char_bag
-        .item_manager
-        .weapons
-        .to_detach_gem_sc(weapon_inst_id, gem_id))
+    Ok(WeaponDetachGemArgs(weapon_inst_id, gem_id).into())
 }
 
 pub fn handle_weapon_puton(

@@ -1,16 +1,16 @@
 use crate::error::{LogicError, Result};
 use common::time::now_ms;
-use config::item::{CraftShowingType, ItemDepotType, ItemKind};
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use tracing::{debug, info, warn};
-
 use config::BeyondAssets;
+use config::item::{CraftShowingType, ItemDepotType, ItemKind};
 use perlica_proto::{
     EquipData, GemData, ItemInst, ScItemBagSync, ScWeaponAddExp, ScWeaponAttachGem,
     ScWeaponBreakthrough, ScWeaponDetachGem, ScWeaponPuton, ScdItemBag, ScdItemDepot,
     ScdItemDepotModify, ScdItemGrid, ScdItemUseBlackboard, WeaponData, item_inst::InstImpl,
 };
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::convert::Into;
+use tracing::{debug, info, warn};
 
 macro_rules! inst_id_newtype {
     ($Name:ident) => {
@@ -26,6 +26,14 @@ macro_rules! inst_id_newtype {
                 self.0
             }
         }
+
+        impl From<u64> for $Name {
+            #[inline]
+            fn from(id: u64) -> Self {
+                Self::new(id)
+            }
+        }
+
         impl std::fmt::Display for $Name {
             fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
                 write!(f, "{}", self.0)
@@ -73,35 +81,60 @@ impl WeaponInstance {
     pub fn is_equipped(&self) -> bool {
         self.equip_char_id != 0
     }
+}
 
-    pub fn to_weapon_data(&self) -> WeaponData {
+impl<'a> From<&'a WeaponInstance> for WeaponData {
+    fn from(instance: &'a WeaponInstance) -> Self {
         WeaponData {
-            inst_id: self.inst_id.as_u64(),
-            template_id: self.template_id.clone(),
-            exp: self.exp,
-            weapon_lv: self.weapon_lv,
-            refine_lv: self.refine_lv,
-            breakthrough_lv: self.breakthrough_lv,
-            equip_char_id: self.equip_char_id,
-            attach_gem_id: self.attach_gem_id,
+            inst_id: instance.inst_id.as_u64(),
+            template_id: instance.template_id.clone(),
+            exp: instance.exp,
+            weapon_lv: instance.weapon_lv,
+            refine_lv: instance.refine_lv,
+            breakthrough_lv: instance.breakthrough_lv,
+            equip_char_id: instance.equip_char_id,
+            attach_gem_id: instance.attach_gem_id,
         }
     }
+}
 
-    pub fn to_item_inst(&self) -> ItemInst {
+impl<'a> From<&'a WeaponInstance> for ItemInst {
+    fn from(instance: &'a WeaponInstance) -> Self {
         ItemInst {
-            inst_id: self.inst_id.as_u64(),
-            is_lock: self.is_lock,
-            is_new: self.is_new,
-            inst_impl: Some(InstImpl::Weapon(self.to_weapon_data())),
+            inst_id: instance.inst_id.as_u64(),
+            is_lock: instance.is_lock,
+            is_new: instance.is_new,
+            inst_impl: Some(InstImpl::Weapon(instance.into())),
         }
     }
+}
 
-    pub fn to_item_grid(&self) -> ScdItemGrid {
+impl<'a> From<&'a WeaponInstance> for ScdItemGrid {
+    fn from(instance: &'a WeaponInstance) -> Self {
         ScdItemGrid {
             grid_index: 0,
-            id: self.template_id.clone(),
+            id: instance.template_id.clone(),
             count: 1,
-            inst: Some(self.to_item_inst()),
+            inst: Some(instance.into()),
+        }
+    }
+}
+
+impl<'a> From<&'a WeaponInstance> for ScWeaponAddExp {
+    fn from(instance: &'a WeaponInstance) -> Self {
+        ScWeaponAddExp {
+            weaponid: instance.inst_id.as_u64(),
+            new_exp: instance.exp,
+            weapon_lv: instance.weapon_lv,
+        }
+    }
+}
+
+impl<'a> From<&'a WeaponInstance> for ScWeaponBreakthrough {
+    fn from(instance: &'a WeaponInstance) -> Self {
+        ScWeaponBreakthrough {
+            weaponid: instance.inst_id.as_u64(),
+            breakthrough_lv: instance.breakthrough_lv,
         }
     }
 }
@@ -133,6 +166,7 @@ impl WeaponDepot {
     pub fn next_inst_id(&self) -> u64 {
         self.next_inst_id
     }
+
     pub fn set_next_inst_id(&mut self, id: u64) {
         self.next_inst_id = id;
     }
@@ -163,6 +197,7 @@ impl WeaponDepot {
     pub fn get(&self, id: WeaponInstId) -> Option<&WeaponInstance> {
         self.weapons.get(&id)
     }
+
     pub fn get_mut(&mut self, id: WeaponInstId) -> Option<&mut WeaponInstance> {
         self.weapons.get_mut(&id)
     }
@@ -188,12 +223,15 @@ impl WeaponDepot {
     pub fn contains(&self, id: WeaponInstId) -> bool {
         self.weapons.contains_key(&id)
     }
+
     pub fn all_weapons(&self) -> &HashMap<WeaponInstId, WeaponInstance> {
         &self.weapons
     }
+
     pub fn len(&self) -> usize {
         self.weapons.len()
     }
+
     pub fn is_empty(&self) -> bool {
         self.weapons.is_empty()
     }
@@ -261,9 +299,11 @@ impl WeaponDepot {
             .get(&char_id)
             .and_then(|&id| self.weapons.get(&id))
     }
+
     pub fn get_equipped_weapon_id(&self, char_id: u64) -> Option<WeaponInstId> {
         self.equipped_weapons.get(&char_id).copied()
     }
+
     pub fn has_equipped_weapon(&self, char_id: u64) -> bool {
         self.equipped_weapons.contains_key(&char_id)
     }
@@ -274,6 +314,7 @@ impl WeaponDepot {
             .ok_or_else(|| LogicError::NotFound("Weapon not found".into()))
             .map(|w| w.is_lock = is_lock)
     }
+
     pub fn clear_new_flag(&mut self, id: WeaponInstId) -> Result<()> {
         self.weapons
             .get_mut(&id)
@@ -513,64 +554,6 @@ impl WeaponDepot {
         Ok(gem_id)
     }
 
-    pub fn to_depot_sync(&self) -> ScdItemDepot {
-        ScdItemDepot {
-            stackable_items: HashMap::new(),
-            inst_list: self.weapons.values().map(|w| w.to_item_grid()).collect(),
-        }
-    }
-    pub fn to_weapon_modify(&self, id: WeaponInstId) -> Option<ScdItemGrid> {
-        self.weapons.get(&id).map(|w| w.to_item_grid())
-    }
-    pub fn to_weapon_delete(id: WeaponInstId) -> u64 {
-        id.as_u64()
-    }
-    pub fn to_add_exp_sc(&self, id: WeaponInstId) -> Option<ScWeaponAddExp> {
-        self.weapons.get(&id).map(|w| ScWeaponAddExp {
-            weaponid: id.as_u64(),
-            new_exp: w.exp,
-            weapon_lv: w.weapon_lv,
-        })
-    }
-    pub fn to_breakthrough_sc(&self, id: WeaponInstId) -> Option<ScWeaponBreakthrough> {
-        self.weapons.get(&id).map(|w| ScWeaponBreakthrough {
-            weaponid: id.as_u64(),
-            breakthrough_lv: w.breakthrough_lv,
-        })
-    }
-    pub fn to_attach_gem_sc(
-        &self,
-        wid: WeaponInstId,
-        detached_gem: Option<u64>,
-        detached_weapon: Option<u64>,
-    ) -> Option<ScWeaponAttachGem> {
-        self.weapons.get(&wid).map(|w| ScWeaponAttachGem {
-            weaponid: wid.as_u64(),
-            gemid: w.attach_gem_id,
-            detach_gemid: detached_gem.unwrap_or(0),
-            detach_gem_weaponid: detached_weapon.unwrap_or(0),
-        })
-    }
-    pub fn to_detach_gem_sc(&self, wid: WeaponInstId, gem_id: u64) -> ScWeaponDetachGem {
-        ScWeaponDetachGem {
-            weaponid: wid.as_u64(),
-            detach_gemid: gem_id,
-        }
-    }
-    pub fn to_weapon_puton_sc(
-        &self,
-        charid: u64,
-        wid: WeaponInstId,
-        off_weapon: Option<u64>,
-        put_off_char: Option<u64>,
-    ) -> ScWeaponPuton {
-        ScWeaponPuton {
-            charid,
-            weaponid: wid.as_u64(),
-            offweaponid: off_weapon.unwrap_or(0),
-            put_off_charid: put_off_char.unwrap_or(0),
-        }
-    }
     pub fn get_equipped_templates_for_chars(&self, char_ids: &[u64]) -> HashMap<u64, String> {
         char_ids
             .iter()
@@ -655,6 +638,63 @@ impl WeaponDepot {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct WeaponAttachGemArgs<'a>(pub &'a WeaponInstance, pub Option<u64>, pub Option<u64>);
+impl<'a> From<WeaponAttachGemArgs<'a>> for ScWeaponAttachGem {
+    fn from(args: WeaponAttachGemArgs<'a>) -> Self {
+        let WeaponAttachGemArgs(w, detached_gem, detached_weapon) = args;
+        ScWeaponAttachGem {
+            weaponid: w.inst_id.as_u64(),
+            gemid: w.attach_gem_id,
+            detach_gemid: detached_gem.unwrap_or(0),
+            detach_gem_weaponid: detached_weapon.unwrap_or(0),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct WeaponDetachGemArgs(pub WeaponInstId, pub u64);
+impl From<WeaponDetachGemArgs> for ScWeaponDetachGem {
+    fn from(args: WeaponDetachGemArgs) -> Self {
+        let WeaponDetachGemArgs(w, detached_gem) = args;
+        Self {
+            weaponid: w.as_u64(),
+            detach_gemid: detached_gem,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct WeaponPutonArgs(pub u64, pub WeaponInstId, pub Option<u64>, pub Option<u64>);
+
+impl From<WeaponPutonArgs> for ScWeaponPuton {
+    fn from(args: WeaponPutonArgs) -> Self {
+        let WeaponPutonArgs(charid, wid, off_weapon, put_off_char) = args;
+
+        Self {
+            charid,
+            weaponid: wid.into(),
+            offweaponid: off_weapon.unwrap_or(0),
+            put_off_charid: put_off_char.unwrap_or(0),
+        }
+    }
+}
+
+impl From<WeaponInstId> for u64 {
+    fn from(value: WeaponInstId) -> Self {
+        value.as_u64()
+    }
+}
+
+impl From<&WeaponDepot> for ScdItemDepot {
+    fn from(value: &WeaponDepot) -> Self {
+        Self {
+            stackable_items: HashMap::new(),
+            inst_list: value.weapons.values().map(Into::into).collect(),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GemInstance {
     pub inst_id: GemInstId,
@@ -688,24 +728,24 @@ impl GemInstance {
     pub fn is_socketed(&self) -> bool {
         self.attach_weapon_id != 0
     }
+}
 
-    fn to_item_grid(&self) -> ScdItemGrid {
+impl From<&GemInstance> for ScdItemGrid {
+    fn from(value: &GemInstance) -> Self {
         ScdItemGrid {
             grid_index: 0,
-            id: self.template_id.clone(),
+            id: value.template_id.clone(),
             count: 1,
             inst: Some(ItemInst {
-                inst_id: self.inst_id.as_u64(),
-                is_lock: self.is_lock,
-                is_new: self.is_new,
-                // GemData carries the full instance identity the client needs to
-                // show the gem in the valuable depot tab.
+                inst_id: value.inst_id.as_u64(),
+                is_lock: value.is_lock,
+                is_new: value.is_new,
                 inst_impl: Some(InstImpl::Gem(GemData {
-                    gem_id: self.inst_id.as_u64(),
-                    template_id: self.template_id.clone(),
+                    gem_id: value.inst_id.as_u64(),
+                    template_id: value.template_id.clone(),
                     total_cost: 0,
                     terms: vec![],
-                    weapon_id: self.attach_weapon_id,
+                    weapon_id: value.attach_weapon_id,
                 })),
             }),
         }
@@ -720,6 +760,7 @@ pub struct GemDepot {
 
 impl GemDepot {
     pub const DEPOT_TYPE: i32 = 2;
+
     pub fn new() -> Self {
         Self {
             gems: HashMap::new(),
@@ -760,6 +801,7 @@ impl GemDepot {
     pub fn get(&self, id: GemInstId) -> Option<&GemInstance> {
         self.gems.get(&id)
     }
+
     pub fn get_mut(&mut self, id: GemInstId) -> Option<&mut GemInstance> {
         self.gems.get_mut(&id)
     }
@@ -788,18 +830,21 @@ impl GemDepot {
             .ok_or_else(|| LogicError::NotFound("Gem not found".into()))
             .map(|g| g.is_lock = lock)
     }
+
     pub fn clear_new_flag(&mut self, id: GemInstId) -> Result<()> {
         self.gems
             .get_mut(&id)
             .ok_or_else(|| LogicError::NotFound("Gem not found".into()))
             .map(|g| g.is_new = false)
     }
+
     pub(crate) fn set_socket(&mut self, id: GemInstId, weapon_id: u64) -> Result<()> {
         self.gems
             .get_mut(&id)
             .ok_or_else(|| LogicError::NotFound("Gem not found".into()))
             .map(|g| g.attach_weapon_id = weapon_id)
     }
+
     pub(crate) fn clear_socket(&mut self, id: GemInstId) -> Result<()> {
         self.gems
             .get_mut(&id)
@@ -810,20 +855,25 @@ impl GemDepot {
     pub fn contains(&self, id: GemInstId) -> bool {
         self.gems.contains_key(&id)
     }
+
     pub fn len(&self) -> usize {
         self.gems.len()
     }
+
     pub fn is_empty(&self) -> bool {
         self.gems.is_empty()
     }
+
     pub fn iter(&self) -> impl Iterator<Item = &GemInstance> {
         self.gems.values()
     }
+}
 
-    pub fn to_depot_sync(&self) -> ScdItemDepot {
+impl From<&GemDepot> for ScdItemDepot {
+    fn from(value: &GemDepot) -> Self {
         ScdItemDepot {
             stackable_items: HashMap::new(),
-            inst_list: self.gems.values().map(|g| g.to_item_grid()).collect(),
+            inst_list: value.gems.values().map(Into::into).collect(),
         }
     }
 }
@@ -861,23 +911,22 @@ impl EquipInstance {
     pub fn is_equipped(&self) -> bool {
         self.equip_char_id != 0
     }
+}
 
-    fn to_item_grid(&self) -> ScdItemGrid {
+impl From<&EquipInstance> for ScdItemGrid {
+    fn from(value: &EquipInstance) -> Self {
         ScdItemGrid {
             grid_index: 0,
-            id: self.template_id.clone(),
+            id: value.template_id.clone(),
             count: 1,
             inst: Some(ItemInst {
-                inst_id: self.inst_id.as_u64(),
-                is_lock: self.is_lock,
-                is_new: self.is_new,
-                // EquipData carries instance identity and equipped-character binding.
-                // attrs is empty, the client derives stats from the config table
-                // using templateid; we don't need to send them here.(probably)
+                inst_id: value.inst_id.as_u64(),
+                is_lock: value.is_lock,
+                is_new: value.is_new,
                 inst_impl: Some(InstImpl::Equip(EquipData {
-                    equipid: self.inst_id.as_u64(),
-                    templateid: self.template_id.clone(),
-                    equip_char_id: self.equip_char_id,
+                    equipid: value.inst_id.as_u64(),
+                    templateid: value.template_id.clone(),
+                    equip_char_id: value.equip_char_id,
                     attrs: vec![],
                 })),
             }),
@@ -894,6 +943,7 @@ pub struct EquipDepot {
 
 impl EquipDepot {
     pub const DEPOT_TYPE: i32 = 3;
+
     pub fn new() -> Self {
         Self {
             pieces: HashMap::new(),
@@ -941,6 +991,7 @@ impl EquipDepot {
     pub fn get(&self, id: EquipInstId) -> Option<&EquipInstance> {
         self.pieces.get(&id)
     }
+
     pub fn get_mut(&mut self, id: EquipInstId) -> Option<&mut EquipInstance> {
         self.pieces.get_mut(&id)
     }
@@ -1067,20 +1118,25 @@ impl EquipDepot {
     pub fn contains(&self, id: EquipInstId) -> bool {
         self.pieces.contains_key(&id)
     }
+
     pub fn len(&self) -> usize {
         self.pieces.len()
     }
+
     pub fn is_empty(&self) -> bool {
         self.pieces.is_empty()
     }
+
     pub fn iter(&self) -> impl Iterator<Item = &EquipInstance> {
         self.pieces.values()
     }
+}
 
-    pub fn to_depot_sync(&self) -> ScdItemDepot {
+impl From<&EquipDepot> for ScdItemDepot {
+    fn from(value: &EquipDepot) -> Self {
         ScdItemDepot {
             stackable_items: HashMap::new(),
-            inst_list: self.pieces.values().map(|p| p.to_item_grid()).collect(),
+            inst_list: value.pieces.values().map(Into::into).collect(),
         }
     }
 }
@@ -1131,6 +1187,7 @@ impl StackableDepot {
     pub fn count_of(&self, id: &str) -> u32 {
         self.counts.get(id).copied().unwrap_or(0)
     }
+
     #[inline]
     pub fn has(&self, id: &str, count: u32) -> bool {
         self.count_of(id) >= count
@@ -1147,22 +1204,13 @@ impl StackableDepot {
     pub fn is_empty(&self) -> bool {
         self.counts.is_empty()
     }
+
     pub fn len(&self) -> usize {
         self.counts.len()
     }
+
     pub fn iter(&self) -> impl Iterator<Item = (&str, u32)> {
         self.counts.iter().map(|(k, &v)| (k.as_str(), v))
-    }
-
-    pub fn to_depot_sync(&self) -> ScdItemDepot {
-        ScdItemDepot {
-            stackable_items: self
-                .counts
-                .iter()
-                .map(|(k, &v)| (k.clone(), v as i64))
-                .collect(),
-            inst_list: Vec::new(),
-        }
     }
 
     pub fn to_bag_grids(&self, start_index: &mut i32) -> Vec<ScdItemGrid> {
@@ -1189,6 +1237,19 @@ impl StackableDepot {
                 .collect(),
             inst_list: vec![],
             del_inst_list: vec![],
+        }
+    }
+}
+
+impl From<&StackableDepot> for ScdItemDepot {
+    fn from(value: &StackableDepot) -> Self {
+        ScdItemDepot {
+            stackable_items: value
+                .counts
+                .iter()
+                .map(|(k, &v)| (k.clone(), v as i64))
+                .collect(),
+            inst_list: Vec::new(),
         }
     }
 }
@@ -1228,7 +1289,6 @@ impl ItemManager {
 
     pub fn init_for_new_player(assets: &BeyondAssets, own_time: i64) -> Self {
         let mut mgr = Self::new();
-
         for cfg in assets.items.iter_by_depot(ItemDepotType::WeaponGem) {
             let craft_slot = match &cfg.kind {
                 ItemKind::WeaponGem { craft_slot } => *craft_slot,
@@ -1236,7 +1296,6 @@ impl ItemManager {
             };
             mgr.gems.add_gem(cfg.id.clone(), craft_slot, own_time);
         }
-
         for cfg in assets.items.iter_by_depot(ItemDepotType::Equip) {
             let slot = match &cfg.kind {
                 ItemKind::Equip { slot } => *slot,
@@ -1244,7 +1303,6 @@ impl ItemManager {
             };
             mgr.equips.add_equip(cfg.id.clone(), slot, own_time);
         }
-
         for cfg in assets.items.iter_by_depot(ItemDepotType::SpecialItem) {
             mgr.special_items.add(&cfg.id, STARTER_SPECIAL_COUNT);
         }
@@ -1254,7 +1312,6 @@ impl ItemManager {
         for cfg in assets.items.iter_by_depot(ItemDepotType::Factory) {
             mgr.factory_items.add(&cfg.id, STARTER_FACTORY_COUNT);
         }
-
         info!(
             "init_for_new_player: gems={}, equips={}, special={}, mission={}, factory={}",
             mgr.gems.len(),
@@ -1347,14 +1404,12 @@ impl ItemManager {
 
     pub fn build_full_bag_sync(&self, assets: &BeyondAssets) -> ScItemBagSync {
         let mut depot = HashMap::new();
-        depot.insert(WeaponDepot::DEPOT_TYPE, self.weapons.to_depot_sync());
-        depot.insert(GemDepot::DEPOT_TYPE, self.gems.to_depot_sync());
-        depot.insert(EquipDepot::DEPOT_TYPE, self.equips.to_depot_sync());
-        depot.insert(4, self.special_items.to_depot_sync());
-        depot.insert(5, self.mission_items.to_depot_sync());
-
-        let factory_depot = Some(self.factory_items.to_depot_sync());
-
+        depot.insert(WeaponDepot::DEPOT_TYPE, (&self.weapons).into());
+        depot.insert(GemDepot::DEPOT_TYPE, (&self.gems).into());
+        depot.insert(EquipDepot::DEPOT_TYPE, (&self.equips).into());
+        depot.insert(4, (&self.special_items).into());
+        depot.insert(5, (&self.mission_items).into());
+        let factory_depot = Some((&self.factory_items).into());
         let bag = {
             let mut idx: i32 = 0;
             let mut grids: Vec<ScdItemGrid> = Vec::new();
@@ -1366,18 +1421,15 @@ impl ItemManager {
                 grids,
             })
         };
-
         let cannot_destroy: HashMap<String, bool> = assets
             .items
             .iter()
             .filter(|cfg| !cfg.can_discard)
             .map(|cfg| (cfg.id.clone(), true))
             .collect();
-
         let use_blackboard = Some(ScdItemUseBlackboard {
             last_use_time: HashMap::new(),
         });
-
         ScItemBagSync {
             depot,
             bag,
@@ -1389,12 +1441,12 @@ impl ItemManager {
 
     pub fn sync_depot(&self, depot_type: ItemDepotType) -> Option<ScdItemDepot> {
         match depot_type {
-            ItemDepotType::Weapon => Some(self.weapons.to_depot_sync()),
-            ItemDepotType::WeaponGem => Some(self.gems.to_depot_sync()),
-            ItemDepotType::Equip => Some(self.equips.to_depot_sync()),
-            ItemDepotType::SpecialItem => Some(self.special_items.to_depot_sync()),
-            ItemDepotType::MissionItem => Some(self.mission_items.to_depot_sync()),
-            ItemDepotType::Factory => Some(self.factory_items.to_depot_sync()),
+            ItemDepotType::Weapon => Some((&self.weapons).into()),
+            ItemDepotType::WeaponGem => Some((&self.gems).into()),
+            ItemDepotType::Equip => Some((&self.equips).into()),
+            ItemDepotType::SpecialItem => Some((&self.special_items).into()),
+            ItemDepotType::MissionItem => Some((&self.mission_items).into()),
+            ItemDepotType::Factory => Some((&self.factory_items).into()),
             ItemDepotType::Invalid => None,
         }
     }
@@ -1441,7 +1493,7 @@ mod tests {
             CraftShowingType::WeaponGemNormal,
             0,
         );
-        let grid = d.gems[&id].to_item_grid();
+        let grid: ScdItemGrid = (&d.gems[&id]).into();
         match grid.inst.unwrap().inst_impl.unwrap() {
             InstImpl::Gem(g) => {
                 assert_eq!(g.gem_id, id.as_u64());
@@ -1461,7 +1513,7 @@ mod tests {
             0,
         );
         d.set_socket(id, 42).unwrap();
-        let grid = d.gems[&id].to_item_grid();
+        let grid: ScdItemGrid = (&d.gems[&id]).into();
         match grid.inst.unwrap().inst_impl.unwrap() {
             InstImpl::Gem(g) => assert_eq!(g.weapon_id, 42),
             _ => panic!("wrong variant"),
@@ -1476,7 +1528,7 @@ mod tests {
             CraftShowingType::EquipBody,
             0,
         );
-        let grid = d.pieces[&id].to_item_grid();
+        let grid: ScdItemGrid = (&d.pieces[&id]).into();
         match grid.inst.unwrap().inst_impl.unwrap() {
             InstImpl::Equip(e) => {
                 assert_eq!(e.equipid, id.as_u64());
@@ -1492,7 +1544,7 @@ mod tests {
         let mut d = EquipDepot::new();
         let id = d.add_equip("item_body".into(), CraftShowingType::EquipBody, 0);
         d.equip(id, 1001).unwrap();
-        let grid = d.pieces[&id].to_item_grid();
+        let grid: ScdItemGrid = (&d.pieces[&id]).into();
         match grid.inst.unwrap().inst_impl.unwrap() {
             InstImpl::Equip(e) => assert_eq!(e.equip_char_id, 1001),
             _ => panic!("wrong variant"),
@@ -1519,11 +1571,9 @@ mod tests {
     fn stackable_proto_i64() {
         let mut d = StackableDepot::new(6);
         d.add("item_iron_cmpt", 9_999);
+        let depot_sync: ScdItemDepot = (&d).into();
         assert_eq!(
-            *d.to_depot_sync()
-                .stackable_items
-                .get("item_iron_cmpt")
-                .unwrap(),
+            *depot_sync.stackable_items.get("item_iron_cmpt").unwrap(),
             9_999i64
         );
     }

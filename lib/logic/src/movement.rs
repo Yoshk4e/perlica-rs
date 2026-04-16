@@ -10,6 +10,19 @@ pub struct MovementManager {
     pub rot_z: f32,
 }
 
+impl From<&WorldState> for MovementManager {
+    fn from(world: &WorldState) -> Self {
+        Self {
+            pos_x: world.pos_x,
+            pos_y: world.pos_y,
+            pos_z: world.pos_z,
+            rot_x: world.rot_x,
+            rot_y: world.rot_y,
+            rot_z: world.rot_z,
+        }
+    }
+}
+
 impl MovementManager {
     pub fn new(pos_x: f32, pos_y: f32, pos_z: f32, rot_x: f32, rot_y: f32, rot_z: f32) -> Self {
         Self {
@@ -22,17 +35,6 @@ impl MovementManager {
         }
     }
 
-    // Initialize from a loaded WorldState so we start at the right position
-    pub fn from_world(world: &WorldState) -> Self {
-        Self {
-            pos_x: world.pos_x,
-            pos_y: world.pos_y,
-            pos_z: world.pos_z,
-            rot_x: world.rot_x,
-            rot_y: world.rot_y,
-            rot_z: world.rot_z,
-        }
-    }
 
     // Write current position back into WorldState before saving to db
     pub fn sync_to_world(&self, world: &mut WorldState) {
@@ -75,6 +77,6 @@ impl MovementManager {
 
 impl Default for MovementManager {
     fn default() -> Self {
-        Self::from_world(&WorldState::default())
+        Self::from(&WorldState::default())
     }
 }

@@ -137,6 +137,7 @@ async fn logic_loop(
             revival_mode: player.scene.current_revival_mode,
             missions: &player.missions,
             guides: &player.guides,
+            mail: &player.mail,
         };
 
         if let Err(e) = ctx.db.save(&player.uid, record_ref).await {

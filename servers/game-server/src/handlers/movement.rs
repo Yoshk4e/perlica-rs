@@ -16,7 +16,7 @@ pub async fn on_cs_move_object_move(
     };
 
     if ctx.player.movement.position_tuple() == MovementManager::default().position_tuple() {
-        ctx.player.movement = MovementManager::from_world(&ctx.player.world);
+        ctx.player.movement = MovementManager::from(&ctx.player.world);
     }
 
     for info in &req.move_info {

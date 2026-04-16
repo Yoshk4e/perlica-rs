@@ -6,6 +6,7 @@ pub mod factory;
 pub mod gm;
 pub mod heartbeat;
 pub mod login;
+pub mod mail;
 pub mod mission;
 pub mod movement;
 pub mod scene;
