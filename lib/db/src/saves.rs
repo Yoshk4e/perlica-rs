@@ -1,6 +1,7 @@
 use crate::error::{DbError, Result};
 use perlica_logic::bitset::BitsetManager;
 use perlica_logic::character::char_bag::CharBag;
+use perlica_logic::mail::MailManager;
 use perlica_logic::mission::{GuideManager, MissionManager};
 use perlica_logic::player::WorldState;
 use perlica_logic::scene::{CheckpointInfo, RevivalMode};
@@ -45,6 +46,8 @@ pub struct PlayerRecord {
     pub missions: MissionManager,
     #[serde(default)]
     pub guides: GuideManager,
+    #[serde(default)]
+    pub mail: MailManager,
 }
 
 /// A strictly borrowed version of `PlayerRecord` used to avoid allocations
@@ -59,9 +62,11 @@ pub struct PlayerRecordRef<'a> {
     pub revival_mode: RevivalMode,
     pub missions: &'a MissionManager,
     pub guides: &'a GuideManager,
+    pub mail: &'a MailManager,
 }
 
 impl<'a> PlayerRecordRef<'a> {
+    #[allow(clippy::too_many_arguments)]
     pub fn from_parts(
         char_bag: &'a CharBag,
         world: &'a WorldState,
@@ -70,6 +75,7 @@ impl<'a> PlayerRecordRef<'a> {
         revival_mode: RevivalMode,
         missions: &'a MissionManager,
         guides: &'a GuideManager,
+        mail: &'a MailManager,
     ) -> Self {
         Self {
             char_bag,
@@ -79,6 +85,7 @@ impl<'a> PlayerRecordRef<'a> {
             revival_mode,
             missions,
             guides,
+            mail,
         }
     }
 }

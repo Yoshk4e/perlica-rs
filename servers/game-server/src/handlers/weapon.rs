@@ -203,7 +203,8 @@ pub async fn on_cs_weapon_add_exp(ctx: &mut NetContext<'_>, req: CsWeaponAddExp)
         .char_bag
         .item_manager
         .weapons
-        .to_weapon_modify(target_id);
+        .get(target_id)
+        .map(|w| w.into());
     let del_inst_list: Vec<u64> = valid_fodders.iter().map(|id| id.as_u64()).collect();
 
     if updated_target.is_some() || !del_inst_list.is_empty() || !consumed_stackable.is_empty() {

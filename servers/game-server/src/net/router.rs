@@ -6,7 +6,7 @@
 //! Use `reply` when the handler returns a response; `no_reply` for fire-and-forget.
 
 use crate::handlers::{
-    bitset, character, equip, heartbeat, login, mission, movement, scene, weapon,
+    bitset, character, equip, heartbeat, login, mail, mission, movement, scene, weapon,
 };
 use byteorder::{LittleEndian, ReadBytesExt};
 use perlica_proto::{CsHead, CsMergeMsg, prost::Message};
@@ -121,6 +121,13 @@ handlers! {
         CsRemoveItemNewTags    => equip::on_cs_remove_item_new_tags,
         // Dialog or Story related commands
         CsFinishDialog                   => scene::on_cs_finish_dialog,
+        // Mail Commands
+        CsGetMail                        => mail::on_cs_get_mail,
+        CsReadMail                       => mail::on_cs_read_mail,
+        CsDeleteMail                     => mail::on_cs_delete_mail,
+        CsDeleteAllMail                  => mail::on_cs_delete_all_mail,
+        CsGetMailAttachment              => mail::on_cs_get_mail_attachment,
+        CsGetAllMailAttachment           => mail::on_cs_get_all_mail_attachment,
     }
     no_reply {
         // Team Composition (self-ACK, controls send order)
