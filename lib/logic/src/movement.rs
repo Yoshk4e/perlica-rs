@@ -35,7 +35,6 @@ impl MovementManager {
         }
     }
 
-
     // Write current position back into WorldState before saving to db
     pub fn sync_to_world(&self, world: &mut WorldState) {
         world.pos_x = self.pos_x;
