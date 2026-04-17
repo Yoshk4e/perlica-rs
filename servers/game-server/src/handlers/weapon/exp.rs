@@ -1,43 +1,8 @@
 use crate::net::NetContext;
-use perlica_logic::{
-    character::char_bag::{
-        handle_weapon_attach_gem, handle_weapon_breakthrough, handle_weapon_detach_gem,
-        handle_weapon_puton,
-    },
-    item::WeaponInstId,
-};
-use perlica_proto::{
-    CsWeaponAddExp, CsWeaponAttachGem, CsWeaponBreakthrough, CsWeaponDetachGem, CsWeaponPuton,
-    ScItemBagSyncModify, ScWeaponAddExp, ScWeaponAttachGem, ScWeaponBreakthrough,
-    ScWeaponDetachGem, ScWeaponPuton, ScdItemDepotModify,
-};
+use perlica_logic::item::WeaponInstId;
+use perlica_proto::{CsWeaponAddExp, ScItemBagSyncModify, ScWeaponAddExp, ScdItemDepotModify};
 use std::collections::HashMap;
-use tracing::{debug, error, warn};
-
-/// Equips a weapon, unequipping it from its previous owner first.
-/// Returns zero `weaponid` on failure.
-pub async fn on_cs_weapon_puton(ctx: &mut NetContext<'_>, req: CsWeaponPuton) -> ScWeaponPuton {
-    debug!(
-        "Weapon put-on request: uid={}, char_id={}, weapon_id={}",
-        ctx.player.uid, req.charid, req.weaponid
-    );
-
-    let response = handle_weapon_puton(&mut ctx.player.char_bag, req.charid, req.weaponid);
-
-    if let Err(ref e) = response {
-        error!(
-            "Weapon put-on failed: uid={}, char_id={}, weapon_id={}, error={:?}",
-            ctx.player.uid, req.charid, req.weaponid, e
-        );
-    }
-
-    response.unwrap_or(ScWeaponPuton {
-        charid: req.charid,
-        weaponid: 0,
-        offweaponid: 0,
-        put_off_charid: 0,
-    })
-}
+use tracing::warn;
 
 pub async fn on_cs_weapon_add_exp(ctx: &mut NetContext<'_>, req: CsWeaponAddExp) -> ScWeaponAddExp {
     let target_id = WeaponInstId::new(req.weaponid);
@@ -268,81 +233,4 @@ pub async fn on_cs_weapon_add_exp(ctx: &mut NetContext<'_>, req: CsWeaponAddExp)
         new_exp: final_exp,
         weapon_lv: final_lv,
     }
-}
-
-/// Advances breakthrough level by one. Weapon must be at its current level cap.
-pub async fn on_cs_weapon_breakthrough(
-    ctx: &mut NetContext<'_>,
-    req: CsWeaponBreakthrough,
-) -> ScWeaponBreakthrough {
-    debug!(
-        "Weapon breakthrough request: uid={}, weapon_id={}",
-        ctx.player.uid, req.weaponid
-    );
-
-    let response = handle_weapon_breakthrough(&mut ctx.player.char_bag, req.weaponid, ctx.assets);
-
-    if let Err(ref e) = response {
-        error!(
-            "Weapon breakthrough failed: uid={}, weapon_id={}, error={:?}",
-            ctx.player.uid, req.weaponid, e
-        );
-    }
-
-    response.unwrap_or(ScWeaponBreakthrough {
-        weaponid: req.weaponid,
-        breakthrough_lv: 1,
-    })
-}
-
-/// Attaches a gem. Previous gem on target is echoed in `detach_gemid`.
-pub async fn on_cs_weapon_attach_gem(
-    ctx: &mut NetContext<'_>,
-    req: CsWeaponAttachGem,
-) -> ScWeaponAttachGem {
-    debug!(
-        "Weapon attach-gem request: uid={}, weapon_id={}, gem_id={}",
-        ctx.player.uid, req.weaponid, req.gemid
-    );
-
-    let response = handle_weapon_attach_gem(&mut ctx.player.char_bag, req.weaponid, req.gemid);
-
-    if let Err(ref e) = response {
-        error!(
-            "Weapon attach-gem failed: uid={}, weapon_id={}, gem_id={}, error={:?}",
-            ctx.player.uid, req.weaponid, req.gemid, e
-        );
-    }
-
-    response.unwrap_or(ScWeaponAttachGem {
-        weaponid: req.weaponid,
-        gemid: 0,
-        detach_gemid: 0,
-        detach_gem_weaponid: 0,
-    })
-}
-
-/// Removes the socketed gem.
-pub async fn on_cs_weapon_detach_gem(
-    ctx: &mut NetContext<'_>,
-    req: CsWeaponDetachGem,
-) -> ScWeaponDetachGem {
-    debug!(
-        "Weapon detach-gem request: uid={}, weapon_id={}",
-        ctx.player.uid, req.weaponid
-    );
-
-    let response = handle_weapon_detach_gem(&mut ctx.player.char_bag, req.weaponid);
-
-    if let Err(ref e) = response {
-        error!(
-            "Weapon detach-gem failed: uid={}, weapon_id={}, error={:?}",
-            ctx.player.uid, req.weaponid, e
-        );
-    }
-
-    response.unwrap_or(ScWeaponDetachGem {
-        weaponid: req.weaponid,
-        detach_gemid: 0,
-    })
 }
