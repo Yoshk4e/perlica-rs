@@ -4,7 +4,7 @@
 ![Rust](https://img.shields.io/badge/Rust-2024-000000?logo=rust&logoColor=white)
 ![License](https://img.shields.io/badge/License-AGPL3.0-yellow)
 ![Status](https://img.shields.io/badge/Status-Playable_Core-2E8B57)
-<a href="https://discord.gg/AgrhKzhP"><img alt="Discord - Perlica Winery" src="https://img.shields.io/discord/1483939903753425056?label=Discord&logo=discord"></a>
+<a href="https://discord.gg/BE7CwcesZp"><img alt="Discord - Perlica Winery" src="https://img.shields.io/discord/1483939903753425056?label=Discord&logo=discord"></a>
 
 ## Features
 
