@@ -1,4 +1,5 @@
 pub mod character;
+pub mod equip;
 pub mod error;
 pub mod id_to_str;
 pub mod item;
@@ -19,6 +20,7 @@ pub struct BeyondAssets {
     pub characters: character::CharacterAssets,
     pub char_skills: skill::SkillAssets,
     pub weapons: weapon::WeaponAssets,
+    pub equipment: equip::EquipmentAssets,
     pub items: item::ItemAssets,
     pub level_data: level_data::LevelDataAssets,
     pub missions: mission::MissionAssets,
@@ -34,6 +36,7 @@ impl BeyondAssets {
             characters: character::CharacterAssets::load(&tables_dir)?,
             char_skills: skill::SkillAssets::load(&tables_dir)?,
             weapons: weapon::WeaponAssets::load(&tables_dir)?,
+            equipment: equip::EquipmentAssets::load(&tables_dir)?,
             items: item::ItemAssets::load(&tables_dir)?,
             level_data: level_data::LevelDataAssets::load(&config_dir)?,
             missions: mission::MissionAssets::load(&tables_dir)?,

@@ -8,17 +8,21 @@ use perlica_proto::{
 use std::collections::HashMap;
 use tracing::{debug, error, info, warn};
 
-/// Equips a piece to a character's slot.
-///
-/// On failure echoes back `equipid = 0` so the client can roll back its optimistic update.
+fn slot_from_part_type(part_type: i32) -> CraftShowingType {
+    match part_type {
+        0 => CraftShowingType::EquipBody,
+        1 => CraftShowingType::EquipHead,
+        2 => CraftShowingType::EquipRing,
+        _ => CraftShowingType::None,
+    }
+}
+
 pub async fn on_cs_equip_puton(ctx: &mut NetContext<'_>, req: CsEquipPuton) -> ScEquipPuton {
     debug!(
         "EquipPuton: uid={}, char_id={}, slot={}, equip_id={}",
         ctx.player.uid, req.charid, req.slotid, req.equipid
     );
-
     let inst_id = EquipInstId::new(req.equipid);
-
     if ctx
         .player
         .char_bag
@@ -41,6 +45,37 @@ pub async fn on_cs_equip_puton(ctx: &mut NetContext<'_>, req: CsEquipPuton) -> S
         };
     }
 
+    // If already equipped to this char, treat as no-op and return current state
+    let already_equipped = ctx
+        .player
+        .char_bag
+        .item_manager
+        .equips
+        .get(inst_id)
+        .map(|p| p.equip_char_id == req.charid)
+        .unwrap_or(false);
+
+    if already_equipped {
+        debug!(
+            "EquipPuton: equip {} already on char {}, returning current state",
+            req.equipid, req.charid
+        );
+        let suitinfo = ctx
+            .player
+            .char_bag
+            .item_manager
+            .equips
+            .compute_suitinfo(req.charid, ctx.assets);
+        return ScEquipPuton {
+            charid: req.charid,
+            slotid: req.slotid,
+            equipid: req.equipid,
+            suitinfo,
+            put_off_charid: 0,
+            old_owner_suitinfo: HashMap::new(),
+        };
+    }
+
     match ctx
         .player
         .char_bag
@@ -48,18 +83,33 @@ pub async fn on_cs_equip_puton(ctx: &mut NetContext<'_>, req: CsEquipPuton) -> S
         .equips
         .equip(inst_id, req.charid)
     {
-        Ok(displaced) => {
+        Ok((displaced, put_off_charid)) => {
+            let old_owner_suitinfo = if put_off_charid != 0 {
+                ctx.player
+                    .char_bag
+                    .item_manager
+                    .equips
+                    .compute_suitinfo(put_off_charid, ctx.assets)
+            } else {
+                HashMap::new()
+            };
+            let suitinfo = ctx
+                .player
+                .char_bag
+                .item_manager
+                .equips
+                .compute_suitinfo(req.charid, ctx.assets);
             info!(
-                "EquipPuton: uid={}, char={}, equip={}, displaced={:?}",
-                ctx.player.uid, req.charid, req.equipid, displaced
+                "EquipPuton: uid={}, char={}, equip={}, displaced={:?}, put_off_charid={}",
+                ctx.player.uid, req.charid, req.equipid, displaced, put_off_charid
             );
             ScEquipPuton {
                 charid: req.charid,
                 slotid: req.slotid,
                 equipid: req.equipid,
-                suitinfo: HashMap::new(),
-                put_off_charid: 0,
-                old_owner_suitinfo: HashMap::new(),
+                suitinfo,
+                put_off_charid,
+                old_owner_suitinfo,
             }
         }
         Err(e) => {
@@ -85,9 +135,7 @@ pub async fn on_cs_equip_putoff(ctx: &mut NetContext<'_>, req: CsEquipPutoff) ->
         "EquipPutoff: uid={}, char_id={}, slot={}",
         ctx.player.uid, req.charid, req.slotid
     );
-
-    let slot = CraftShowingType::try_from(req.slotid as u32).unwrap_or(CraftShowingType::None);
-
+    let slot = slot_from_part_type(req.slotid);
     let inst_id = ctx
         .player
         .char_bag
@@ -121,10 +169,17 @@ pub async fn on_cs_equip_putoff(ctx: &mut NetContext<'_>, req: CsEquipPutoff) ->
         }
     }
 
+    let suitinfo = ctx
+        .player
+        .char_bag
+        .item_manager
+        .equips
+        .compute_suitinfo(req.charid, ctx.assets);
+
     ScEquipPutoff {
         charid: req.charid,
         slotid: req.slotid,
-        suitinfo: HashMap::new(),
+        suitinfo,
     }
 }
 

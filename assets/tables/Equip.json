@@ -1,0 +1,5466 @@
+{
+  "equipBasicTable": {
+    "item_unit_t05_suit_01_body_01": {
+      "itemId": "item_unit_t05_suit_01_body_01",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "1F3EA2FA5EFEDFD3"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T0.5",
+      "enhanceFrom": ""
+    },
+    "item_unit_t05_suit_01_hand_01": {
+      "itemId": "item_unit_t05_suit_01_hand_01",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "1511461003F509AA"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T0.5",
+      "enhanceFrom": ""
+    },
+    "item_unit_t1_parts_body_01": {
+      "itemId": "item_unit_t1_parts_body_01",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "4D3990C2C518C889"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T1",
+      "enhanceFrom": ""
+    },
+    "item_unit_t1_parts_edc_01": {
+      "itemId": "item_unit_t1_parts_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "E17592056CA84FEF"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T1",
+      "enhanceFrom": ""
+    },
+    "item_unit_t1_parts_edc_02": {
+      "itemId": "item_unit_t1_parts_edc_02",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "2822B7DEE650837A"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T1",
+      "enhanceFrom": ""
+    },
+    "item_unit_t1_parts_hand_01": {
+      "itemId": "item_unit_t1_parts_hand_01",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "A78948BBDF523544"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T1",
+      "enhanceFrom": ""
+    },
+    "item_unit_t1_suit_01_edc_01": {
+      "itemId": "item_unit_t1_suit_01_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "9CFA4427BDD6E9B4"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_atkup_01",
+      "tierId": "T1",
+      "enhanceFrom": ""
+    },
+    "item_unit_t1_suit_01_hand_01": {
+      "itemId": "item_unit_t1_suit_01_hand_01",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "08784568F5C89564"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_atkup_01",
+      "tierId": "T1",
+      "enhanceFrom": ""
+    },
+    "item_unit_t1_suit_02_body_01": {
+      "itemId": "item_unit_t1_suit_02_body_01",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "F17B5FF00C4FEA9C"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_defup_01",
+      "tierId": "T1",
+      "enhanceFrom": ""
+    },
+    "item_unit_t1_suit_02_hand_01": {
+      "itemId": "item_unit_t1_suit_02_hand_01",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "0FE65A4C1BB2FA9A"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_defup_01",
+      "tierId": "T1",
+      "enhanceFrom": ""
+    },
+    "item_unit_t1_suit_03_body_01": {
+      "itemId": "item_unit_t1_suit_03_body_01",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "A1932BEA1E402BE7"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_hpup_01",
+      "tierId": "T1",
+      "enhanceFrom": ""
+    },
+    "item_unit_t1_suit_03_edc_01": {
+      "itemId": "item_unit_t1_suit_03_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "1226BC33E5258F8E"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_hpup_01",
+      "tierId": "T1",
+      "enhanceFrom": ""
+    },
+    "item_unit_t1_suit_04_edc_01": {
+      "itemId": "item_unit_t1_suit_04_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "4CBB763E2D6EC7DF"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_critmulti_01",
+      "tierId": "T1",
+      "enhanceFrom": ""
+    },
+    "item_unit_t2_parts_body_01": {
+      "itemId": "item_unit_t2_parts_body_01",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "6A8C039C049BC05D"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T2",
+      "enhanceFrom": ""
+    },
+    "item_unit_t2_parts_edc_01": {
+      "itemId": "item_unit_t2_parts_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "D54450EC565E5F1E"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T2",
+      "enhanceFrom": ""
+    },
+    "item_unit_t2_parts_hand_01": {
+      "itemId": "item_unit_t2_parts_hand_01",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "DD1AEB7B409F8480"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T2",
+      "enhanceFrom": ""
+    },
+    "item_unit_t2_suit_01_body_01": {
+      "itemId": "item_unit_t2_suit_01_body_01",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "8375700094BB8E35"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_atkup_01",
+      "tierId": "T2",
+      "enhanceFrom": ""
+    },
+    "item_unit_t2_suit_01_edc_01": {
+      "itemId": "item_unit_t2_suit_01_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "306233BE02174D11"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_atkup_01",
+      "tierId": "T2",
+      "enhanceFrom": ""
+    },
+    "item_unit_t2_suit_02_edc_01": {
+      "itemId": "item_unit_t2_suit_02_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "B9FC37CEA3FA3A9F"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_defup_01",
+      "tierId": "T2",
+      "enhanceFrom": ""
+    },
+    "item_unit_t2_suit_02_hand_01": {
+      "itemId": "item_unit_t2_suit_02_hand_01",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "45D8BCCF4657C172"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_defup_01",
+      "tierId": "T2",
+      "enhanceFrom": ""
+    },
+    "item_unit_t2_suit_03_edc_01": {
+      "itemId": "item_unit_t2_suit_03_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "D4FB2FEB1680496C"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_hpup_01",
+      "tierId": "T2",
+      "enhanceFrom": ""
+    },
+    "item_unit_t2_suit_03_hand_01": {
+      "itemId": "item_unit_t2_suit_03_hand_01",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "08E43B99D49F05BE"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_hpup_01",
+      "tierId": "T2",
+      "enhanceFrom": ""
+    },
+    "item_unit_t2_suit_04_body_01": {
+      "itemId": "item_unit_t2_suit_04_body_01",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "E713227319CAE0E0"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_critmulti_01",
+      "tierId": "T2",
+      "enhanceFrom": ""
+    },
+    "item_unit_t2_suit_04_hand_01": {
+      "itemId": "item_unit_t2_suit_04_hand_01",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "F5CE83C63AC1CCE4"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_critmulti_01",
+      "tierId": "T2",
+      "enhanceFrom": ""
+    },
+    "item_unit_t2_suit_05_edc_01": {
+      "itemId": "item_unit_t2_suit_05_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "97B0519674280F0F"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_cd_01",
+      "tierId": "T2",
+      "enhanceFrom": ""
+    },
+    "item_unit_t2_suit_05_hand_01": {
+      "itemId": "item_unit_t2_suit_05_hand_01",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "4B32DFB731EF3C45"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_cd_01",
+      "tierId": "T2",
+      "enhanceFrom": ""
+    },
+    "item_unit_t2_suit_06_body_01": {
+      "itemId": "item_unit_t2_suit_06_body_01",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "2D349A34C9BBD392"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_knockdownup_01",
+      "tierId": "T2",
+      "enhanceFrom": ""
+    },
+    "item_unit_t2_suit_06_edc_01": {
+      "itemId": "item_unit_t2_suit_06_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "B138C0F752D8F987"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_knockdownup_01",
+      "tierId": "T2",
+      "enhanceFrom": ""
+    },
+    "item_unit_t2_suit_07_edc_01": {
+      "itemId": "item_unit_t2_suit_07_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "AFF4262D71623F13"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_receivehealup_01",
+      "tierId": "T2",
+      "enhanceFrom": ""
+    },
+    "item_unit_t3_parts_body_01": {
+      "itemId": "item_unit_t3_parts_body_01",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "6637C86C942AD8AB"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T3",
+      "enhanceFrom": ""
+    },
+    "item_unit_t3_parts_body_02": {
+      "itemId": "item_unit_t3_parts_body_02",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "ACA4A0455D5D6F12"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T3",
+      "enhanceFrom": ""
+    },
+    "item_unit_t3_parts_edc_01": {
+      "itemId": "item_unit_t3_parts_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "E72CD8E1EF3A011B"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T3",
+      "enhanceFrom": ""
+    },
+    "item_unit_t3_parts_edc_02": {
+      "itemId": "item_unit_t3_parts_edc_02",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "B6D5E9F3BEB36EA0"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T3",
+      "enhanceFrom": ""
+    },
+    "item_unit_t3_parts_hand_01": {
+      "itemId": "item_unit_t3_parts_hand_01",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "7111A8A243BD17DB"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T3",
+      "enhanceFrom": ""
+    },
+    "item_unit_t3_parts_hand_02": {
+      "itemId": "item_unit_t3_parts_hand_02",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "66B94A42EB077408"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T3",
+      "enhanceFrom": ""
+    },
+    "item_unit_t3_suit_01_hand_01": {
+      "itemId": "item_unit_t3_suit_01_hand_01",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "32E2FCC040500882"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_atkup_01",
+      "tierId": "T3",
+      "enhanceFrom": ""
+    },
+    "item_unit_t3_suit_02_body_01": {
+      "itemId": "item_unit_t3_suit_02_body_01",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "B62FE0B91AB3AB5C"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_defup_01",
+      "tierId": "T3",
+      "enhanceFrom": ""
+    },
+    "item_unit_t3_suit_03_body_01": {
+      "itemId": "item_unit_t3_suit_03_body_01",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "878F04DBB4679A06"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_hpup_01",
+      "tierId": "T3",
+      "enhanceFrom": ""
+    },
+    "item_unit_t3_suit_04_edc_01": {
+      "itemId": "item_unit_t3_suit_04_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "390C2E28358B5AB5"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_critmulti_01",
+      "tierId": "T3",
+      "enhanceFrom": ""
+    },
+    "item_unit_t3_suit_04_hand_01": {
+      "itemId": "item_unit_t3_suit_04_hand_01",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "2E607B6F1CC58562"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_critmulti_01",
+      "tierId": "T3",
+      "enhanceFrom": ""
+    },
+    "item_unit_t3_suit_05_body_01": {
+      "itemId": "item_unit_t3_suit_05_body_01",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "F308467B2B4156BB"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_cd_01",
+      "tierId": "T3",
+      "enhanceFrom": ""
+    },
+    "item_unit_t3_suit_05_edc_01": {
+      "itemId": "item_unit_t3_suit_05_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "8D4247FD400BE8FD"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_cd_01",
+      "tierId": "T3",
+      "enhanceFrom": ""
+    },
+    "item_unit_t3_suit_06_edc_01": {
+      "itemId": "item_unit_t3_suit_06_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "D27B135D3D2A322F"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_knockdownup_01",
+      "tierId": "T3",
+      "enhanceFrom": ""
+    },
+    "item_unit_t3_suit_06_hand_01": {
+      "itemId": "item_unit_t3_suit_06_hand_01",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "E123358589FCBD5A"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_knockdownup_01",
+      "tierId": "T3",
+      "enhanceFrom": ""
+    },
+    "item_unit_t3_suit_07_body_01": {
+      "itemId": "item_unit_t3_suit_07_body_01",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "93F9B5EBD616193D"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_receivehealup_01",
+      "tierId": "T3",
+      "enhanceFrom": ""
+    },
+    "item_unit_t3_suit_07_hand_01": {
+      "itemId": "item_unit_t3_suit_07_hand_01",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "4A9A10845FAF7367"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_receivehealup_01",
+      "tierId": "T3",
+      "enhanceFrom": ""
+    },
+    "item_unit_t3_suit_08_edc_01": {
+      "itemId": "item_unit_t3_suit_08_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "81BA8C606F3AEFC8"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_pulseup_01",
+      "tierId": "T3",
+      "enhanceFrom": ""
+    },
+    "item_unit_t3_suit_08_hand_01": {
+      "itemId": "item_unit_t3_suit_08_hand_01",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "1B10E444F641F6EA"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_pulseup_01",
+      "tierId": "T3",
+      "enhanceFrom": ""
+    },
+    "item_unit_t3_suit_09_body_01": {
+      "itemId": "item_unit_t3_suit_09_body_01",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "143BA12CA917255E"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_fireup_01",
+      "tierId": "T3",
+      "enhanceFrom": ""
+    },
+    "item_unit_t3_suit_09_edc_01": {
+      "itemId": "item_unit_t3_suit_09_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "DC0DEF2A96DD3022"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_fireup_01",
+      "tierId": "T3",
+      "enhanceFrom": ""
+    },
+    "item_unit_t3_suit_10_edc_01": {
+      "itemId": "item_unit_t3_suit_10_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "12780BF536DBE145"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_crystup_01",
+      "tierId": "T3",
+      "enhanceFrom": ""
+    },
+    "item_unit_t3_suit_10_edc_02": {
+      "itemId": "item_unit_t3_suit_10_edc_02",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "2EFA1F93F3E4513F"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_crystup_01",
+      "tierId": "T3",
+      "enhanceFrom": ""
+    },
+    "item_unit_t4_parts_body_01": {
+      "itemId": "item_unit_t4_parts_body_01",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "A74046DC4BA36B87"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T4",
+      "enhanceFrom": ""
+    },
+    "item_unit_t4_parts_body_01_eh": {
+      "itemId": "item_unit_t4_parts_body_01",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "A74046DC4BA36B87"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T4",
+      "enhanceFrom": "item_unit_t4_parts_body_01"
+    },
+    "item_unit_t4_parts_body_02": {
+      "itemId": "item_unit_t4_parts_body_02",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "C5E972F1C7AD72A3"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T4",
+      "enhanceFrom": ""
+    },
+    "item_unit_t4_parts_body_02_eh": {
+      "itemId": "item_unit_t4_parts_body_02",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "C5E972F1C7AD72A3"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T4",
+      "enhanceFrom": "item_unit_t4_parts_body_02"
+    },
+    "item_unit_t4_parts_body_03": {
+      "itemId": "item_unit_t4_parts_body_03",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "12B67411D7A82740"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T4",
+      "enhanceFrom": ""
+    },
+    "item_unit_t4_parts_body_03_eh": {
+      "itemId": "item_unit_t4_parts_body_03",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "12B67411D7A82740"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T4",
+      "enhanceFrom": "item_unit_t4_parts_body_03"
+    },
+    "item_unit_t4_parts_body_04": {
+      "itemId": "item_unit_t4_parts_body_04",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "BC3D17D405D3B758"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T4",
+      "enhanceFrom": ""
+    },
+    "item_unit_t4_parts_body_04_eh": {
+      "itemId": "item_unit_t4_parts_body_04",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "BC3D17D405D3B758"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T4",
+      "enhanceFrom": "item_unit_t4_parts_body_04"
+    },
+    "item_unit_t4_parts_edc_01": {
+      "itemId": "item_unit_t4_parts_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "DF0CEEA712FCCFBE"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T4",
+      "enhanceFrom": ""
+    },
+    "item_unit_t4_parts_edc_01_eh": {
+      "itemId": "item_unit_t4_parts_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "DF0CEEA712FCCFBE"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T4",
+      "enhanceFrom": "item_unit_t4_parts_edc_01"
+    },
+    "item_unit_t4_parts_edc_02": {
+      "itemId": "item_unit_t4_parts_edc_02",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "95EA87ABB98289D7"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T4",
+      "enhanceFrom": ""
+    },
+    "item_unit_t4_parts_edc_02_eh": {
+      "itemId": "item_unit_t4_parts_edc_02",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "95EA87ABB98289D7"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T4",
+      "enhanceFrom": "item_unit_t4_parts_edc_02"
+    },
+    "item_unit_t4_parts_edc_03": {
+      "itemId": "item_unit_t4_parts_edc_03",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "5944AB38E6B6FC91"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T4",
+      "enhanceFrom": ""
+    },
+    "item_unit_t4_parts_edc_03_eh": {
+      "itemId": "item_unit_t4_parts_edc_03",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "5944AB38E6B6FC91"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T4",
+      "enhanceFrom": "item_unit_t4_parts_edc_03"
+    },
+    "item_unit_t4_parts_edc_04": {
+      "itemId": "item_unit_t4_parts_edc_04",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "D46781548100629E"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T4",
+      "enhanceFrom": ""
+    },
+    "item_unit_t4_parts_edc_04_eh": {
+      "itemId": "item_unit_t4_parts_edc_04",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "D46781548100629E"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T4",
+      "enhanceFrom": "item_unit_t4_parts_edc_04"
+    },
+    "item_unit_t4_parts_hand_01": {
+      "itemId": "item_unit_t4_parts_hand_01",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "62E9B926A49D5A49"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T4",
+      "enhanceFrom": ""
+    },
+    "item_unit_t4_parts_hand_01_eh": {
+      "itemId": "item_unit_t4_parts_hand_01",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "62E9B926A49D5A49"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T4",
+      "enhanceFrom": "item_unit_t4_parts_hand_01"
+    },
+    "item_unit_t4_parts_hand_02": {
+      "itemId": "item_unit_t4_parts_hand_02",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "BFF2CA1A9F0725AB"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T4",
+      "enhanceFrom": ""
+    },
+    "item_unit_t4_parts_hand_02_eh": {
+      "itemId": "item_unit_t4_parts_hand_02",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "BFF2CA1A9F0725AB"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T4",
+      "enhanceFrom": "item_unit_t4_parts_hand_02"
+    },
+    "item_unit_t4_parts_hand_03": {
+      "itemId": "item_unit_t4_parts_hand_03",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "2835DE5B21B69231"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T4",
+      "enhanceFrom": ""
+    },
+    "item_unit_t4_parts_hand_03_eh": {
+      "itemId": "item_unit_t4_parts_hand_03",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "2835DE5B21B69231"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T4",
+      "enhanceFrom": "item_unit_t4_parts_hand_03"
+    },
+    "item_unit_t4_parts_hand_04": {
+      "itemId": "item_unit_t4_parts_hand_04",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "2F98F6E579AD2AE8"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T4",
+      "enhanceFrom": ""
+    },
+    "item_unit_t4_parts_hand_04_eh": {
+      "itemId": "item_unit_t4_parts_hand_04",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "2F98F6E579AD2AE8"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T4",
+      "enhanceFrom": "item_unit_t4_parts_hand_04"
+    },
+    "item_unit_t4_suit_01_body_01": {
+      "itemId": "item_unit_t4_suit_01_body_01",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "A0DDC51E31EE2D82"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_atkup_01",
+      "tierId": "T4",
+      "enhanceFrom": ""
+    },
+    "item_unit_t4_suit_01_body_01_eh": {
+      "itemId": "item_unit_t4_suit_01_body_01",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "A0DDC51E31EE2D82"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_atkup_01",
+      "tierId": "T4",
+      "enhanceFrom": "item_unit_t4_suit_01_body_01"
+    },
+    "item_unit_t4_suit_01_edc_01": {
+      "itemId": "item_unit_t4_suit_01_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "9E4AF66B1210C39F"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_atkup_01",
+      "tierId": "T4",
+      "enhanceFrom": ""
+    },
+    "item_unit_t4_suit_01_edc_01_eh": {
+      "itemId": "item_unit_t4_suit_01_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "9E4AF66B1210C39F"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_atkup_01",
+      "tierId": "T4",
+      "enhanceFrom": "item_unit_t4_suit_01_edc_01"
+    },
+    "item_unit_t4_suit_01_edc_02": {
+      "itemId": "item_unit_t4_suit_01_edc_02",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "11449A9AC096A23F"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_atkup_01",
+      "tierId": "T4",
+      "enhanceFrom": ""
+    },
+    "item_unit_t4_suit_01_edc_02_eh": {
+      "itemId": "item_unit_t4_suit_01_edc_02",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "11449A9AC096A23F"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_atkup_01",
+      "tierId": "T4",
+      "enhanceFrom": "item_unit_t4_suit_01_edc_02"
+    },
+    "item_unit_t4_suit_02_edc_01": {
+      "itemId": "item_unit_t4_suit_02_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "D56E93DE440E9810"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_defup_01",
+      "tierId": "T4",
+      "enhanceFrom": ""
+    },
+    "item_unit_t4_suit_02_edc_01_eh": {
+      "itemId": "item_unit_t4_suit_02_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "D56E93DE440E9810"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_defup_01",
+      "tierId": "T4",
+      "enhanceFrom": "item_unit_t4_suit_02_edc_01"
+    },
+    "item_unit_t4_suit_02_hand_01": {
+      "itemId": "item_unit_t4_suit_02_hand_01",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "E4AC08D971866686"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_defup_01",
+      "tierId": "T4",
+      "enhanceFrom": ""
+    },
+    "item_unit_t4_suit_02_hand_01_eh": {
+      "itemId": "item_unit_t4_suit_02_hand_01",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "E4AC08D971866686"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_defup_01",
+      "tierId": "T4",
+      "enhanceFrom": "item_unit_t4_suit_02_hand_01"
+    },
+    "item_unit_t4_suit_03_edc_01": {
+      "itemId": "item_unit_t4_suit_03_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "F0846957C35E94A7"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_hpup_01",
+      "tierId": "T4",
+      "enhanceFrom": ""
+    },
+    "item_unit_t4_suit_03_edc_01_eh": {
+      "itemId": "item_unit_t4_suit_03_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "F0846957C35E94A7"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_hpup_01",
+      "tierId": "T4",
+      "enhanceFrom": "item_unit_t4_suit_03_edc_01"
+    },
+    "item_unit_t4_suit_03_hand_01": {
+      "itemId": "item_unit_t4_suit_03_hand_01",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "8A36940ECF96DC2D"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_hpup_01",
+      "tierId": "T4",
+      "enhanceFrom": ""
+    },
+    "item_unit_t4_suit_03_hand_01_eh": {
+      "itemId": "item_unit_t4_suit_03_hand_01",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "8A36940ECF96DC2D"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_hpup_01",
+      "tierId": "T4",
+      "enhanceFrom": "item_unit_t4_suit_03_hand_01"
+    },
+    "item_unit_t4_suit_04_body_01": {
+      "itemId": "item_unit_t4_suit_04_body_01",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "ECD1AB01E150BDE3"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_critmulti_01",
+      "tierId": "T4",
+      "enhanceFrom": ""
+    },
+    "item_unit_t4_suit_04_body_01_eh": {
+      "itemId": "item_unit_t4_suit_04_body_01",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "ECD1AB01E150BDE3"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_critmulti_01",
+      "tierId": "T4",
+      "enhanceFrom": "item_unit_t4_suit_04_body_01"
+    },
+    "item_unit_t4_suit_04_edc_01": {
+      "itemId": "item_unit_t4_suit_04_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "B70DE29E5F16216D"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_critmulti_01",
+      "tierId": "T4",
+      "enhanceFrom": ""
+    },
+    "item_unit_t4_suit_04_edc_01_eh": {
+      "itemId": "item_unit_t4_suit_04_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "B70DE29E5F16216D"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_critmulti_01",
+      "tierId": "T4",
+      "enhanceFrom": "item_unit_t4_suit_04_edc_01"
+    },
+    "item_unit_t4_suit_05_body_01": {
+      "itemId": "item_unit_t4_suit_05_body_01",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "8D769456CF004985"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_cd_01",
+      "tierId": "T4",
+      "enhanceFrom": ""
+    },
+    "item_unit_t4_suit_05_body_01_eh": {
+      "itemId": "item_unit_t4_suit_05_body_01",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "8D769456CF004985"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_cd_01",
+      "tierId": "T4",
+      "enhanceFrom": "item_unit_t4_suit_05_body_01"
+    },
+    "item_unit_t4_suit_05_edc_01": {
+      "itemId": "item_unit_t4_suit_05_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "09340E1D1E8E2910"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_cd_01",
+      "tierId": "T4",
+      "enhanceFrom": ""
+    },
+    "item_unit_t4_suit_05_edc_01_eh": {
+      "itemId": "item_unit_t4_suit_05_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "09340E1D1E8E2910"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_cd_01",
+      "tierId": "T4",
+      "enhanceFrom": "item_unit_t4_suit_05_edc_01"
+    },
+    "item_unit_t4_suit_05_edc_02": {
+      "itemId": "item_unit_t4_suit_05_edc_02",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "7A7312E16580A23B"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_cd_01",
+      "tierId": "T4",
+      "enhanceFrom": ""
+    },
+    "item_unit_t4_suit_05_edc_02_eh": {
+      "itemId": "item_unit_t4_suit_05_edc_02",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "7A7312E16580A23B"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_cd_01",
+      "tierId": "T4",
+      "enhanceFrom": "item_unit_t4_suit_05_edc_02"
+    },
+    "item_unit_t4_suit_05_hand_01": {
+      "itemId": "item_unit_t4_suit_05_hand_01",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "61FDC68D8BABDDE1"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_cd_01",
+      "tierId": "T4",
+      "enhanceFrom": ""
+    },
+    "item_unit_t4_suit_05_hand_01_eh": {
+      "itemId": "item_unit_t4_suit_05_hand_01",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "61FDC68D8BABDDE1"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_cd_01",
+      "tierId": "T4",
+      "enhanceFrom": "item_unit_t4_suit_05_hand_01"
+    },
+    "item_unit_t4_suit_06_body_01": {
+      "itemId": "item_unit_t4_suit_06_body_01",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "BEFB8B27CC0D3925"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_knockdownup_01",
+      "tierId": "T4",
+      "enhanceFrom": ""
+    },
+    "item_unit_t4_suit_06_body_01_eh": {
+      "itemId": "item_unit_t4_suit_06_body_01",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "BEFB8B27CC0D3925"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_knockdownup_01",
+      "tierId": "T4",
+      "enhanceFrom": "item_unit_t4_suit_06_body_01"
+    },
+    "item_unit_t4_suit_06_edc_01": {
+      "itemId": "item_unit_t4_suit_06_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "E16222C6575DF55A"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_knockdownup_01",
+      "tierId": "T4",
+      "enhanceFrom": ""
+    },
+    "item_unit_t4_suit_06_edc_01_eh": {
+      "itemId": "item_unit_t4_suit_06_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "E16222C6575DF55A"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_knockdownup_01",
+      "tierId": "T4",
+      "enhanceFrom": "item_unit_t4_suit_06_edc_01"
+    },
+    "item_unit_t4_suit_06_edc_02": {
+      "itemId": "item_unit_t4_suit_06_edc_02",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "E1CF8C2C6F19BA32"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_knockdownup_01",
+      "tierId": "T4",
+      "enhanceFrom": ""
+    },
+    "item_unit_t4_suit_06_edc_02_eh": {
+      "itemId": "item_unit_t4_suit_06_edc_02",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "E1CF8C2C6F19BA32"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_knockdownup_01",
+      "tierId": "T4",
+      "enhanceFrom": "item_unit_t4_suit_06_edc_02"
+    },
+    "item_unit_t4_suit_06_hand_01": {
+      "itemId": "item_unit_t4_suit_06_hand_01",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "824E39FE3F89878C"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_knockdownup_01",
+      "tierId": "T4",
+      "enhanceFrom": ""
+    },
+    "item_unit_t4_suit_06_hand_01_eh": {
+      "itemId": "item_unit_t4_suit_06_hand_01",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "824E39FE3F89878C"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_knockdownup_01",
+      "tierId": "T4",
+      "enhanceFrom": "item_unit_t4_suit_06_hand_01"
+    },
+    "item_unit_t4_suit_07_body_01": {
+      "itemId": "item_unit_t4_suit_07_body_01",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "2E90FF48196B623D"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_receivehealup_01",
+      "tierId": "T4",
+      "enhanceFrom": ""
+    },
+    "item_unit_t4_suit_07_body_01_eh": {
+      "itemId": "item_unit_t4_suit_07_body_01",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "2E90FF48196B623D"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_receivehealup_01",
+      "tierId": "T4",
+      "enhanceFrom": "item_unit_t4_suit_07_body_01"
+    },
+    "item_unit_t4_suit_07_edc_01": {
+      "itemId": "item_unit_t4_suit_07_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "0F2CC00DC4D9A4CB"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_receivehealup_01",
+      "tierId": "T4",
+      "enhanceFrom": ""
+    },
+    "item_unit_t4_suit_07_edc_01_eh": {
+      "itemId": "item_unit_t4_suit_07_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "0F2CC00DC4D9A4CB"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_receivehealup_01",
+      "tierId": "T4",
+      "enhanceFrom": "item_unit_t4_suit_07_edc_01"
+    },
+    "item_unit_t4_suit_07_edc_02": {
+      "itemId": "item_unit_t4_suit_07_edc_02",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "F406FEDBC219C9F1"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_receivehealup_01",
+      "tierId": "T4",
+      "enhanceFrom": ""
+    },
+    "item_unit_t4_suit_07_edc_02_eh": {
+      "itemId": "item_unit_t4_suit_07_edc_02",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "F406FEDBC219C9F1"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_receivehealup_01",
+      "tierId": "T4",
+      "enhanceFrom": "item_unit_t4_suit_07_edc_02"
+    },
+    "item_unit_t4_suit_07_hand_01": {
+      "itemId": "item_unit_t4_suit_07_hand_01",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "2BC638E0F9537AC0"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_receivehealup_01",
+      "tierId": "T4",
+      "enhanceFrom": ""
+    },
+    "item_unit_t4_suit_07_hand_01_eh": {
+      "itemId": "item_unit_t4_suit_07_hand_01",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "2BC638E0F9537AC0"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_receivehealup_01",
+      "tierId": "T4",
+      "enhanceFrom": "item_unit_t4_suit_07_hand_01"
+    },
+    "item_unit_t4_suit_08_body_01": {
+      "itemId": "item_unit_t4_suit_08_body_01",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "6A8BA69175923541"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_pulseup_01",
+      "tierId": "T4",
+      "enhanceFrom": ""
+    },
+    "item_unit_t4_suit_08_body_01_eh": {
+      "itemId": "item_unit_t4_suit_08_body_01",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "6A8BA69175923541"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_pulseup_01",
+      "tierId": "T4",
+      "enhanceFrom": "item_unit_t4_suit_08_body_01"
+    },
+    "item_unit_t4_suit_08_body_02": {
+      "itemId": "item_unit_t4_suit_08_body_02",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "7332F28F71BBDF01"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_pulseup_01",
+      "tierId": "T4",
+      "enhanceFrom": ""
+    },
+    "item_unit_t4_suit_08_body_02_eh": {
+      "itemId": "item_unit_t4_suit_08_body_02",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "7332F28F71BBDF01"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_pulseup_01",
+      "tierId": "T4",
+      "enhanceFrom": "item_unit_t4_suit_08_body_02"
+    },
+    "item_unit_t4_suit_08_edc_01": {
+      "itemId": "item_unit_t4_suit_08_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "5A29A3707E808F31"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_pulseup_01",
+      "tierId": "T4",
+      "enhanceFrom": ""
+    },
+    "item_unit_t4_suit_08_edc_01_eh": {
+      "itemId": "item_unit_t4_suit_08_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "5A29A3707E808F31"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_pulseup_01",
+      "tierId": "T4",
+      "enhanceFrom": "item_unit_t4_suit_08_edc_01"
+    },
+    "item_unit_t4_suit_08_edc_02": {
+      "itemId": "item_unit_t4_suit_08_edc_02",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "511F1CDA86B6D936"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_pulseup_01",
+      "tierId": "T4",
+      "enhanceFrom": ""
+    },
+    "item_unit_t4_suit_08_edc_02_eh": {
+      "itemId": "item_unit_t4_suit_08_edc_02",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "511F1CDA86B6D936"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_pulseup_01",
+      "tierId": "T4",
+      "enhanceFrom": "item_unit_t4_suit_08_edc_02"
+    },
+    "item_unit_t4_suit_09_edc_01": {
+      "itemId": "item_unit_t4_suit_09_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "8541D0C055A427F9"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_fireup_01",
+      "tierId": "T4",
+      "enhanceFrom": ""
+    },
+    "item_unit_t4_suit_09_edc_01_eh": {
+      "itemId": "item_unit_t4_suit_09_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "8541D0C055A427F9"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_fireup_01",
+      "tierId": "T4",
+      "enhanceFrom": "item_unit_t4_suit_09_edc_01"
+    },
+    "item_unit_t4_suit_09_edc_02": {
+      "itemId": "item_unit_t4_suit_09_edc_02",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "6BF825D3518A5720"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_fireup_01",
+      "tierId": "T4",
+      "enhanceFrom": ""
+    },
+    "item_unit_t4_suit_09_edc_02_eh": {
+      "itemId": "item_unit_t4_suit_09_edc_02",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "6BF825D3518A5720"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_fireup_01",
+      "tierId": "T4",
+      "enhanceFrom": "item_unit_t4_suit_09_edc_02"
+    },
+    "item_unit_t4_suit_09_hand_01": {
+      "itemId": "item_unit_t4_suit_09_hand_01",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "F8C3893CAC911203"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_fireup_01",
+      "tierId": "T4",
+      "enhanceFrom": ""
+    },
+    "item_unit_t4_suit_09_hand_01_eh": {
+      "itemId": "item_unit_t4_suit_09_hand_01",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "F8C3893CAC911203"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_fireup_01",
+      "tierId": "T4",
+      "enhanceFrom": "item_unit_t4_suit_09_hand_01"
+    },
+    "item_unit_t4_suit_09_hand_02": {
+      "itemId": "item_unit_t4_suit_09_hand_02",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "A3497304768B4E0F"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_fireup_01",
+      "tierId": "T4",
+      "enhanceFrom": ""
+    },
+    "item_unit_t4_suit_09_hand_02_eh": {
+      "itemId": "item_unit_t4_suit_09_hand_02",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "A3497304768B4E0F"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_fireup_01",
+      "tierId": "T4",
+      "enhanceFrom": "item_unit_t4_suit_09_hand_02"
+    },
+    "item_unit_t4_suit_10_body_01": {
+      "itemId": "item_unit_t4_suit_10_body_01",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "00391D7A8B29EEE6"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_crystup_01",
+      "tierId": "T4",
+      "enhanceFrom": ""
+    },
+    "item_unit_t4_suit_10_body_01_eh": {
+      "itemId": "item_unit_t4_suit_10_body_01",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "00391D7A8B29EEE6"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_crystup_01",
+      "tierId": "T4",
+      "enhanceFrom": "item_unit_t4_suit_10_body_01"
+    },
+    "item_unit_t4_suit_10_body_02": {
+      "itemId": "item_unit_t4_suit_10_body_02",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "C2A051540D61C6A0"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_crystup_01",
+      "tierId": "T4",
+      "enhanceFrom": ""
+    },
+    "item_unit_t4_suit_10_body_02_eh": {
+      "itemId": "item_unit_t4_suit_10_body_02",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "C2A051540D61C6A0"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_crystup_01",
+      "tierId": "T4",
+      "enhanceFrom": "item_unit_t4_suit_10_body_02"
+    },
+    "item_unit_t4_suit_10_edc_01": {
+      "itemId": "item_unit_t4_suit_10_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "04C8A4B569D738DF"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_crystup_01",
+      "tierId": "T4",
+      "enhanceFrom": ""
+    },
+    "item_unit_t4_suit_10_edc_01_eh": {
+      "itemId": "item_unit_t4_suit_10_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "04C8A4B569D738DF"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_crystup_01",
+      "tierId": "T4",
+      "enhanceFrom": "item_unit_t4_suit_10_edc_01"
+    },
+    "item_unit_t4_suit_10_hand_01": {
+      "itemId": "item_unit_t4_suit_10_hand_01",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "B46C9CFF80639284"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_crystup_01",
+      "tierId": "T4",
+      "enhanceFrom": ""
+    },
+    "item_unit_t4_suit_10_hand_01_eh": {
+      "itemId": "item_unit_t4_suit_10_hand_01",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "B46C9CFF80639284"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_crystup_01",
+      "tierId": "T4",
+      "enhanceFrom": "item_unit_t4_suit_10_hand_01"
+    },
+    "item_unit_t4_suit_10_hand_02": {
+      "itemId": "item_unit_t4_suit_10_hand_02",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "D59C8562DB4705C5"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_crystup_01",
+      "tierId": "T4",
+      "enhanceFrom": ""
+    },
+    "item_unit_t4_suit_10_hand_02_eh": {
+      "itemId": "item_unit_t4_suit_10_hand_02",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "D59C8562DB4705C5"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_crystup_01",
+      "tierId": "T4",
+      "enhanceFrom": "item_unit_t4_suit_10_hand_02"
+    }
+  },
+  "equipTable": {
+    "item_unit_t05_suit_01_body_01": {
+      "itemId": "item_unit_t05_suit_01_body_01",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "1F3EA2FA5EFEDFD3"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T0.5",
+      "attrModifiers": [
+        {
+          "attrType": 1,
+          "attrValue": 103.860669323914,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 1,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t05_suit_01_hand_01": {
+      "itemId": "item_unit_t05_suit_01_hand_01",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "1511461003F509AA"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T0.5",
+      "attrModifiers": [
+        {
+          "attrType": 3,
+          "attrValue": 14.147819909271,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 3,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t1_parts_body_01": {
+      "itemId": "item_unit_t1_parts_body_01",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "4D3990C2C518C889"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T1",
+      "attrModifiers": [
+        {
+          "attrType": 1,
+          "attrValue": 296.283223932388,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 1,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t1_parts_edc_01": {
+      "itemId": "item_unit_t1_parts_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "E17592056CA84FEF"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T1",
+      "attrModifiers": [
+        {
+          "attrType": 2,
+          "attrValue": 69.1327522508904,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 2,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t1_parts_edc_02": {
+      "itemId": "item_unit_t1_parts_edc_02",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "2822B7DEE650837A"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T1",
+      "attrModifiers": [
+        {
+          "attrType": 33,
+          "attrValue": 41.1154625975092,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 33,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t1_parts_hand_01": {
+      "itemId": "item_unit_t1_parts_hand_01",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "A78948BBDF523544"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T1",
+      "attrModifiers": [
+        {
+          "attrType": 3,
+          "attrValue": 41.1154625975092,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 3,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t1_suit_01_edc_01": {
+      "itemId": "item_unit_t1_suit_01_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "9CFA4427BDD6E9B4"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_atkup_01",
+      "tierId": "T1",
+      "attrModifiers": [
+        {
+          "attrType": 2,
+          "attrValue": 27.6208776918576,
+          "modifierType": 7
+        },
+        {
+          "attrType": 33,
+          "attrValue": 16.3568200158673,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 2,
+          "ratios": []
+        },
+        {
+          "attrType": 33,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t1_suit_01_hand_01": {
+      "itemId": "item_unit_t1_suit_01_hand_01",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "08784568F5C89564"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_atkup_01",
+      "tierId": "T1",
+      "attrModifiers": [
+        {
+          "attrType": 3,
+          "attrValue": 16.3568200158673,
+          "modifierType": 7
+        },
+        {
+          "attrType": 2,
+          "attrValue": 27.6208776918576,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 3,
+          "ratios": []
+        },
+        {
+          "attrType": 2,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t1_suit_02_body_01": {
+      "itemId": "item_unit_t1_suit_02_body_01",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "F17B5FF00C4FEA9C"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_defup_01",
+      "tierId": "T1",
+      "attrModifiers": [
+        {
+          "attrType": 1,
+          "attrValue": 118.375190107962,
+          "modifierType": 7
+        },
+        {
+          "attrType": 3,
+          "attrValue": 16.3568200158673,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 1,
+          "ratios": []
+        },
+        {
+          "attrType": 3,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t1_suit_02_hand_01": {
+      "itemId": "item_unit_t1_suit_02_hand_01",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "0FE65A4C1BB2FA9A"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_defup_01",
+      "tierId": "T1",
+      "attrModifiers": [
+        {
+          "attrType": 3,
+          "attrValue": 16.3568200158673,
+          "modifierType": 7
+        },
+        {
+          "attrType": 1,
+          "attrValue": 118.375190107962,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 3,
+          "ratios": []
+        },
+        {
+          "attrType": 1,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t1_suit_03_body_01": {
+      "itemId": "item_unit_t1_suit_03_body_01",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "A1932BEA1E402BE7"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_hpup_01",
+      "tierId": "T1",
+      "attrModifiers": [
+        {
+          "attrType": 1,
+          "attrValue": 118.375190107962,
+          "modifierType": 7
+        },
+        {
+          "attrType": 3,
+          "attrValue": 16.3568200158673,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 1,
+          "ratios": []
+        },
+        {
+          "attrType": 3,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t1_suit_03_edc_01": {
+      "itemId": "item_unit_t1_suit_03_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "1226BC33E5258F8E"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_hpup_01",
+      "tierId": "T1",
+      "attrModifiers": [
+        {
+          "attrType": 33,
+          "attrValue": 16.3568200158673,
+          "modifierType": 7
+        },
+        {
+          "attrType": 2,
+          "attrValue": 27.6208776918576,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 33,
+          "ratios": []
+        },
+        {
+          "attrType": 2,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t1_suit_04_edc_01": {
+      "itemId": "item_unit_t1_suit_04_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "4CBB763E2D6EC7DF"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_critmulti_01",
+      "tierId": "T1",
+      "attrModifiers": [
+        {
+          "attrType": 33,
+          "attrValue": 16.3568200158673,
+          "modifierType": 7
+        },
+        {
+          "attrType": 10,
+          "attrValue": 0.306285714285714,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 33,
+          "ratios": []
+        },
+        {
+          "attrType": 10,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t2_parts_body_01": {
+      "itemId": "item_unit_t2_parts_body_01",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "6A8C039C049BC05D"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T2",
+      "attrModifiers": [
+        {
+          "attrType": 1,
+          "attrValue": 278.821372929958,
+          "modifierType": 7
+        },
+        {
+          "attrType": 3,
+          "attrValue": 39.1925916147939,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 1,
+          "ratios": []
+        },
+        {
+          "attrType": 3,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t2_parts_edc_01": {
+      "itemId": "item_unit_t2_parts_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "D54450EC565E5F1E"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T2",
+      "attrModifiers": [
+        {
+          "attrType": 3,
+          "attrValue": 39.1925916147939,
+          "modifierType": 7
+        },
+        {
+          "attrType": 33,
+          "attrValue": 39.1925916147939,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 3,
+          "ratios": []
+        },
+        {
+          "attrType": 33,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t2_parts_hand_01": {
+      "itemId": "item_unit_t2_parts_hand_01",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "DD1AEB7B409F8480"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T2",
+      "attrModifiers": [
+        {
+          "attrType": 3,
+          "attrValue": 39.1925916147939,
+          "modifierType": 7
+        },
+        {
+          "attrType": 1,
+          "attrValue": 278.821372929958,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 3,
+          "ratios": []
+        },
+        {
+          "attrType": 1,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t2_suit_01_body_01": {
+      "itemId": "item_unit_t2_suit_01_body_01",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "8375700094BB8E35"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_atkup_01",
+      "tierId": "T2",
+      "attrModifiers": [
+        {
+          "attrType": 1,
+          "attrValue": 227.132734753439,
+          "modifierType": 7
+        },
+        {
+          "attrType": 33,
+          "attrValue": 31.7905262376638,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 1,
+          "ratios": []
+        },
+        {
+          "attrType": 33,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t2_suit_01_edc_01": {
+      "itemId": "item_unit_t2_suit_01_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "306233BE02174D11"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_atkup_01",
+      "tierId": "T2",
+      "attrModifiers": [
+        {
+          "attrType": 2,
+          "attrValue": 52.9976381091357,
+          "modifierType": 7
+        },
+        {
+          "attrType": 33,
+          "attrValue": 31.7905262376638,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 2,
+          "ratios": []
+        },
+        {
+          "attrType": 33,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t2_suit_02_edc_01": {
+      "itemId": "item_unit_t2_suit_02_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "B9FC37CEA3FA3A9F"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_defup_01",
+      "tierId": "T2",
+      "attrModifiers": [
+        {
+          "attrType": 3,
+          "attrValue": 31.7905262376638,
+          "modifierType": 7
+        },
+        {
+          "attrType": 2,
+          "attrValue": 52.9976381091357,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 3,
+          "ratios": []
+        },
+        {
+          "attrType": 2,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t2_suit_02_hand_01": {
+      "itemId": "item_unit_t2_suit_02_hand_01",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "45D8BCCF4657C172"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_defup_01",
+      "tierId": "T2",
+      "attrModifiers": [
+        {
+          "attrType": 3,
+          "attrValue": 31.7905262376638,
+          "modifierType": 7
+        },
+        {
+          "attrType": 33,
+          "attrValue": 31.7905262376638,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 3,
+          "ratios": []
+        },
+        {
+          "attrType": 33,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t2_suit_03_edc_01": {
+      "itemId": "item_unit_t2_suit_03_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "D4FB2FEB1680496C"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_hpup_01",
+      "tierId": "T2",
+      "attrModifiers": [
+        {
+          "attrType": 33,
+          "attrValue": 31.7905262376638,
+          "modifierType": 7
+        },
+        {
+          "attrType": 2,
+          "attrValue": 52.9976381091357,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 33,
+          "ratios": []
+        },
+        {
+          "attrType": 2,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t2_suit_03_hand_01": {
+      "itemId": "item_unit_t2_suit_03_hand_01",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "08E43B99D49F05BE"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_hpup_01",
+      "tierId": "T2",
+      "attrModifiers": [
+        {
+          "attrType": 3,
+          "attrValue": 31.7905262376638,
+          "modifierType": 7
+        },
+        {
+          "attrType": 1,
+          "attrValue": 227.132734753439,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 3,
+          "ratios": []
+        },
+        {
+          "attrType": 1,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t2_suit_04_body_01": {
+      "itemId": "item_unit_t2_suit_04_body_01",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "E713227319CAE0E0"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_critmulti_01",
+      "tierId": "T2",
+      "attrModifiers": [
+        {
+          "attrType": 1,
+          "attrValue": 227.132734753439,
+          "modifierType": 7
+        },
+        {
+          "attrType": 3,
+          "attrValue": 31.7905262376638,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 1,
+          "ratios": []
+        },
+        {
+          "attrType": 3,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t2_suit_04_hand_01": {
+      "itemId": "item_unit_t2_suit_04_hand_01",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "F5CE83C63AC1CCE4"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_critmulti_01",
+      "tierId": "T2",
+      "attrModifiers": [
+        {
+          "attrType": 3,
+          "attrValue": 31.7905262376638,
+          "modifierType": 7
+        },
+        {
+          "attrType": 2,
+          "attrValue": 52.9976381091357,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 3,
+          "ratios": []
+        },
+        {
+          "attrType": 2,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t2_suit_05_edc_01": {
+      "itemId": "item_unit_t2_suit_05_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "97B0519674280F0F"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_cd_01",
+      "tierId": "T2",
+      "attrModifiers": [
+        {
+          "attrType": 2,
+          "attrValue": 52.9976381091357,
+          "modifierType": 7
+        },
+        {
+          "attrType": 33,
+          "attrValue": 31.7905262376638,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 2,
+          "ratios": []
+        },
+        {
+          "attrType": 33,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t2_suit_05_hand_01": {
+      "itemId": "item_unit_t2_suit_05_hand_01",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "4B32DFB731EF3C45"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_cd_01",
+      "tierId": "T2",
+      "attrModifiers": [
+        {
+          "attrType": 3,
+          "attrValue": 31.7905262376638,
+          "modifierType": 7
+        },
+        {
+          "attrType": 1,
+          "attrValue": 227.132734753439,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 3,
+          "ratios": []
+        },
+        {
+          "attrType": 1,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t2_suit_06_body_01": {
+      "itemId": "item_unit_t2_suit_06_body_01",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "2D349A34C9BBD392"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_knockdownup_01",
+      "tierId": "T2",
+      "attrModifiers": [
+        {
+          "attrType": 1,
+          "attrValue": 227.132734753439,
+          "modifierType": 7
+        },
+        {
+          "attrType": 2,
+          "attrValue": 52.9976381091357,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 1,
+          "ratios": []
+        },
+        {
+          "attrType": 2,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t2_suit_06_edc_01": {
+      "itemId": "item_unit_t2_suit_06_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "B138C0F752D8F987"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_knockdownup_01",
+      "tierId": "T2",
+      "attrModifiers": [
+        {
+          "attrType": 2,
+          "attrValue": 52.9976381091357,
+          "modifierType": 7
+        },
+        {
+          "attrType": 33,
+          "attrValue": 31.7905262376638,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 2,
+          "ratios": []
+        },
+        {
+          "attrType": 33,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t2_suit_07_edc_01": {
+      "itemId": "item_unit_t2_suit_07_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "AFF4262D71623F13"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_receivehealup_01",
+      "tierId": "T2",
+      "attrModifiers": [
+        {
+          "attrType": 2,
+          "attrValue": 52.9976381091357,
+          "modifierType": 7
+        },
+        {
+          "attrType": 1,
+          "attrValue": 227.132734753439,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 2,
+          "ratios": []
+        },
+        {
+          "attrType": 1,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t3_parts_body_01": {
+      "itemId": "item_unit_t3_parts_body_01",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "6637C86C942AD8AB"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T3",
+      "attrModifiers": [
+        {
+          "attrType": 1,
+          "attrValue": 471.301049794919,
+          "modifierType": 7
+        },
+        {
+          "attrType": 3,
+          "attrValue": 67.0094651583616,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 1,
+          "ratios": []
+        },
+        {
+          "attrType": 3,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t3_parts_body_02": {
+      "itemId": "item_unit_t3_parts_body_02",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "ACA4A0455D5D6F12"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T3",
+      "attrModifiers": [
+        {
+          "attrType": 1,
+          "attrValue": 471.301049794919,
+          "modifierType": 7
+        },
+        {
+          "attrType": 2,
+          "attrValue": 109.970244952148,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 1,
+          "ratios": []
+        },
+        {
+          "attrType": 2,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t3_parts_edc_01": {
+      "itemId": "item_unit_t3_parts_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "E72CD8E1EF3A011B"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T3",
+      "attrModifiers": [
+        {
+          "attrType": 10,
+          "attrValue": 0.5422227929374,
+          "modifierType": 7
+        },
+        {
+          "attrType": 33,
+          "attrValue": 0.5422227929374,
+          "modifierType": 6
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 10,
+          "ratios": []
+        },
+        {
+          "attrType": 33,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t3_parts_edc_02": {
+      "itemId": "item_unit_t3_parts_edc_02",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "B6D5E9F3BEB36EA0"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T3",
+      "attrModifiers": [
+        {
+          "attrType": 9,
+          "attrValue": 0.13555569823435,
+          "modifierType": 7
+        },
+        {
+          "attrType": 10,
+          "attrValue": 0.5422227929374,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 9,
+          "ratios": []
+        },
+        {
+          "attrType": 10,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t3_parts_hand_01": {
+      "itemId": "item_unit_t3_parts_hand_01",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "7111A8A243BD17DB"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T3",
+      "attrModifiers": [
+        {
+          "attrType": 3,
+          "attrValue": 67.0094651583616,
+          "modifierType": 7
+        },
+        {
+          "attrType": 9,
+          "attrValue": 0.13555569823435,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 3,
+          "ratios": []
+        },
+        {
+          "attrType": 9,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t3_parts_hand_02": {
+      "itemId": "item_unit_t3_parts_hand_02",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "66B94A42EB077408"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T3",
+      "attrModifiers": [
+        {
+          "attrType": 3,
+          "attrValue": 67.0094651583616,
+          "modifierType": 7
+        },
+        {
+          "attrType": 10,
+          "attrValue": 0.5422227929374,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 3,
+          "ratios": []
+        },
+        {
+          "attrType": 10,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t3_suit_01_hand_01": {
+      "itemId": "item_unit_t3_suit_01_hand_01",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "32E2FCC040500882"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_atkup_01",
+      "tierId": "T3",
+      "attrModifiers": [
+        {
+          "attrType": 3,
+          "attrValue": 54.9833481583062,
+          "modifierType": 7
+        },
+        {
+          "attrType": 1,
+          "attrValue": 388.376882781463,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 3,
+          "ratios": []
+        },
+        {
+          "attrType": 1,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t3_suit_02_body_01": {
+      "itemId": "item_unit_t3_suit_02_body_01",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "B62FE0B91AB3AB5C"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_defup_01",
+      "tierId": "T3",
+      "attrModifiers": [
+        {
+          "attrType": 1,
+          "attrValue": 388.376882781463,
+          "modifierType": 7
+        },
+        {
+          "attrType": 2,
+          "attrValue": 90.6212726490079,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 1,
+          "ratios": []
+        },
+        {
+          "attrType": 2,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t3_suit_03_body_01": {
+      "itemId": "item_unit_t3_suit_03_body_01",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "878F04DBB4679A06"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_hpup_01",
+      "tierId": "T3",
+      "attrModifiers": [
+        {
+          "attrType": 1,
+          "attrValue": 388.376882781463,
+          "modifierType": 7
+        },
+        {
+          "attrType": 9,
+          "attrValue": 0.125917024070022,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 1,
+          "ratios": []
+        },
+        {
+          "attrType": 9,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t3_suit_04_edc_01": {
+      "itemId": "item_unit_t3_suit_04_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "390C2E28358B5AB5"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_critmulti_01",
+      "tierId": "T3",
+      "attrModifiers": [
+        {
+          "attrType": 33,
+          "attrValue": 0.503668096280088,
+          "modifierType": 6
+        },
+        {
+          "attrType": 2,
+          "attrValue": 0.251834048140044,
+          "modifierType": 6
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 33,
+          "ratios": []
+        },
+        {
+          "attrType": 2,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t3_suit_04_hand_01": {
+      "itemId": "item_unit_t3_suit_04_hand_01",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "2E607B6F1CC58562"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_critmulti_01",
+      "tierId": "T3",
+      "attrModifiers": [
+        {
+          "attrType": 3,
+          "attrValue": 54.9833481583062,
+          "modifierType": 7
+        },
+        {
+          "attrType": 2,
+          "attrValue": 90.6212726490079,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 3,
+          "ratios": []
+        },
+        {
+          "attrType": 2,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t3_suit_05_body_01": {
+      "itemId": "item_unit_t3_suit_05_body_01",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "F308467B2B4156BB"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_cd_01",
+      "tierId": "T3",
+      "attrModifiers": [
+        {
+          "attrType": 1,
+          "attrValue": 388.376882781463,
+          "modifierType": 7
+        },
+        {
+          "attrType": 9,
+          "attrValue": 0.125917024070022,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 1,
+          "ratios": []
+        },
+        {
+          "attrType": 9,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t3_suit_05_edc_01": {
+      "itemId": "item_unit_t3_suit_05_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "8D4247FD400BE8FD"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_cd_01",
+      "tierId": "T3",
+      "attrModifiers": [
+        {
+          "attrType": 9,
+          "attrValue": 0.125917024070022,
+          "modifierType": 7
+        },
+        {
+          "attrType": 10,
+          "attrValue": 0.503668096280088,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 9,
+          "ratios": []
+        },
+        {
+          "attrType": 10,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t3_suit_06_edc_01": {
+      "itemId": "item_unit_t3_suit_06_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "D27B135D3D2A322F"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_knockdownup_01",
+      "tierId": "T3",
+      "attrModifiers": [
+        {
+          "attrType": 9,
+          "attrValue": 0.125917024070022,
+          "modifierType": 7
+        },
+        {
+          "attrType": 10,
+          "attrValue": 0.503668096280088,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 9,
+          "ratios": []
+        },
+        {
+          "attrType": 10,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t3_suit_06_hand_01": {
+      "itemId": "item_unit_t3_suit_06_hand_01",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "E123358589FCBD5A"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_knockdownup_01",
+      "tierId": "T3",
+      "attrModifiers": [
+        {
+          "attrType": 3,
+          "attrValue": 54.9833481583062,
+          "modifierType": 7
+        },
+        {
+          "attrType": 2,
+          "attrValue": 90.6212726490079,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 3,
+          "ratios": []
+        },
+        {
+          "attrType": 2,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t3_suit_07_body_01": {
+      "itemId": "item_unit_t3_suit_07_body_01",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "93F9B5EBD616193D"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_receivehealup_01",
+      "tierId": "T3",
+      "attrModifiers": [
+        {
+          "attrType": 1,
+          "attrValue": 388.376882781463,
+          "modifierType": 7
+        },
+        {
+          "attrType": 2,
+          "attrValue": 90.6212726490079,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 1,
+          "ratios": []
+        },
+        {
+          "attrType": 2,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t3_suit_07_hand_01": {
+      "itemId": "item_unit_t3_suit_07_hand_01",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "4A9A10845FAF7367"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_receivehealup_01",
+      "tierId": "T3",
+      "attrModifiers": [
+        {
+          "attrType": 3,
+          "attrValue": 54.9833481583062,
+          "modifierType": 7
+        },
+        {
+          "attrType": 33,
+          "attrValue": 54.9833481583062,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 3,
+          "ratios": []
+        },
+        {
+          "attrType": 33,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t3_suit_08_edc_01": {
+      "itemId": "item_unit_t3_suit_08_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "81BA8C606F3AEFC8"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_pulseup_01",
+      "tierId": "T3",
+      "attrModifiers": [
+        {
+          "attrType": 2,
+          "attrValue": 0.251834048140044,
+          "modifierType": 6
+        },
+        {
+          "attrType": 3,
+          "attrValue": 0.503668096280088,
+          "modifierType": 6
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 2,
+          "ratios": []
+        },
+        {
+          "attrType": 3,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t3_suit_08_hand_01": {
+      "itemId": "item_unit_t3_suit_08_hand_01",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "1B10E444F641F6EA"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_pulseup_01",
+      "tierId": "T3",
+      "attrModifiers": [
+        {
+          "attrType": 3,
+          "attrValue": 54.9833481583062,
+          "modifierType": 7
+        },
+        {
+          "attrType": 1,
+          "attrValue": 388.376882781463,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 3,
+          "ratios": []
+        },
+        {
+          "attrType": 1,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t3_suit_09_body_01": {
+      "itemId": "item_unit_t3_suit_09_body_01",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "143BA12CA917255E"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_fireup_01",
+      "tierId": "T3",
+      "attrModifiers": [
+        {
+          "attrType": 1,
+          "attrValue": 388.376882781463,
+          "modifierType": 7
+        },
+        {
+          "attrType": 2,
+          "attrValue": 90.6212726490079,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 1,
+          "ratios": []
+        },
+        {
+          "attrType": 2,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t3_suit_09_edc_01": {
+      "itemId": "item_unit_t3_suit_09_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "DC0DEF2A96DD3022"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_fireup_01",
+      "tierId": "T3",
+      "attrModifiers": [
+        {
+          "attrType": 2,
+          "attrValue": 0.251834048140044,
+          "modifierType": 6
+        },
+        {
+          "attrType": 33,
+          "attrValue": 0.503668096280088,
+          "modifierType": 6
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 2,
+          "ratios": []
+        },
+        {
+          "attrType": 33,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t3_suit_10_edc_01": {
+      "itemId": "item_unit_t3_suit_10_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "12780BF536DBE145"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_crystup_01",
+      "tierId": "T3",
+      "attrModifiers": [
+        {
+          "attrType": 2,
+          "attrValue": 0.251834048140044,
+          "modifierType": 6
+        },
+        {
+          "attrType": 1,
+          "attrValue": 0.251834048140044,
+          "modifierType": 6
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 2,
+          "ratios": []
+        },
+        {
+          "attrType": 1,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t3_suit_10_edc_02": {
+      "itemId": "item_unit_t3_suit_10_edc_02",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "2EFA1F93F3E4513F"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_crystup_01",
+      "tierId": "T3",
+      "attrModifiers": [
+        {
+          "attrType": 9,
+          "attrValue": 0.125917024070022,
+          "modifierType": 7
+        },
+        {
+          "attrType": 33,
+          "attrValue": 0.503668096280088,
+          "modifierType": 6
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 9,
+          "ratios": []
+        },
+        {
+          "attrType": 33,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t4_parts_body_01": {
+      "itemId": "item_unit_t4_parts_body_01",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "A74046DC4BA36B87"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T4",
+      "attrModifiers": [
+        {
+          "attrType": 1,
+          "attrValue": 777.063319230574,
+          "modifierType": 7
+        },
+        {
+          "attrType": 3,
+          "attrValue": 111.751658435442,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 1,
+          "ratios": []
+        },
+        {
+          "attrType": 3,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t4_parts_body_02": {
+      "itemId": "item_unit_t4_parts_body_02",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "C5E972F1C7AD72A3"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T4",
+      "attrModifiers": [
+        {
+          "attrType": 1,
+          "attrValue": 777.063319230574,
+          "modifierType": 7
+        },
+        {
+          "attrType": 2,
+          "attrValue": 181.314774487134,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 1,
+          "ratios": []
+        },
+        {
+          "attrType": 2,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t4_parts_body_03": {
+      "itemId": "item_unit_t4_parts_body_03",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "12B67411D7A82740"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T4",
+      "attrModifiers": [
+        {
+          "attrType": 1,
+          "attrValue": 777.063319230574,
+          "modifierType": 7
+        },
+        {
+          "attrType": 33,
+          "attrValue": 111.751658435442,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 1,
+          "ratios": []
+        },
+        {
+          "attrType": 33,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t4_parts_body_04": {
+      "itemId": "item_unit_t4_parts_body_04",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "BC3D17D405D3B758"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T4",
+      "attrModifiers": [
+        {
+          "attrType": 1,
+          "attrValue": 777.063319230574,
+          "modifierType": 7
+        },
+        {
+          "attrType": 9,
+          "attrValue": 0.162993898305085,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 1,
+          "ratios": []
+        },
+        {
+          "attrType": 9,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t4_parts_edc_01": {
+      "itemId": "item_unit_t4_parts_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "DF0CEEA712FCCFBE"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T4",
+      "attrModifiers": [
+        {
+          "attrType": 2,
+          "attrValue": 0.32598779661017,
+          "modifierType": 6
+        },
+        {
+          "attrType": 1,
+          "attrValue": 0.32598779661017,
+          "modifierType": 6
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 2,
+          "ratios": []
+        },
+        {
+          "attrType": 1,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t4_parts_edc_02": {
+      "itemId": "item_unit_t4_parts_edc_02",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "95EA87ABB98289D7"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T4",
+      "attrModifiers": [
+        {
+          "attrType": 33,
+          "attrValue": 0.65197559322034,
+          "modifierType": 6
+        },
+        {
+          "attrType": 3,
+          "attrValue": 0.65197559322034,
+          "modifierType": 6
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 33,
+          "ratios": []
+        },
+        {
+          "attrType": 3,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t4_parts_edc_03": {
+      "itemId": "item_unit_t4_parts_edc_03",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "5944AB38E6B6FC91"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T4",
+      "attrModifiers": [
+        {
+          "attrType": 10,
+          "attrValue": 0.65197559322034,
+          "modifierType": 7
+        },
+        {
+          "attrType": 33,
+          "attrValue": 0.65197559322034,
+          "modifierType": 6
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 10,
+          "ratios": []
+        },
+        {
+          "attrType": 33,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t4_parts_edc_04": {
+      "itemId": "item_unit_t4_parts_edc_04",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "D46781548100629E"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T4",
+      "attrModifiers": [
+        {
+          "attrType": 2,
+          "attrValue": 0.32598779661017,
+          "modifierType": 6
+        },
+        {
+          "attrType": 9,
+          "attrValue": 0.162993898305085,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 2,
+          "ratios": []
+        },
+        {
+          "attrType": 9,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t4_parts_hand_01": {
+      "itemId": "item_unit_t4_parts_hand_01",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "62E9B926A49D5A49"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T4",
+      "attrModifiers": [
+        {
+          "attrType": 3,
+          "attrValue": 111.751658435442,
+          "modifierType": 7
+        },
+        {
+          "attrType": 1,
+          "attrValue": 777.063319230574,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 3,
+          "ratios": []
+        },
+        {
+          "attrType": 1,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t4_parts_hand_02": {
+      "itemId": "item_unit_t4_parts_hand_02",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "BFF2CA1A9F0725AB"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T4",
+      "attrModifiers": [
+        {
+          "attrType": 3,
+          "attrValue": 111.751658435442,
+          "modifierType": 7
+        },
+        {
+          "attrType": 2,
+          "attrValue": 181.314774487134,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 3,
+          "ratios": []
+        },
+        {
+          "attrType": 2,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t4_parts_hand_03": {
+      "itemId": "item_unit_t4_parts_hand_03",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "2835DE5B21B69231"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T4",
+      "attrModifiers": [
+        {
+          "attrType": 3,
+          "attrValue": 111.751658435442,
+          "modifierType": 7
+        },
+        {
+          "attrType": 10,
+          "attrValue": 0.65197559322034,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 3,
+          "ratios": []
+        },
+        {
+          "attrType": 10,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t4_parts_hand_04": {
+      "itemId": "item_unit_t4_parts_hand_04",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "2F98F6E579AD2AE8"
+      },
+      "attachSlotNum": 0,
+      "suitID": "",
+      "tierId": "T4",
+      "attrModifiers": [
+        {
+          "attrType": 3,
+          "attrValue": 111.751658435442,
+          "modifierType": 7
+        },
+        {
+          "attrType": 33,
+          "attrValue": 111.751658435442,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 3,
+          "ratios": []
+        },
+        {
+          "attrType": 33,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t4_suit_01_body_01": {
+      "itemId": "item_unit_t4_suit_01_body_01",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "A0DDC51E31EE2D82"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_atkup_01",
+      "tierId": "T4",
+      "attrModifiers": [
+        {
+          "attrType": 1,
+          "attrValue": 645.806918369124,
+          "modifierType": 7
+        },
+        {
+          "attrType": 9,
+          "attrValue": 0.152386554621849,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 1,
+          "ratios": []
+        },
+        {
+          "attrType": 9,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t4_suit_01_edc_01": {
+      "itemId": "item_unit_t4_suit_01_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "9E4AF66B1210C39F"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_atkup_01",
+      "tierId": "T4",
+      "attrModifiers": [
+        {
+          "attrType": 33,
+          "attrValue": 0.609546218487396,
+          "modifierType": 6
+        },
+        {
+          "attrType": 2,
+          "attrValue": 0.304773109243698,
+          "modifierType": 6
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 33,
+          "ratios": []
+        },
+        {
+          "attrType": 2,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t4_suit_01_edc_02": {
+      "itemId": "item_unit_t4_suit_01_edc_02",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "11449A9AC096A23F"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_atkup_01",
+      "tierId": "T4",
+      "attrModifiers": [
+        {
+          "attrType": 3,
+          "attrValue": 0.609546218487396,
+          "modifierType": 6
+        },
+        {
+          "attrType": 1,
+          "attrValue": 0.304773109243698,
+          "modifierType": 6
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 3,
+          "ratios": []
+        },
+        {
+          "attrType": 1,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t4_suit_02_edc_01": {
+      "itemId": "item_unit_t4_suit_02_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "D56E93DE440E9810"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_defup_01",
+      "tierId": "T4",
+      "attrModifiers": [
+        {
+          "attrType": 2,
+          "attrValue": 0.304773109243698,
+          "modifierType": 6
+        },
+        {
+          "attrType": 33,
+          "attrValue": 0.609546218487396,
+          "modifierType": 6
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 2,
+          "ratios": []
+        },
+        {
+          "attrType": 33,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t4_suit_02_hand_01": {
+      "itemId": "item_unit_t4_suit_02_hand_01",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "E4AC08D971866686"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_defup_01",
+      "tierId": "T4",
+      "attrModifiers": [
+        {
+          "attrType": 3,
+          "attrValue": 92.47840429228,
+          "modifierType": 7
+        },
+        {
+          "attrType": 1,
+          "attrValue": 645.806918369124,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 3,
+          "ratios": []
+        },
+        {
+          "attrType": 1,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t4_suit_03_edc_01": {
+      "itemId": "item_unit_t4_suit_03_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "F0846957C35E94A7"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_hpup_01",
+      "tierId": "T4",
+      "attrModifiers": [
+        {
+          "attrType": 10,
+          "attrValue": 0.609546218487396,
+          "modifierType": 7
+        },
+        {
+          "attrType": 9,
+          "attrValue": 0.152386554621849,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 10,
+          "ratios": []
+        },
+        {
+          "attrType": 9,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t4_suit_03_hand_01": {
+      "itemId": "item_unit_t4_suit_03_hand_01",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "8A36940ECF96DC2D"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_hpup_01",
+      "tierId": "T4",
+      "attrModifiers": [
+        {
+          "attrType": 3,
+          "attrValue": 92.47840429228,
+          "modifierType": 7
+        },
+        {
+          "attrType": 1,
+          "attrValue": 645.806918369124,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 3,
+          "ratios": []
+        },
+        {
+          "attrType": 1,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t4_suit_04_body_01": {
+      "itemId": "item_unit_t4_suit_04_body_01",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "ECD1AB01E150BDE3"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_critmulti_01",
+      "tierId": "T4",
+      "attrModifiers": [
+        {
+          "attrType": 1,
+          "attrValue": 645.806918369124,
+          "modifierType": 7
+        },
+        {
+          "attrType": 10,
+          "attrValue": 0.609546218487396,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 1,
+          "ratios": []
+        },
+        {
+          "attrType": 10,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t4_suit_04_edc_01": {
+      "itemId": "item_unit_t4_suit_04_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "B70DE29E5F16216D"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_critmulti_01",
+      "tierId": "T4",
+      "attrModifiers": [
+        {
+          "attrType": 33,
+          "attrValue": 0.609546218487396,
+          "modifierType": 6
+        },
+        {
+          "attrType": 3,
+          "attrValue": 0.609546218487396,
+          "modifierType": 6
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 33,
+          "ratios": []
+        },
+        {
+          "attrType": 3,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t4_suit_05_body_01": {
+      "itemId": "item_unit_t4_suit_05_body_01",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "8D769456CF004985"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_cd_01",
+      "tierId": "T4",
+      "attrModifiers": [
+        {
+          "attrType": 1,
+          "attrValue": 645.806918369124,
+          "modifierType": 7
+        },
+        {
+          "attrType": 10,
+          "attrValue": 0.609546218487396,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 1,
+          "ratios": []
+        },
+        {
+          "attrType": 10,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t4_suit_05_edc_01": {
+      "itemId": "item_unit_t4_suit_05_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "09340E1D1E8E2910"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_cd_01",
+      "tierId": "T4",
+      "attrModifiers": [
+        {
+          "attrType": 2,
+          "attrValue": 0.304773109243698,
+          "modifierType": 6
+        },
+        {
+          "attrType": 33,
+          "attrValue": 0.609546218487396,
+          "modifierType": 6
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 2,
+          "ratios": []
+        },
+        {
+          "attrType": 33,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t4_suit_05_edc_02": {
+      "itemId": "item_unit_t4_suit_05_edc_02",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "7A7312E16580A23B"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_cd_01",
+      "tierId": "T4",
+      "attrModifiers": [
+        {
+          "attrType": 3,
+          "attrValue": 0.609546218487396,
+          "modifierType": 6
+        },
+        {
+          "attrType": 1,
+          "attrValue": 0.304773109243698,
+          "modifierType": 6
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 3,
+          "ratios": []
+        },
+        {
+          "attrType": 1,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t4_suit_05_hand_01": {
+      "itemId": "item_unit_t4_suit_05_hand_01",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "61FDC68D8BABDDE1"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_cd_01",
+      "tierId": "T4",
+      "attrModifiers": [
+        {
+          "attrType": 3,
+          "attrValue": 92.47840429228,
+          "modifierType": 7
+        },
+        {
+          "attrType": 10,
+          "attrValue": 0.609546218487396,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 3,
+          "ratios": []
+        },
+        {
+          "attrType": 10,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t4_suit_06_body_01": {
+      "itemId": "item_unit_t4_suit_06_body_01",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "BEFB8B27CC0D3925"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_knockdownup_01",
+      "tierId": "T4",
+      "attrModifiers": [
+        {
+          "attrType": 1,
+          "attrValue": 645.806918369124,
+          "modifierType": 7
+        },
+        {
+          "attrType": 33,
+          "attrValue": 92.47840429228,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 1,
+          "ratios": []
+        },
+        {
+          "attrType": 33,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t4_suit_06_edc_01": {
+      "itemId": "item_unit_t4_suit_06_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "E16222C6575DF55A"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_knockdownup_01",
+      "tierId": "T4",
+      "attrModifiers": [
+        {
+          "attrType": 1,
+          "attrValue": 0.304773109243698,
+          "modifierType": 6
+        },
+        {
+          "attrType": 9,
+          "attrValue": 0.152386554621849,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 1,
+          "ratios": []
+        },
+        {
+          "attrType": 9,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t4_suit_06_edc_02": {
+      "itemId": "item_unit_t4_suit_06_edc_02",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "E1CF8C2C6F19BA32"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_knockdownup_01",
+      "tierId": "T4",
+      "attrModifiers": [
+        {
+          "attrType": 3,
+          "attrValue": 0.609546218487396,
+          "modifierType": 6
+        },
+        {
+          "attrType": 10,
+          "attrValue": 0.609546218487396,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 3,
+          "ratios": []
+        },
+        {
+          "attrType": 10,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t4_suit_06_hand_01": {
+      "itemId": "item_unit_t4_suit_06_hand_01",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "824E39FE3F89878C"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_knockdownup_01",
+      "tierId": "T4",
+      "attrModifiers": [
+        {
+          "attrType": 3,
+          "attrValue": 92.47840429228,
+          "modifierType": 7
+        },
+        {
+          "attrType": 33,
+          "attrValue": 92.47840429228,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 3,
+          "ratios": []
+        },
+        {
+          "attrType": 33,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t4_suit_07_body_01": {
+      "itemId": "item_unit_t4_suit_07_body_01",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "2E90FF48196B623D"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_receivehealup_01",
+      "tierId": "T4",
+      "attrModifiers": [
+        {
+          "attrType": 1,
+          "attrValue": 645.806918369124,
+          "modifierType": 7
+        },
+        {
+          "attrType": 33,
+          "attrValue": 92.47840429228,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 1,
+          "ratios": []
+        },
+        {
+          "attrType": 33,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t4_suit_07_edc_01": {
+      "itemId": "item_unit_t4_suit_07_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "0F2CC00DC4D9A4CB"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_receivehealup_01",
+      "tierId": "T4",
+      "attrModifiers": [
+        {
+          "attrType": 9,
+          "attrValue": 0.152386554621849,
+          "modifierType": 7
+        },
+        {
+          "attrType": 10,
+          "attrValue": 0.609546218487396,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 9,
+          "ratios": []
+        },
+        {
+          "attrType": 10,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t4_suit_07_edc_02": {
+      "itemId": "item_unit_t4_suit_07_edc_02",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "F406FEDBC219C9F1"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_receivehealup_01",
+      "tierId": "T4",
+      "attrModifiers": [
+        {
+          "attrType": 33,
+          "attrValue": 0.609546218487396,
+          "modifierType": 6
+        },
+        {
+          "attrType": 2,
+          "attrValue": 0.304773109243698,
+          "modifierType": 6
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 33,
+          "ratios": []
+        },
+        {
+          "attrType": 2,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t4_suit_07_hand_01": {
+      "itemId": "item_unit_t4_suit_07_hand_01",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "2BC638E0F9537AC0"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_receivehealup_01",
+      "tierId": "T4",
+      "attrModifiers": [
+        {
+          "attrType": 3,
+          "attrValue": 92.47840429228,
+          "modifierType": 7
+        },
+        {
+          "attrType": 9,
+          "attrValue": 0.152386554621849,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 3,
+          "ratios": []
+        },
+        {
+          "attrType": 9,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t4_suit_08_body_01": {
+      "itemId": "item_unit_t4_suit_08_body_01",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "6A8BA69175923541"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_pulseup_01",
+      "tierId": "T4",
+      "attrModifiers": [
+        {
+          "attrType": 1,
+          "attrValue": 645.806918369124,
+          "modifierType": 7
+        },
+        {
+          "attrType": 3,
+          "attrValue": 92.47840429228,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 1,
+          "ratios": []
+        },
+        {
+          "attrType": 3,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t4_suit_08_body_02": {
+      "itemId": "item_unit_t4_suit_08_body_02",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "7332F28F71BBDF01"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_pulseup_01",
+      "tierId": "T4",
+      "attrModifiers": [
+        {
+          "attrType": 1,
+          "attrValue": 645.806918369124,
+          "modifierType": 7
+        },
+        {
+          "attrType": 33,
+          "attrValue": 92.47840429228,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 1,
+          "ratios": []
+        },
+        {
+          "attrType": 33,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t4_suit_08_edc_01": {
+      "itemId": "item_unit_t4_suit_08_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "5A29A3707E808F31"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_pulseup_01",
+      "tierId": "T4",
+      "attrModifiers": [
+        {
+          "attrType": 3,
+          "attrValue": 0.609546218487396,
+          "modifierType": 6
+        },
+        {
+          "attrType": 2,
+          "attrValue": 0.304773109243698,
+          "modifierType": 6
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 3,
+          "ratios": []
+        },
+        {
+          "attrType": 2,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t4_suit_08_edc_02": {
+      "itemId": "item_unit_t4_suit_08_edc_02",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "511F1CDA86B6D936"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_pulseup_01",
+      "tierId": "T4",
+      "attrModifiers": [
+        {
+          "attrType": 10,
+          "attrValue": 0.609546218487396,
+          "modifierType": 7
+        },
+        {
+          "attrType": 9,
+          "attrValue": 0.152386554621849,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 10,
+          "ratios": []
+        },
+        {
+          "attrType": 9,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t4_suit_09_edc_01": {
+      "itemId": "item_unit_t4_suit_09_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "8541D0C055A427F9"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_fireup_01",
+      "tierId": "T4",
+      "attrModifiers": [
+        {
+          "attrType": 9,
+          "attrValue": 0.152386554621849,
+          "modifierType": 7
+        },
+        {
+          "attrType": 10,
+          "attrValue": 0.609546218487396,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 9,
+          "ratios": []
+        },
+        {
+          "attrType": 10,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t4_suit_09_edc_02": {
+      "itemId": "item_unit_t4_suit_09_edc_02",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "6BF825D3518A5720"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_fireup_01",
+      "tierId": "T4",
+      "attrModifiers": [
+        {
+          "attrType": 3,
+          "attrValue": 0.609546218487396,
+          "modifierType": 6
+        },
+        {
+          "attrType": 1,
+          "attrValue": 0.304773109243698,
+          "modifierType": 6
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 3,
+          "ratios": []
+        },
+        {
+          "attrType": 1,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t4_suit_09_hand_01": {
+      "itemId": "item_unit_t4_suit_09_hand_01",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "F8C3893CAC911203"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_fireup_01",
+      "tierId": "T4",
+      "attrModifiers": [
+        {
+          "attrType": 3,
+          "attrValue": 92.47840429228,
+          "modifierType": 7
+        },
+        {
+          "attrType": 2,
+          "attrValue": 150.688280952795,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 3,
+          "ratios": []
+        },
+        {
+          "attrType": 2,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t4_suit_09_hand_02": {
+      "itemId": "item_unit_t4_suit_09_hand_02",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "A3497304768B4E0F"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_fireup_01",
+      "tierId": "T4",
+      "attrModifiers": [
+        {
+          "attrType": 3,
+          "attrValue": 92.47840429228,
+          "modifierType": 7
+        },
+        {
+          "attrType": 9,
+          "attrValue": 0.152386554621849,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 3,
+          "ratios": []
+        },
+        {
+          "attrType": 9,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t4_suit_10_body_01": {
+      "itemId": "item_unit_t4_suit_10_body_01",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "00391D7A8B29EEE6"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_crystup_01",
+      "tierId": "T4",
+      "attrModifiers": [
+        {
+          "attrType": 1,
+          "attrValue": 645.806918369124,
+          "modifierType": 7
+        },
+        {
+          "attrType": 33,
+          "attrValue": 92.47840429228,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 1,
+          "ratios": []
+        },
+        {
+          "attrType": 33,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t4_suit_10_body_02": {
+      "itemId": "item_unit_t4_suit_10_body_02",
+      "partType": 0,
+      "name": {
+        "text": "",
+        "id": "C2A051540D61C6A0"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_crystup_01",
+      "tierId": "T4",
+      "attrModifiers": [
+        {
+          "attrType": 1,
+          "attrValue": 645.806918369124,
+          "modifierType": 7
+        },
+        {
+          "attrType": 9,
+          "attrValue": 0.152386554621849,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 1,
+          "ratios": []
+        },
+        {
+          "attrType": 9,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t4_suit_10_edc_01": {
+      "itemId": "item_unit_t4_suit_10_edc_01",
+      "partType": 2,
+      "name": {
+        "text": "",
+        "id": "04C8A4B569D738DF"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_crystup_01",
+      "tierId": "T4",
+      "attrModifiers": [
+        {
+          "attrType": 10,
+          "attrValue": 0.609546218487396,
+          "modifierType": 7
+        },
+        {
+          "attrType": 3,
+          "attrValue": 0.609546218487396,
+          "modifierType": 6
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 10,
+          "ratios": []
+        },
+        {
+          "attrType": 3,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t4_suit_10_hand_01": {
+      "itemId": "item_unit_t4_suit_10_hand_01",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "B46C9CFF80639284"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_crystup_01",
+      "tierId": "T4",
+      "attrModifiers": [
+        {
+          "attrType": 3,
+          "attrValue": 92.47840429228,
+          "modifierType": 7
+        },
+        {
+          "attrType": 10,
+          "attrValue": 0.609546218487396,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 3,
+          "ratios": []
+        },
+        {
+          "attrType": 10,
+          "ratios": []
+        }
+      ]
+    },
+    "item_unit_t4_suit_10_hand_02": {
+      "itemId": "item_unit_t4_suit_10_hand_02",
+      "partType": 1,
+      "name": {
+        "text": "",
+        "id": "D59C8562DB4705C5"
+      },
+      "attachSlotNum": 0,
+      "suitID": "suit_crystup_01",
+      "tierId": "T4",
+      "attrModifiers": [
+        {
+          "attrType": 3,
+          "attrValue": 92.47840429228,
+          "modifierType": 7
+        },
+        {
+          "attrType": 2,
+          "attrValue": 150.688280952795,
+          "modifierType": 7
+        }
+      ],
+      "enhanceInfos": [
+        {
+          "attrType": 3,
+          "ratios": []
+        },
+        {
+          "attrType": 2,
+          "ratios": []
+        }
+      ]
+    }
+  },
+  "affixTable": {},
+  "affixGettingTable": {},
+  "equipSuitTable": {
+    "suit_atkup_01": {
+      "list": [
+        {
+          "suitID": "suit_atkup_01",
+          "equipCnt": 2,
+          "desc": {
+            "text": "",
+            "id": "A20EB3D0041604F5"
+          },
+          "suitName": {
+            "text": "",
+            "id": "4E44E1C16455416D"
+          },
+          "skillID": "passive_equipsuit_atkup_01",
+          "skillLv": 1,
+          "suitIcon": "icon_suit_atkup"
+        },
+        {
+          "suitID": "suit_atkup_01",
+          "equipCnt": 3,
+          "desc": {
+            "text": "",
+            "id": "2029111C8CD715D3"
+          },
+          "suitName": {
+            "text": "",
+            "id": "FD9026C4A4FC0BAC"
+          },
+          "skillID": "passive_equipsuit_atkup_01",
+          "skillLv": 2,
+          "suitIcon": "icon_suit_atkup"
+        }
+      ],
+      "equipList": [
+        "item_unit_t1_suit_01_hand_01",
+        "item_unit_t1_suit_01_edc_01",
+        "item_unit_t2_suit_01_body_01",
+        "item_unit_t2_suit_01_edc_01",
+        "item_unit_t3_suit_01_hand_01",
+        "item_unit_t4_suit_01_body_01",
+        "item_unit_t4_suit_01_edc_01",
+        "item_unit_t4_suit_01_edc_02"
+      ]
+    },
+    "suit_cd_01": {
+      "list": [
+        {
+          "suitID": "suit_cd_01",
+          "equipCnt": 2,
+          "desc": {
+            "text": "",
+            "id": "3C7B50B00811F9E9"
+          },
+          "suitName": {
+            "text": "",
+            "id": "5217F03FA42B5861"
+          },
+          "skillID": "passive_equipsuit_cd_01",
+          "skillLv": 1,
+          "suitIcon": "icon_suit_critmulti"
+        },
+        {
+          "suitID": "suit_cd_01",
+          "equipCnt": 3,
+          "desc": {
+            "text": "",
+            "id": "0ADF2AB121804DF1"
+          },
+          "suitName": {
+            "text": "",
+            "id": "BB1B9CD88263A197"
+          },
+          "skillID": "passive_equipsuit_cd_01",
+          "skillLv": 2,
+          "suitIcon": "icon_suit_critmulti"
+        },
+        {
+          "suitID": "suit_cd_01",
+          "equipCnt": 4,
+          "desc": {
+            "text": "",
+            "id": "4C629ECAB97921F9"
+          },
+          "suitName": {
+            "text": "",
+            "id": "2FD19ABEE5380137"
+          },
+          "skillID": "passive_equipsuit_cd_01",
+          "skillLv": 3,
+          "suitIcon": "icon_suit_critmulti"
+        }
+      ],
+      "equipList": [
+        "item_unit_t2_suit_05_hand_01",
+        "item_unit_t2_suit_05_edc_01",
+        "item_unit_t3_suit_05_body_01",
+        "item_unit_t3_suit_05_edc_01",
+        "item_unit_t4_suit_05_hand_01",
+        "item_unit_t4_suit_05_body_01",
+        "item_unit_t4_suit_05_edc_01",
+        "item_unit_t4_suit_05_edc_02"
+      ]
+    },
+    "suit_critmulti_01": {
+      "list": [
+        {
+          "suitID": "suit_critmulti_01",
+          "equipCnt": 2,
+          "desc": {
+            "text": "",
+            "id": "97525722E3286A77"
+          },
+          "suitName": {
+            "text": "",
+            "id": "0965538E6CA8B99C"
+          },
+          "skillID": "passive_equipsuit_critmulti_01",
+          "skillLv": 1,
+          "suitIcon": "icon_suit_penup"
+        },
+        {
+          "suitID": "suit_critmulti_01",
+          "equipCnt": 3,
+          "desc": {
+            "text": "",
+            "id": "8038306BFEA02219"
+          },
+          "suitName": {
+            "text": "",
+            "id": "7A123C47D889FC94"
+          },
+          "skillID": "passive_equipsuit_critmulti_01",
+          "skillLv": 2,
+          "suitIcon": "icon_suit_penup"
+        },
+        {
+          "suitID": "suit_critmulti_01",
+          "equipCnt": 4,
+          "desc": {
+            "text": "",
+            "id": "E47B573AB7EF7566"
+          },
+          "suitName": {
+            "text": "",
+            "id": "FE44991F79E800A2"
+          },
+          "skillID": "passive_equipsuit_critmulti_01",
+          "skillLv": 3,
+          "suitIcon": "icon_suit_penup"
+        }
+      ],
+      "equipList": [
+        "item_unit_t1_suit_04_edc_01",
+        "item_unit_t2_suit_04_hand_01",
+        "item_unit_t2_suit_04_body_01",
+        "item_unit_t3_suit_04_edc_01",
+        "item_unit_t3_suit_04_hand_01",
+        "item_unit_t4_suit_04_body_01",
+        "item_unit_t4_suit_04_edc_01"
+      ]
+    },
+    "suit_crystup_01": {
+      "list": [
+        {
+          "suitID": "suit_crystup_01",
+          "equipCnt": 2,
+          "desc": {
+            "text": "",
+            "id": "19DF5ECD794E57B4"
+          },
+          "suitName": {
+            "text": "",
+            "id": "3FE79EAB4C0AB3A9"
+          },
+          "skillID": "passive_equipsuit_crystup_01",
+          "skillLv": 1,
+          "suitIcon": "icon_suit_crystup"
+        },
+        {
+          "suitID": "suit_crystup_01",
+          "equipCnt": 3,
+          "desc": {
+            "text": "",
+            "id": "392765004F2A259C"
+          },
+          "suitName": {
+            "text": "",
+            "id": "CCFFB5F1FCF3A9BD"
+          },
+          "skillID": "passive_equipsuit_crystup_01",
+          "skillLv": 2,
+          "suitIcon": "icon_suit_crystup"
+        },
+        {
+          "suitID": "suit_crystup_01",
+          "equipCnt": 4,
+          "desc": {
+            "text": "",
+            "id": "C9E5B11627A7BFE9"
+          },
+          "suitName": {
+            "text": "",
+            "id": "7D270C54B60122DD"
+          },
+          "skillID": "passive_equipsuit_crystup_01",
+          "skillLv": 3,
+          "suitIcon": "icon_suit_crystup"
+        }
+      ],
+      "equipList": [
+        "item_unit_t3_suit_10_edc_01",
+        "item_unit_t3_suit_10_edc_02",
+        "item_unit_t4_suit_10_hand_01",
+        "item_unit_t4_suit_10_hand_02",
+        "item_unit_t4_suit_10_body_01",
+        "item_unit_t4_suit_10_body_02",
+        "item_unit_t4_suit_10_edc_01"
+      ]
+    },
+    "suit_defup_01": {
+      "list": [
+        {
+          "suitID": "suit_defup_01",
+          "equipCnt": 2,
+          "desc": {
+            "text": "",
+            "id": "44A7F7B5856D889C"
+          },
+          "suitName": {
+            "text": "",
+            "id": "DDECD1532AEED548"
+          },
+          "skillID": "passive_equipsuit_defup_01",
+          "skillLv": 1,
+          "suitIcon": "icon_suit_defup"
+        },
+        {
+          "suitID": "suit_defup_01",
+          "equipCnt": 3,
+          "desc": {
+            "text": "",
+            "id": "7534F2FDB60E9B8D"
+          },
+          "suitName": {
+            "text": "",
+            "id": "C284D1CA198030C1"
+          },
+          "skillID": "passive_equipsuit_defup_01",
+          "skillLv": 2,
+          "suitIcon": "icon_suit_defup"
+        }
+      ],
+      "equipList": [
+        "item_unit_t1_suit_02_hand_01",
+        "item_unit_t1_suit_02_body_01",
+        "item_unit_t2_suit_02_edc_01",
+        "item_unit_t2_suit_02_hand_01",
+        "item_unit_t3_suit_02_body_01",
+        "item_unit_t4_suit_02_hand_01",
+        "item_unit_t4_suit_02_edc_01"
+      ]
+    },
+    "suit_fireup_01": {
+      "list": [
+        {
+          "suitID": "suit_fireup_01",
+          "equipCnt": 2,
+          "desc": {
+            "text": "",
+            "id": "3D1F87661FEAB8DF"
+          },
+          "suitName": {
+            "text": "",
+            "id": "0E101B1AFF034BCB"
+          },
+          "skillID": "passive_equipsuit_fireup_01",
+          "skillLv": 1,
+          "suitIcon": "icon_suit_fireup"
+        },
+        {
+          "suitID": "suit_fireup_01",
+          "equipCnt": 3,
+          "desc": {
+            "text": "",
+            "id": "1266C416FA4A0E11"
+          },
+          "suitName": {
+            "text": "",
+            "id": "714822701A69963F"
+          },
+          "skillID": "passive_equipsuit_fireup_01",
+          "skillLv": 2,
+          "suitIcon": "icon_suit_fireup"
+        },
+        {
+          "suitID": "suit_fireup_01",
+          "equipCnt": 4,
+          "desc": {
+            "text": "",
+            "id": "F67B5D22D4F5C133"
+          },
+          "suitName": {
+            "text": "",
+            "id": "DA95991FAD9A982F"
+          },
+          "skillID": "passive_equipsuit_fireup_01",
+          "skillLv": 3,
+          "suitIcon": "icon_suit_fireup"
+        }
+      ],
+      "equipList": [
+        "item_unit_t3_suit_09_body_01",
+        "item_unit_t3_suit_09_edc_01",
+        "item_unit_t4_suit_09_hand_01",
+        "item_unit_t4_suit_09_hand_02",
+        "item_unit_t4_suit_09_edc_01",
+        "item_unit_t4_suit_09_edc_02"
+      ]
+    },
+    "suit_hpup_01": {
+      "list": [
+        {
+          "suitID": "suit_hpup_01",
+          "equipCnt": 2,
+          "desc": {
+            "text": "",
+            "id": "1ACDD4FED32A30D0"
+          },
+          "suitName": {
+            "text": "",
+            "id": "7C1AE5D877C0CB00"
+          },
+          "skillID": "passive_equipsuit_maxhpup_01",
+          "skillLv": 1,
+          "suitIcon": "icon_suit_hpup"
+        },
+        {
+          "suitID": "suit_hpup_01",
+          "equipCnt": 3,
+          "desc": {
+            "text": "",
+            "id": "1A6D47A7870F370C"
+          },
+          "suitName": {
+            "text": "",
+            "id": "01DC4CECC612ACB2"
+          },
+          "skillID": "passive_equipsuit_maxhpup_01",
+          "skillLv": 2,
+          "suitIcon": "icon_suit_hpup"
+        }
+      ],
+      "equipList": [
+        "item_unit_t1_suit_03_body_01",
+        "item_unit_t1_suit_03_edc_01",
+        "item_unit_t2_suit_03_hand_01",
+        "item_unit_t2_suit_03_edc_01",
+        "item_unit_t3_suit_03_body_01",
+        "item_unit_t4_suit_03_hand_01",
+        "item_unit_t4_suit_03_edc_01"
+      ]
+    },
+    "suit_knockdownup_01": {
+      "list": [
+        {
+          "suitID": "suit_knockdownup_01",
+          "equipCnt": 2,
+          "desc": {
+            "text": "",
+            "id": "DDF2CF01641A3308"
+          },
+          "suitName": {
+            "text": "",
+            "id": "3000547D25969EEB"
+          },
+          "skillID": "passive_equipsuit_knockdownup_01",
+          "skillLv": 1,
+          "suitIcon": "icon_suit_knockdownup"
+        },
+        {
+          "suitID": "suit_knockdownup_01",
+          "equipCnt": 3,
+          "desc": {
+            "text": "",
+            "id": "72FDFFB5726196F0"
+          },
+          "suitName": {
+            "text": "",
+            "id": "1B969FBE32E4FD24"
+          },
+          "skillID": "passive_equipsuit_knockdownup_01",
+          "skillLv": 2,
+          "suitIcon": "icon_suit_knockdownup"
+        },
+        {
+          "suitID": "suit_knockdownup_01",
+          "equipCnt": 4,
+          "desc": {
+            "text": "",
+            "id": "23CCE1D303029A26"
+          },
+          "suitName": {
+            "text": "",
+            "id": "CF14353C02BCB877"
+          },
+          "skillID": "passive_equipsuit_knockdownup_01",
+          "skillLv": 3,
+          "suitIcon": "icon_suit_knockdownup"
+        }
+      ],
+      "equipList": [
+        "item_unit_t2_suit_06_body_01",
+        "item_unit_t2_suit_06_edc_01",
+        "item_unit_t3_suit_06_hand_01",
+        "item_unit_t3_suit_06_edc_01",
+        "item_unit_t4_suit_06_hand_01",
+        "item_unit_t4_suit_06_body_01",
+        "item_unit_t4_suit_06_edc_01",
+        "item_unit_t4_suit_06_edc_02"
+      ]
+    },
+    "suit_pulseup_01": {
+      "list": [
+        {
+          "suitID": "suit_pulseup_01",
+          "equipCnt": 2,
+          "desc": {
+            "text": "",
+            "id": "2B2DAC0797DAFF4D"
+          },
+          "suitName": {
+            "text": "",
+            "id": "168B01C848D912F3"
+          },
+          "skillID": "passive_equipsuit_pulseup_01",
+          "skillLv": 1,
+          "suitIcon": "icon_suit_pulseup"
+        },
+        {
+          "suitID": "suit_pulseup_01",
+          "equipCnt": 3,
+          "desc": {
+            "text": "",
+            "id": "271CA13198FD4AA9"
+          },
+          "suitName": {
+            "text": "",
+            "id": "6DDF719BA6F375C8"
+          },
+          "skillID": "passive_equipsuit_pulseup_01",
+          "skillLv": 2,
+          "suitIcon": "icon_suit_pulseup"
+        },
+        {
+          "suitID": "suit_pulseup_01",
+          "equipCnt": 4,
+          "desc": {
+            "text": "",
+            "id": "C0336AAD7287FC9B"
+          },
+          "suitName": {
+            "text": "",
+            "id": "72AC969059C0463A"
+          },
+          "skillID": "passive_equipsuit_pulseup_01",
+          "skillLv": 3,
+          "suitIcon": "icon_suit_pulseup"
+        }
+      ],
+      "equipList": [
+        "item_unit_t3_suit_08_hand_01",
+        "item_unit_t3_suit_08_edc_01",
+        "item_unit_t4_suit_08_body_01",
+        "item_unit_t4_suit_08_body_02",
+        "item_unit_t4_suit_08_edc_01",
+        "item_unit_t4_suit_08_edc_02"
+      ]
+    },
+    "suit_receivehealup_01": {
+      "list": [
+        {
+          "suitID": "suit_receivehealup_01",
+          "equipCnt": 2,
+          "desc": {
+            "text": "",
+            "id": "0031EC76F2319367"
+          },
+          "suitName": {
+            "text": "",
+            "id": "959C2E7BEF8A136B"
+          },
+          "skillID": "passive_equipsuit_receivehealup_01",
+          "skillLv": 1,
+          "suitIcon": "icon_suit_receivehealup"
+        },
+        {
+          "suitID": "suit_receivehealup_01",
+          "equipCnt": 4,
+          "desc": {
+            "text": "",
+            "id": "D98369ECF158C9FE"
+          },
+          "suitName": {
+            "text": "",
+            "id": "EE10A82821756CBD"
+          },
+          "skillID": "passive_equipsuit_receivehealup_01",
+          "skillLv": 2,
+          "suitIcon": "icon_suit_receivehealup"
+        }
+      ],
+      "equipList": [
+        "item_unit_t2_suit_07_edc_01",
+        "item_unit_t3_suit_07_hand_01",
+        "item_unit_t3_suit_07_body_01",
+        "item_unit_t4_suit_07_hand_01",
+        "item_unit_t4_suit_07_body_01",
+        "item_unit_t4_suit_07_edc_01",
+        "item_unit_t4_suit_07_edc_02"
+      ]
+    }
+  },
+  "equipTierTable": {
+    "T0.5": {
+      "tierID": "T0.5",
+      "tierDesc": "T0.5",
+      "minWearLv": 1
+    },
+    "T1": {
+      "tierID": "T1",
+      "tierDesc": "T1",
+      "minWearLv": 10
+    },
+    "T2": {
+      "tierID": "T2",
+      "tierDesc": "T2",
+      "minWearLv": 20
+    },
+    "T3": {
+      "tierID": "T3",
+      "tierDesc": "T3",
+      "minWearLv": 30
+    },
+    "T4": {
+      "tierID": "T4",
+      "tierDesc": "T4",
+      "minWearLv": 40
+    }
+  }
+}
