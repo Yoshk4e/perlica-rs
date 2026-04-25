@@ -2,8 +2,9 @@ use crate::error::{LogicError, Result};
 use common::time::now_ms;
 use config::BeyondAssets;
 use config::item::{CraftShowingType, ItemDepotType, ItemKind};
+use config::tables::equip::AttrModifier;
 use perlica_proto::{
-    EquipData, GemData, ItemInst, ScItemBagSync, ScWeaponAddExp, ScWeaponAttachGem,
+    EquipAttr, EquipData, GemData, ItemInst, ScItemBagSync, ScWeaponAddExp, ScWeaponAttachGem,
     ScWeaponBreakthrough, ScWeaponDetachGem, ScWeaponPuton, ScdItemBag, ScdItemDepot,
     ScdItemDepotModify, ScdItemGrid, ScdItemUseBlackboard, WeaponData, item_inst::InstImpl,
 };
@@ -884,6 +885,7 @@ pub struct EquipInstance {
     pub template_id: String,
     /// `EquipHead`, `EquipBody`, or `EquipRing`.
     pub slot: CraftShowingType,
+    pub attrs: Vec<EquipAttr>,
     pub equip_char_id: u64,
     pub is_lock: bool,
     pub is_new: bool,
@@ -895,12 +897,14 @@ impl EquipInstance {
         inst_id: EquipInstId,
         template_id: String,
         slot: CraftShowingType,
+        attrs: Vec<EquipAttr>,
         own_time: i64,
     ) -> Self {
         Self {
             inst_id,
             template_id,
             slot,
+            attrs,
             equip_char_id: 0,
             is_lock: false,
             is_new: true,
@@ -927,7 +931,7 @@ impl From<&EquipInstance> for ScdItemGrid {
                     equipid: value.inst_id.as_u64(),
                     templateid: value.template_id.clone(),
                     equip_char_id: value.equip_char_id,
-                    attrs: vec![],
+                    attrs: value.attrs.clone(),
                 })),
             }),
         }
@@ -962,10 +966,11 @@ impl EquipDepot {
         &mut self,
         template_id: String,
         slot: CraftShowingType,
+        attrs: Vec<EquipAttr>,
         own_time: i64,
     ) -> EquipInstId {
         let inst_id = self.alloc_inst_id();
-        let piece = EquipInstance::new(inst_id, template_id, slot, own_time);
+        let piece = EquipInstance::new(inst_id, template_id, slot, attrs, own_time);
         debug!(
             "Adding equip: inst_id={}, template_id={}, slot={:?}",
             inst_id, piece.template_id, piece.slot
@@ -1000,7 +1005,7 @@ impl EquipDepot {
         &mut self,
         piece_inst_id: EquipInstId,
         char_id: u64,
-    ) -> Result<Option<EquipInstId>> {
+    ) -> Result<(Option<EquipInstId>, u64)> {
         let p = self
             .pieces
             .get(&piece_inst_id)
@@ -1011,6 +1016,8 @@ impl EquipDepot {
             ));
         }
         let slot = p.slot;
+        let prev_owner = p.equip_char_id;
+
         let prev = self
             .equipped_by_char
             .get(&char_id)
@@ -1025,7 +1032,6 @@ impl EquipDepot {
                 .or_default()
                 .remove(&slot);
         }
-        let prev_owner = self.pieces.get(&piece_inst_id).unwrap().equip_char_id;
         if prev_owner != 0 {
             self.equipped_by_char
                 .entry(prev_owner)
@@ -1038,11 +1044,8 @@ impl EquipDepot {
             .entry(char_id)
             .or_default()
             .insert(slot, piece_inst_id);
-        info!(
-            "Equipped piece {} (slot {:?}) to char {}",
-            piece_inst_id, slot, char_id
-        );
-        Ok(prev)
+
+        Ok((prev, prev_owner))
     }
 
     pub fn unequip(&mut self, id: EquipInstId) -> Result<bool> {
@@ -1112,6 +1115,20 @@ impl EquipDepot {
                 slots
                     .iter()
                     .filter_map(|(&slot, &id)| self.pieces.get(&id).map(move |p| (slot, p)))
+            })
+    }
+    pub fn compute_suitinfo(&self, char_id: u64, assets: &BeyondAssets) -> HashMap<String, i32> {
+        self.equipped_slots(char_id)
+            .filter_map(|(_, inst)| {
+                assets
+                    .equipment
+                    .get_basic(&inst.template_id)
+                    .map(|cfg| &cfg.suit_id)
+                    .filter(|id| !id.is_empty())
+            })
+            .fold(HashMap::new(), |mut map, suit_id| {
+                *map.entry(suit_id.clone()).or_insert(0) += 1;
+                map
             })
     }
 
@@ -1254,6 +1271,19 @@ impl From<&StackableDepot> for ScdItemDepot {
     }
 }
 
+#[derive(Clone, Copy)]
+pub struct AttrList<'a>(&'a AttrModifier);
+impl<'a> From<AttrList<'a>> for EquipAttr {
+    fn from(val: AttrList) -> Self {
+        let attrs = val.0;
+        EquipAttr {
+            attr_type: attrs.attr_type,
+            modifier_type: attrs.modifier_type,
+            modifier_value: attrs.attr_value,
+        }
+    }
+}
+
 const STARTER_SPECIAL_COUNT: u32 = 999;
 const STARTER_MISSION_COUNT: u32 = 999;
 const STARTER_FACTORY_COUNT: u32 = 9_999;
@@ -1301,7 +1331,17 @@ impl ItemManager {
                 ItemKind::Equip { slot } => *slot,
                 _ => CraftShowingType::None,
             };
-            mgr.equips.add_equip(cfg.id.clone(), slot, own_time);
+            let attrs: Vec<EquipAttr> = assets
+                .equipment
+                .get_equip(&cfg.id)
+                .map(|e| {
+                    e.attr_modifiers
+                        .iter()
+                        .map(|a| AttrList(a).into())
+                        .collect()
+                })
+                .unwrap_or_default();
+            mgr.equips.add_equip(cfg.id.clone(), slot, attrs, own_time);
         }
         for cfg in assets.items.iter_by_depot(ItemDepotType::SpecialItem) {
             mgr.special_items.add(&cfg.id, STARTER_SPECIAL_COUNT);
@@ -1526,6 +1566,7 @@ mod tests {
         let id = d.add_equip(
             "item_unit_t1_parts_body_01".into(),
             CraftShowingType::EquipBody,
+            vec![],
             0,
         );
         let grid: ScdItemGrid = (&d.pieces[&id]).into();
@@ -1534,6 +1575,11 @@ mod tests {
                 assert_eq!(e.equipid, id.as_u64());
                 assert_eq!(e.templateid, "item_unit_t1_parts_body_01");
                 assert_eq!(e.equip_char_id, 0);
+                assert!(
+                    !e.attrs.is_empty(),
+                    "Attributes should be populated from config"
+                );
+                assert!(e.attrs[0].modifier_value > 0.0);
             }
             other => panic!("Expected Equip variant, got {:?}", other),
         }
@@ -1542,7 +1588,7 @@ mod tests {
     #[test]
     fn equip_char_id_reflects_equipped_state() {
         let mut d = EquipDepot::new();
-        let id = d.add_equip("item_body".into(), CraftShowingType::EquipBody, 0);
+        let id = d.add_equip("item_body".into(), CraftShowingType::EquipBody, vec![], 0);
         d.equip(id, 1001).unwrap();
         let grid: ScdItemGrid = (&d.pieces[&id]).into();
         match grid.inst.unwrap().inst_impl.unwrap() {
@@ -1554,16 +1600,34 @@ mod tests {
     #[test]
     fn equip_slot_displacement() {
         let mut d = EquipDepot::new();
-        let a = d.add_equip("body_a".into(), CraftShowingType::EquipBody, 0);
-        let b = d.add_equip("body_b".into(), CraftShowingType::EquipBody, 0);
+        let a = d.add_equip("body_a".into(), CraftShowingType::EquipBody, vec![], 0);
+        let b = d.add_equip("body_b".into(), CraftShowingType::EquipBody, vec![], 0);
         d.equip(a, 1001).unwrap();
-        let displaced = d.equip(b, 1001).unwrap();
+        let (displaced, prev_owner) = d.equip(b, 1001).unwrap();
         assert_eq!(displaced, Some(a));
+        assert_eq!(prev_owner, 0);
         assert_eq!(
             d.get_in_slot(1001, CraftShowingType::EquipBody)
                 .unwrap()
                 .inst_id,
             b
+        );
+    }
+
+    #[test]
+    fn equip_transfer_between_chars() {
+        let mut d = EquipDepot::new();
+        let a = d.add_equip("body_a".into(), CraftShowingType::EquipBody, vec![], 0);
+        d.equip(a, 1001).unwrap();
+        let (displaced, prev_owner) = d.equip(a, 1002).unwrap();
+        assert_eq!(displaced, None);
+        assert_eq!(prev_owner, 1001);
+        assert!(d.get_in_slot(1001, CraftShowingType::EquipBody).is_none());
+        assert_eq!(
+            d.get_in_slot(1002, CraftShowingType::EquipBody)
+                .unwrap()
+                .inst_id,
+            a
         );
     }
 
