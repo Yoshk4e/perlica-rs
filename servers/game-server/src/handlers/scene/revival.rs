@@ -19,10 +19,7 @@ pub async fn on_cs_scene_kill_monster(ctx: &mut NetContext<'_>, req: CsSceneKill
         .remove(req.id)
         .filter(|e| e.kind == perlica_logic::entity::EntityKind::Enemy)
     {
-        ctx.player
-            .scene
-            .dead_entities
-            .insert(entity.level_logic_id, common::time::now_ms());
+        ctx.player.scene.on_entity_killed(entity.level_logic_id);
     }
 
     let msg = ctx

@@ -91,7 +91,17 @@ pub async fn on_cs_scene_destroy_entity(ctx: &mut NetContext<'_>, req: CsSceneDe
     );
 
     for id in req.id_list {
-        ctx.player.entities.remove(id);
+        if let Some(removed) = ctx.player.entities.remove(id) {
+            // Only enemies record a respawn cooldown.  Interactives /
+            // NPCs just need their interest entry cleared.
+            if removed.kind == perlica_logic::entity::EntityKind::Enemy {
+                ctx.player.scene.on_entity_killed(removed.level_logic_id);
+            } else {
+                // Non-enemy: skip the dead_entities cooldown but still
+                // flush the interest entry so the cap stays accurate.
+                ctx.player.scene.on_entity_despawned(removed.level_logic_id);
+            }
+        }
 
         let msg = ctx
             .player

@@ -15,6 +15,24 @@
 #### `lib/logic/src/item.rs`
 - `EquipDepot::compute_suitinfo()` for set-bonus computation.
 
+#### `lib/logic/src/interest.rs` (new module)
+- Multi-tiered entity replication / interest manager.  Four concentric zones (Immediate / Combat / Distant / Background) at 40 / 80 / 150 / 250 wu enter radii, each with its own check-frequency (16 / 50 / 160 / 500 ms) and hysteresis-based leave radii (now +60 wu, was +25).
+- `StreamBucket` enum (`Enemy` / `Interactive` / `Npc`) with per-bucket max-zone, per-tick spawn-budget, and concurrent-cap config:
+    - `ENEMY_MAX_ZONE = Distant`, `ENEMY_SPAWN_BUDGET_PER_TICK = 6`, `ENEMY_CONCURRENT_CAP = 64`.
+    - `INTERACTIVE_MAX_ZONE = Combat`, `INTERACTIVE_SPAWN_BUDGET_PER_TICK = 8`, `INTERACTIVE_CONCURRENT_CAP = 80`.
+    - `NPC_MAX_ZONE = Combat`, `NPC_SPAWN_BUDGET_PER_TICK = 4`, `NPC_CONCURRENT_CAP = 16`.
+- Adaptive query radius: `max_due_radius_for(max_zone)` returns the world-space radius of the outermost *currently due* zone clamped by per-kind cap, so most ticks query 40 wu instead of 275.
+- O(1) `live_count: [usize; 3]` per bucket maintained alongside `entries`; `at_capacity(bucket)` is a single array index.
+- Fast-mover predictive-radius bonus (+40 wu) when the player's EMA-tracked speed exceeds 20 wu/s.
+- Inlined FxHash-style `BuildHasher` for `u64` keys.
+- Height-band occlusion heuristic (`is_occluded`) for Zone 0 with a per-tick `OcclusionCache` (16 ms TTL).
+- Always-resident entries via `ghost_in_resident()`: TPs, save points, dungeon entries, blockages, and doors are exempt from leave-radius and orphan-sweep passes.
+- Open-world combat-stickiness: `last_close_ms` per entry, bumped automatically by `update_zone` / `touch_or_classify` / `ghost_in` whenever the entity is observed in Combat zone or closer.  `should_retain` keeps recently-engaged enemies (within 5 s of last close sighting) inside `COMBAT_STICKY_MAX_RADIUS = 200 wu` even past the normal leave radius - works without any client-side `in_battle` flag, which was confirmed dungeon-only.  Dungeon `in_battle = true` still triggers the same path as a fallback.
+- 30+ unit tests covering zone scheduling, adaptive radius, fast-mover bonus, FxHasher distribution, capacity counters, time-based stickiness expiry, hard-cap release, resident retention, and the height-band occlusion heuristic.
+
+#### `lib/logic/src/spatial.rs` (new module)
+- 2-D XZ spatial grid with bucketed `query_radius_indices`.  One grid per streamed bucket inside `SceneCache`; rebuilt once per scene transition.
+
 ### Changed
 
 #### `servers/game-server/src/handlers/scene` - split into modules
@@ -27,10 +45,33 @@
 #### `servers/game-server/src/handlers/weapon` - split into modules
 - `weapon.rs` is now `weapon/{mod,exp,equip,breakthrough,gem}.rs`.
 
+#### `lib/logic/src/scene.rs` - streaming scene manager
+- Replaced bulk-spawn at scene load with proximity-based streaming for enemies, interactives, *and* NPCs.  `finish_scene_load` and `handle_revival` no longer dump every interactive in the map (often 200+ on map01_lv001) - the streamer fills the visible set in the next few ticks.
+- Single `SceneCache` now builds three spatial grids (enemies / interactives / NPCs) at 50 wu cell size.
+- `update_visible_entities` rewritten as three streaming helpers (`stream_enemies` / `stream_interactives` / `stream_npcs`) sharing the same skeleton: clamped query radius -> 3-D distance check -> capped zone classify -> single-probe `touch_or_classify` -> spawn-budget gate -> capacity gate -> ghost-in.
+- Unified ghost-out pass walks `interest.entries` directly instead of `entities.monsters()`, saving one HashMap probe per ghosted-in entity.  Honours each entry's own zone leave radius plus the new sticky retention paths.
+- Reusable scratch buffers (`candidates_buf`, `leave_ids_buf`) owned by `SceneManager` - zero allocation in steady state on the per-tick hot path.
+- New always-resident classifier `is_always_resident_interactive(template_id, entity_type)` with a substring pattern list: `int_campfire`, `int_teleport_zone`, `int_save_{point,group}`, `int_dungeon_entry`, `int_barrierwall_*`, `int_edoor_*`, plus generic `_tp_` / `checkpoint` / `repatriate` / `levelgate` / `locked_door` / `blockage` patterns.  Sample data classification: 36 residents (TPs, saves, doors, barriers) sent at scene load; 154 streamed (chests, pickups, breakables, switches, etc.); 22 already filtered by `defaultHide` at config load.
+- `pack_resident_interactives` builds the resident subset for the initial `ScObjectEnterView` / `ScSelfSceneInfo`; `install_resident_interactives` mirrors them into `EntityManager` + `InterestManager` so the streamer / leave-pass recognise them as already present.
+- New `SceneManager::on_entity_killed(level_logic_id)` and `on_entity_despawned(level_logic_id)` so kill / destroy handlers can keep the interest counter in sync atomically.
+
+#### `lib/logic/src/entity.rs`
+- Added `interactives()` and `npcs()` iterator helpers, symmetric with the existing `monsters()` and `characters()`.
+
+#### `servers/game-server/src/handlers/scene/revival.rs`
+- `on_cs_scene_kill_monster` now calls `SceneManager::on_entity_killed` so the interest map and bucket `live_count` stay in sync with `EntityManager` after a kill.
+
+#### `servers/game-server/src/handlers/scene/entity.rs`
+- `on_cs_scene_destroy_entity` likewise routes through `on_entity_killed` / `on_entity_despawned` depending on `EntityKind`.
+
 ### Fixed
 
 - **fix(equip)**: slot mapping, `suitinfo` computation, and attr loading on login.
 - Removed leftover `to_xxx` helpers in `item.rs` superseded by the `From`/`Into` conversions introduced with the mail system.
+- **fix(scene)**: monster disappearence mid-fight.  Two compounding causes were addressed:
+    - The kill-monster handler removed the entity from `EntityManager` but never cleared the matching interest entry, so `live_count[Enemy]` stayed inflated for up to 500 ms (one Background tick).  Once the cap was reached, the streamer refused to refresh the active fight.  Now atomically cleaned via `on_entity_killed` from both kill / destroy paths.
+    - The previous +25 wu hysteresis was too tight for active combat - a single laggy movement packet past the Combat leave radius would evict an actively-fought enemy.  Hysteresis bumped to +60 wu and the new time-based stickiness keeps recently-engaged enemies retained inside 200 wu for 5 s after the last sighting at Combat range.
+- **fix(scene)**: scene-load FPS hitch.  Interactives are no longer bulk-spawned on scene entry / revival - only navigation-critical residents (TPs, blockages, doors, save points, dungeon entries) are sent up-front. 
 
 ---
 
