@@ -166,7 +166,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: dev-${{ github.sha }}
-          name: "dev — ${{ github.sha }}"
+          name: "dev - ${{ github.sha }}"
           body: |
             Automated dev build from master.
 
@@ -214,24 +214,21 @@ jobs:
           mv release/windows/perlica-game-server.exe   release/perlica-game-server-windows.exe
           mv release/windows/perlica-config-server.exe release/perlica-config-server-windows.exe
 
+      - name: Extract changelog for ${{ github.ref_name }}
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          awk "/^## \[${VERSION}\]/{found=1; next} found && /^## /{exit} found{print}" \
+            CHANGELOG.md > release_notes.md
+          if [ ! -s release_notes.md ]; then
+            echo "No changelog entry found for ${VERSION}" > release_notes.md
+          fi
+
       - name: Publish versioned release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
           name: "${{ github.ref_name }}"
-          body: |
-            ## ${{ github.ref_name }}
-
-            ### Downloads
-            | Binary | Platform |
-            |--------|----------|
-            | `perlica-game-server-linux` | Linux |
-            | `perlica-config-server-linux` | Linux |
-            | `perlica-game-server-windows.exe` | Windows |
-            | `perlica-config-server-windows.exe` | Windows |
-
-            ### Changelog
-            <!-- that needs to be automated later but fuck who cares for now -->
+          body_path: release_notes.md
           prerelease: false
           files: |
             release/perlica-game-server-linux

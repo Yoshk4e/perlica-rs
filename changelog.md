@@ -1,171 +1,133 @@
+# Changelog
+
 ## [Unreleased]
 
 ### Added
 
-#### `lib/logic` — new modules
-- **`lib/logic/src/bitset.rs`** — Introduced `BitsetType` enum (20 variants mirroring
-  `Beyond.GEnums.BitsetType`) and `BitsetManager`, a typed `HashMap<BitsetType,
-  HashSet<u32>>` with ergonomic per-type helpers (`mark_item_found`, `has_visited_area`,
-  etc.). `BitsetManager` is `Serialize`/`Deserialize` and is now the canonical home of
-  all boolean flag sets. The ad-hoc `HashMap<u32, HashSet<u32>>` on `Player` is gone.
+#### `lib/config/src/equip.rs` and `lib/config/src/tables/equip.rs`
+- New `EquipBasicTable` and `EquipAttrTable` config structs backed by `assets/tables/Equip.json` (~5.4k entries).
 
-- **`lib/logic/src/entity.rs`** — `EntityManager` tracks all live scene entities
-  (`SceneEntity`) keyed by `u64` ID. Provides typed iterators for monsters /
-  characters, an auto-incrementing monster ID allocator starting at 1000 (above
-  character IDs), and a `clear()` to wipe state on scene transitions. `EntityKind`
-  covers Character, Enemy, Npc, Interactive, Projectile, Creature.
+#### `servers/game-server/src/handlers/equip.rs` (expanded)
+- Slot-aware puton/putoff flow with `partType -> CraftShowingType` mapping fixed.
+- Already-equipped on the same character is now a no-op instead of an error.
+- Previous-owner tracking on equip swaps.
 
-- **`lib/logic/src/item.rs`** — Full weapon inventory system:
-  - `WeaponInstId` — newtype wrapper around `u64` for weapon instance IDs.
-  - `WeaponInstance` — per-instance state: template ID, exp, level, refinement,
-    breakthrough, equip owner, gem slot, lock/new flags, timestamp.
-  - `WeaponDepot` — owns all `WeaponInstance` records for a player; maintains a
-    reverse `equipped_weapons: HashMap<char_id, WeaponInstId>` for O(1) lookups;
-    exposes `add_weapon`, `equip_weapon`, `unequip_weapon`, `remove_weapon`,
-    `add_exp`, `breakthrough`, `attach_gem`, `detach_gem`, `build_item_bag_sync`.
-    Handles swap-equip (auto-unequips old weapon from both sides) atomically.
-
-- **`lib/logic/src/movement.rs`** — `MovementManager` caches player position and
-  rotation; initialized from `WorldState` on login via `from_world`; synced back to
-  `WorldState` on disconnect via `sync_to_world`. Ensures last-known position is
-  saved rather than the login spawn.
-
-- **`lib/logic/src/scene.rs`** — `SceneManager` wraps scene transition logic,
-  checkpoint tracking (`CheckpointInfo`), and revival mode (`RevivalMode`). Provides
-  `handle_team_index_switch`, `handle_active_team_update`, and
-  `handle_inactive_team_update` to produce the correct `ScLeaveView` / `ScEnterView`
-  / `ScSelfInfo` notification triple on team changes.
-
-#### `servers/game-server` — new handlers
-- **`src/handlers/weapon.rs`** — Five new weapon command handlers, each delegating to
-  the corresponding `CharBag` method:
-  - `on_cs_weapon_puton` — swap-equips a weapon to a character.
-  - `on_cs_weapon_add_exp` — feeds fodder weapons to gain exp/levels; fodder is
-    consumed (removed from depot).
-  - `on_cs_weapon_breakthrough` — advances breakthrough level if level cap reached.
-  - `on_cs_weapon_attach_gem` — sockets a gem; detaches any existing gem first.
-  - `on_cs_weapon_detach_gem` — removes the socketed gem and returns it to the bag.
-
-
-#### `Config.toml` (project root)
-- Added default runtime configuration template with `[server]`, `[assets]`,
-  `[world_state]`, and `[default_team]` sections. Includes commented-out database
-  presets (SQLite / PostgreSQL) and spawn-position reference comments for all maps.
-
----
+#### `lib/logic/src/item.rs`
+- `EquipDepot::compute_suitinfo()` for set-bonus computation.
 
 ### Changed
 
-#### `lib/logic/src/character/char_bag.rs` — weapon model refactor + API expansion
-- **Removed** `WeaponIndex` type; weapon references are now `WeaponInstId` from
-  `item.rs`.
-- **`Char`** fields `weapon_id: WeaponIndex` and `weapon_template_id: String` replaced
-  with `cached_weapon_inst_id: Option<WeaponInstId>` (`#[serde(skip)]`) — the depot
-  is the single source of truth; the cache avoids per-frame depot lookups.
-- **`CharBag`** now owns `weapon_depot: WeaponDepot`; the depot is initialized in
-  `CharBag::new()` and populated with one default weapon per character.
-- `CharBag::new()` refactored: character creation and weapon assignment are now two
-  separate passes, enabling the weapon depot to be fully built before equipping.
-- `add_char` no longer takes `&BeyondAssets`; weapon assignment responsibility removed.
-- Added `TeamSlot::object_id()` convenience method.
-- Added public methods: `get_char_mut`, `get_char_by_objid`, `equip_weapon`,
-  `unequip_weapon`, `get_equipped_weapon`, `char_bag_info`, `char_attrs`,
-  `char_status`, `item_bag_sync` (the last four consolidated here from scattered
-  locations).
-- Added `validate_after_load()` — called by `PlayerDb::load` to repair any data
-  inconsistencies after deserialization (mismatched weapon references, stale caches).
-- Weapon inst_id used in `CharSyncState` is now sourced from the depot instead of
-  being derived from the character's numeric ID.
+#### `servers/game-server/src/handlers/scene` - split into modules
+- The 600+ line `scene.rs` is now `scene/{mod,dialog,entity,level_script,load,revival,teleport}.rs`.
+- No behaviour change, just easier to navigate.
 
-#### `lib/config/src/weapon.rs`
-- Added `get_breakthrough_template(&str) -> Option<&BreakthroughTemplate>`.
-- Added `get_breakthrough_required_level(&str, u32) -> Option<u32>` — looks up the
-  minimum character level required for a given breakthrough stage.
+#### `servers/game-server/src/handlers/character` - split into modules
+- `character.rs` is now `character/{mod,battle,progression,skill,team}.rs`.
 
-#### `lib/db/src/saves.rs`
-- `PlayerRecord` gains three new `#[serde(default)]` fields: `bitsets: BitsetManager`,
-  `checkpoint: Option<CheckpointInfo>`, `revival_mode: RevivalMode`. Old saves without
-  these fields deserialize cleanly via the defaults.
-- `PlayerDb::save` signature extended to `(uid, char_bag, world, bitsets, checkpoint,
-  revival_mode)`.
-- `PlayerDb::load` now calls `record.char_bag.validate_after_load()` after
-  deserialization.
-- Added detailed doc comment on `PlayerRecord` explaining what is saved and why.
+#### `servers/game-server/src/handlers/weapon` - split into modules
+- `weapon.rs` is now `weapon/{mod,exp,equip,breakthrough,gem}.rs`.
 
-#### `lib/logic/Cargo.toml`
-- Added `common.workspace = true` dependency (needed for `common::time::now_ms`).
+### Fixed
 
-#### `lib/logic/src/lib.rs`
-- Exported the five new modules: `bitset`, `entity`, `item`, `movement`, `scene`.
+- **fix(equip)**: slot mapping, `suitinfo` computation, and attr loading on login.
+- Removed leftover `to_xxx` helpers in `item.rs` superseded by the `From`/`Into` conversions introduced with the mail system.
 
-#### `servers/game-server/src/player/mod.rs` — major `Player` struct expansion
-- `bitsets` field changed from `HashMap<u32, HashSet<u32>>` to `BitsetManager`.
-- Added fields: `movement: MovementManager`, `scene: SceneManager`,
-  `entities: EntityManager`.
-- `Player::default()` now initialises `movement` from `WorldState` and creates a
-  fresh `SceneManager` / `EntityManager`.
-- `Player::on_login` initialises movement and scene from saved world state.
-- Added helpers: `get_char_by_objid`, `get_char_by_objid_mut`, `get_leader_objid`.
-- Replaced all informal/emoji inline comments with proper Rust doc comments; added
-  full module-level architecture documentation.
+---
 
-#### `servers/game-server/src/handlers/bitset.rs`
-- `BitsetType` enum removed from this file; imported from `perlica_logic::bitset`.
-- Added `on_cs_bitset_add` handler — sets bits in `BitsetManager` and returns
-  `ScBitsetAdd`.
-- `push_bitsets` now serialises the actual persisted bits from `BitsetManager` instead
-  of sending empty vectors for every type.
-- Logging converted to positional format (`"key={}"` style).
+## [0.2.0] - 2026-04-13
 
-#### `servers/game-server/src/handlers/char_bag.rs`
-- `item_bag_sync()` call updated — assets argument removed (depot is self-contained).
-- Added `push_char_status_for_ids(ctx, &[u64])` — targeted `ScCharSyncStatus` push
-  for only the characters in a team after a team switch.
-- Logging converted to positional format.
+### Added
 
-#### `servers/game-server/src/handlers/character.rs` — major expansion
-- `on_cs_char_bag_set_team_leader` now validates the requested leader is actually a
-  member of the target team before accepting; logs a warning if not.
-- Added `on_cs_char_bag_set_curr_team_index` — switches active team; emits the
-  leave/enter/self_info scene triple and pushes char status for new team members.
-- Added `on_cs_char_bag_set_team` — replaces team slot composition; handles both
-  active-team (full scene diff) and inactive-team (self_info only) paths.
-- Added `on_cs_char_bag_set_team_name` — renames a team slot, returns empty name on
-  invalid index.
-- Added `on_cs_char_level_up` — increments character level up to break-stage cap;
-  restores HP; pushes `ScSyncAttr` + `ScCharSyncLevelExp`.
-- Added `on_cs_char_break` — advances `break_stage` if at level cap; pushes updated
-  attrs.
-- Added `on_cs_char_skill_level_up`, `on_cs_char_set_normal_skill`,
-  `on_cs_char_set_team_skill`.
+#### Mail system (`lib/logic/src/mail.rs`, `servers/game-server/src/handlers/mail.rs`)
+- `StoredMail` and `MailManager` with expiry, attachment state, and CRUD ops.
+- Canned welcome and login-greeting mail factories.
+- `push_mail_sync`, `deliver_login_mails`, plus handlers for get/read/delete/claim mail and attachments.
+- `LoginPhase` now has a `Mail` stage between `Bitsets` and `EnterScene` that pushes `ScSyncAllMail` and delivers welcome mail for new players or greeting mail for returning ones.
+- `Player` stores a `MailManager` and a transient `is_new_player` flag set during login from whether the DB returned an existing record.
+- `PlayerRecord` and `PlayerRecordRef` persist `MailManager` with `serde(default)` so older saves still load.
 
-#### `servers/game-server/src/handlers/factory.rs`
-- Registered all new handlers from `character.rs` and `weapon.rs` in the routing
-  table.
+#### GM console / MUIP (`lib/muip/`, `servers/game-server/src/{gm.rs,handlers/gm.rs}`)
+- New `lib/muip` crate and a 365-line `handlers/gm.rs` providing live testing commands for the various game systems.
+- `assets/tables/Index.json` (~1.6k entries) added to support GM lookups.
+- New `perlica-muip-server` binary mentioned in the README install steps.
 
-#### `servers/game-server/src/handlers/login.rs`
-- Login sequence now restores `bitsets`, `checkpoint`, and `revival_mode` from
-  `PlayerRecord` after loading a save.
+#### Mission and Guide systems
+- `MissionManager` and `GuideManager` added to `PlayerRecord` and `Player`.
+- New `lib/config/src/mission.rs` config schema.
+- Mission/guide command handlers wired into the game-server router.
+- Locale tables landed: `assets/tables/I18nTextTable_EN.json` and `assets/tables/TextTable.json`.
 
-#### `servers/game-server/src/handlers/mod.rs`
-- Added `pub mod weapon`.
+#### Item system rewrite (`lib/logic/src/item.rs`, `lib/config/src/item.rs`)
+- `WeaponDepot` generalised into `ItemManager` covering weapons, gems, equip, and stackables.
+- `WeaponInstance`, `GemInstance`, `EquipInstance`, `WeaponDepot`, `GemDepot`, `EquipDepot`, and `StackableDepot` now use idiomatic `From`/`Into` conversions instead of bespoke `to_xxx` helpers.
+- `WeaponAttachGemArgs`, `WeaponDetachGemArgs`, `WeaponPutonArgs` convert to their matching `Sc*` proto messages via `From`.
+- `WeaponInstId` converts to and from `u64`.
+- `assets/tables/Item.json` (~19.6k entries) added.
 
-#### `servers/game-server/src/handlers/movement.rs`
-- Updated to delegate to `MovementManager`.
+#### Equip handler (`servers/game-server/src/handlers/equip.rs`)
+- New equipment puton/putoff handler set and wallet handler.
 
-#### `servers/game-server/src/handlers/scene.rs`
-- Updated to delegate to `SceneManager`.
+#### Character const (`lib/config/src/character.rs`)
+- `CharacterConst` for global leveling data.
 
-#### `servers/game-server/src/net/session.rs`
-- `logic_loop` extended save call to include `bitsets`, `checkpoint`, and
-  `revival_mode`.
-- Player position is now flushed from `MovementManager` into `WorldState` before
-  saving (via `player.movement.sync_to_world`).
-- All informal/emoji inline comments replaced with proper doc comments.
+#### Scene: dynamic visibility and respawn (`lib/logic/src/scene.rs`)
+- Replaced full-scene monster spawning with radius-based dynamic visibility driven by `EnterView`/`LeaveView` events.
+- 60s respawn cooldown for killed monsters keyed by `level_logic_id`.
+- 80/100 unit hysteresis to prevent entity flickering at vision edges.
+- Visibility checks integrated into authoritative movement and scene-load handlers.
+- Per-level spawn data in `assets/level_data/map01_lv001_lv_data_sub01.json` with a new `lib/config/src/{level_data,tables/level_data}.rs` schema.
 
-#### `servers/game-server/src/net/context.rs`
-- Added full module-level and struct-level doc comments explaining purpose, usage,
-  and lifetime semantics. No logic changes.
+#### Level scripts (`lib/logic/src/level_script.rs`)
+- New ~415 line module covering teleportation, entity lifecycle, and level script events.
+- Packet validation relaxed to allow empty bodies for certain command types.
 
-#### `servers/game-server/src/sconfig.rs`
-- Fixed indentation: tab characters replaced with spaces.
+#### Save layer
+- `PlayerRecordRef` introduced so `PlayerDb::save` doesn't have to clone the whole `PlayerRecord` to serialise.
+
+#### Project meta
+- `README.md` and `CONTRIBUTING.md` added.
+- `LICENSE`: GNU AGPL v3.
+- CI workflow `.github/workflows/rust.yml`: fmt + clippy + build + test on `ubuntu-latest` and `windows-latest`; release-mode prebuilts as artifacts; rolling `dev-<sha>` pre-release on every master push; tagged release with linux/windows binaries on `v*` tags.
+- Discord link replaced with a permanent invite.
+- `assets/img/sleep.png` added for README.
+
+### Changed
+
+#### Errors: `anyhow` → typed `thiserror`
+- New error enums in `lib/config/src/error.rs`, `lib/db/src/error.rs`, `lib/logic/src/error.rs`.
+- Call sites across `config/{character,id_to_str,level_data,skill,str_to_id,weapon}`, `db/saves`, `logic/{character/char_bag,item}`, and the game-server handlers updated.
+- Added `InvalidStructure` (config) and `Insufficient` (logic) variants so callers can branch on missing items or bad JSON without string matching.
+
+#### Entity IDs
+- Arbitrary IDs for NPCs, enemies, and interactives removed; logic IDs are used directly so level scripts and inter-entity interactions trigger correctly.
+- `EntityDestroyReason` changed from `Immediately` to `Dead`.
+
+#### Scene: spawn data replaced
+- `assets/tables/EnemySpawns.json` removed in favour of per-level `assets/level_data/` files (see Scene entry above).
+
+#### Factory / scene handler
+- Factory now sends needed dummy data plus interacts, NPCs, etc. so the map loads correctly client-side.
+- `DynamicParam` parsing fixed.
+
+#### Workspace
+- `Cargo.toml` `[workspace.package].version` bumped to `0.2.0`.
+
+### Fixed
+
+- **Revival flow**: scene handler revival path corrected; factory route registered.
+- **`charBag` team UI crash**: client crashed when `max_indexes` tail entries were omitted. Side effect: editing a whole team no longer reloads the entire scene.
+- **`set_team` leader**: when `CsCharBagSetTeam` removed the current leader, `leader_index` was left pointing at a missing character, causing `move_leader_to_front` to silently no-op and the client to receive a `ScSelfSceneInfo` with a `leader_id` matching no character - triggering "Can not find main character in SC_SELF_SCENE_INFO". The first occupied slot is now promoted to leader whenever the existing one is removed.
+- Infinite loading on The Hub; missing enemies added; enemy logic fixes (contributed by inkursion).
+- All clippy warnings cleared.
+
+---
+
+## [0.1.0] - 2026-03-18
+
+### Added
+
+- Weapon depot (`WeaponDepot`, `WeaponInstance`) with experience, breakthrough, and gem attach/detach handlers.
+- Scene system: entity manager, monster spawning, NPC and interactive entity support, authoritative movement.
+- Bitset persistence: player progress flags saved to and restored from the DB on login/logout.
+- Initial game-server handler set: scene load, revival, teleport, dialog, and entity interactions.
+- Core `PlayerRecord` / `PlayerDb` save layer backed by an embedded database.
