@@ -3,6 +3,7 @@ pub mod character;
 pub mod entity;
 pub mod enums;
 pub mod error;
+pub mod interest;
 pub mod item;
 pub mod level_script;
 pub mod mail;
@@ -10,5 +11,6 @@ pub mod mission;
 pub mod movement;
 pub mod player;
 pub mod scene;
+pub mod spatial;
 
 pub use error::{LogicError, Result};

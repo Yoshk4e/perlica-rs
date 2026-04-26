@@ -87,6 +87,16 @@ impl EntityManager {
             .filter(|e| e.kind == EntityKind::Character)
     }
 
+    pub fn interactives(&self) -> impl Iterator<Item = &SceneEntity> {
+        self.entities
+            .values()
+            .filter(|e| e.kind == EntityKind::Interactive)
+    }
+
+    pub fn npcs(&self) -> impl Iterator<Item = &SceneEntity> {
+        self.entities.values().filter(|e| e.kind == EntityKind::Npc)
+    }
+
     // Nukes all entities and resets the ID counter. Call on scene transition.
     pub fn clear(&mut self) {
         self.entities.clear();
