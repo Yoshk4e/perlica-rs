@@ -1,3 +1,4 @@
+use crate::traits::Expirable;
 use common::time::now_ms;
 use serde::{Deserialize, Serialize};
 
@@ -20,14 +21,6 @@ pub struct StoredMail {
 }
 
 impl StoredMail {
-    pub fn is_expired(&self) -> bool {
-        if self.expire_time < 0 {
-            return false;
-        }
-        let now = (now_ms() / 1000) as i64;
-        now >= self.expire_time
-    }
-
     pub fn has_unclaimed_attachment(&self) -> bool {
         !self.items.is_empty() && !self.is_attachment_got
     }

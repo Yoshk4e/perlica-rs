@@ -64,14 +64,6 @@ impl MovementManager {
         self.pos_y = y;
         self.pos_z = z;
     }
-
-    pub fn position_tuple(&self) -> (f32, f32, f32) {
-        (self.pos_x, self.pos_y, self.pos_z)
-    }
-
-    pub fn rotation_tuple(&self) -> (f32, f32, f32) {
-        (self.rot_x, self.rot_y, self.rot_z)
-    }
 }
 
 impl Default for MovementManager {

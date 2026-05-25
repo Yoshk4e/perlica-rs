@@ -19,10 +19,6 @@ impl Container for WeaponDepot {
     fn len(&self) -> usize {
         WeaponDepot::len(self)
     }
-    #[inline]
-    fn is_empty(&self) -> bool {
-        WeaponDepot::is_empty(self)
-    }
 }
 impl KeyedContainer for WeaponDepot {
     type Key = WeaponInstId;
@@ -62,10 +58,6 @@ impl Container for GemDepot {
     fn len(&self) -> usize {
         GemDepot::len(self)
     }
-    #[inline]
-    fn is_empty(&self) -> bool {
-        GemDepot::is_empty(self)
-    }
 }
 impl KeyedContainer for GemDepot {
     type Key = GemInstId;
@@ -104,10 +96,6 @@ impl Container for EquipDepot {
     #[inline]
     fn len(&self) -> usize {
         EquipDepot::len(self)
-    }
-    #[inline]
-    fn is_empty(&self) -> bool {
-        EquipDepot::is_empty(self)
     }
 }
 impl KeyedContainer for EquipDepot {
@@ -151,10 +139,6 @@ impl Container for StackableDepot {
     fn len(&self) -> usize {
         StackableDepot::len(self)
     }
-    #[inline]
-    fn is_empty(&self) -> bool {
-        StackableDepot::is_empty(self)
-    }
 }
 
 impl Container for EntityManager {
@@ -162,10 +146,6 @@ impl Container for EntityManager {
     #[inline]
     fn len(&self) -> usize {
         EntityManager::len(self)
-    }
-    #[inline]
-    fn is_empty(&self) -> bool {
-        EntityManager::is_empty(self)
     }
 }
 impl KeyedContainer for EntityManager {
@@ -189,10 +169,6 @@ impl Container for MailManager {
     #[inline]
     fn len(&self) -> usize {
         self.mails.len()
-    }
-    #[inline]
-    fn is_empty(&self) -> bool {
-        self.mails.is_empty()
     }
 }
 impl KeyedContainer for MailManager {

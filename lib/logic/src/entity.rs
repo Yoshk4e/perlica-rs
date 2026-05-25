@@ -25,12 +25,6 @@ pub struct SceneEntity {
     pub belong_level_script_id: i32,
 }
 
-impl SceneEntity {
-    pub fn position(&self) -> (f32, f32, f32) {
-        (self.pos_x, self.pos_y, self.pos_z)
-    }
-}
-
 #[derive(Debug, Default)]
 pub struct EntityManager {
     entities: HashMap<u64, SceneEntity>,

@@ -1,6 +1,7 @@
 //! Scene enter / load-finish handshake.
 
 use crate::net::NetContext;
+use perlica_logic::traits::Positioned3D;
 use perlica_proto::{CsSceneLoadFinish, ScEnterSceneNotify, ScSelfSceneInfo, Vector};
 use tracing::{debug, error, info};
 
@@ -51,7 +52,7 @@ pub async fn on_scene_load_finish(
         error!("Failed to send object enter view: {:?}", error);
     }
 
-    let pos = ctx.player.movement.position_tuple();
+    let pos = ctx.player.movement.position();
     let (initial_enter, _) =
         ctx.player
             .scene
