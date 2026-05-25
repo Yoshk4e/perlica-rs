@@ -1,5 +1,6 @@
 use crate::net::NetContext;
 use perlica_logic::movement::MovementManager;
+use perlica_logic::traits::SyncWriteBack;
 use perlica_proto::{CsMoveObjectMove, ScMoveObjectMove};
 
 /// Updates the team leader's server-side position. Only the leader is tracked; other positions are client-authoritative.
@@ -29,7 +30,7 @@ pub async fn on_cs_move_object_move(
                     ctx.player.movement.update_rotation(rot.x, rot.y, rot.z);
                 }
 
-                ctx.player.movement.sync_to_world(&mut ctx.player.world);
+                ctx.player.movement.write_back_into(&mut ctx.player.world);
 
                 let pos = ctx.player.movement.position_tuple();
                 let (enter_view, leave_view) = ctx.player.scene.update_visible_entities(

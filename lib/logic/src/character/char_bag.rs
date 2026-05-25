@@ -1,5 +1,6 @@
 use crate::error::{LogicError, Result};
 use crate::item::{ItemManager, WeaponAttachGemArgs, WeaponDetachGemArgs, WeaponPutonArgs};
+use crate::traits::KeyedContainerExt;
 use common::time::now_ms;
 use config::BeyondAssets;
 use perlica_proto::{
@@ -291,8 +292,7 @@ impl CharBag {
         let weapon = self
             .item_manager
             .weapons
-            .get(weapon_inst_id)
-            .ok_or_else(|| LogicError::NotFound("Weapon not found".into()))?;
+            .get_or_not_found(weapon_inst_id, "Weapon not found")?;
         let prev_owner = if weapon.is_equipped() && weapon.equip_char_id != char_id {
             Some(weapon.equip_char_id)
         } else {
@@ -630,12 +630,11 @@ pub fn handle_weapon_add_exp(
         .weapons
         .add_exp(target_id, &fodder_ids, assets)?;
 
-    char_bag
+    let weapon = char_bag
         .item_manager
         .weapons
-        .get(target_id)
-        .map(|w| w.into())
-        .ok_or_else(|| LogicError::NotFound("Weapon not found after add_exp".into()))
+        .get_or_not_found(target_id, "Weapon not found after add_exp")?;
+    Ok(weapon.into())
 }
 
 pub fn handle_weapon_breakthrough(
@@ -650,12 +649,11 @@ pub fn handle_weapon_breakthrough(
         .weapons
         .breakthrough(inst_id, assets)?;
 
-    char_bag
+    let weapon = char_bag
         .item_manager
         .weapons
-        .get(inst_id)
-        .map(|w| w.into())
-        .ok_or_else(|| LogicError::NotFound("Weapon not found after breakthrough".into()))
+        .get_or_not_found(inst_id, "Weapon not found after breakthrough")?;
+    Ok(weapon.into())
 }
 
 pub fn handle_weapon_attach_gem(
@@ -682,8 +680,7 @@ pub fn handle_weapon_attach_gem(
     let weapon = char_bag
         .item_manager
         .weapons
-        .get(weapon_inst_id)
-        .ok_or_else(|| LogicError::NotFound("Weapon not found".into()))?;
+        .get_or_not_found(weapon_inst_id, "Weapon not found")?;
     let prev_gem_id = if weapon.attach_gem_id != 0 {
         Some(weapon.attach_gem_id)
     } else {
@@ -698,8 +695,7 @@ pub fn handle_weapon_attach_gem(
     let weapon = char_bag
         .item_manager
         .weapons
-        .get(weapon_inst_id)
-        .ok_or_else(|| LogicError::NotFound("Weapon not found".into()))?;
+        .get_or_not_found(weapon_inst_id, "Weapon not found")?;
 
     Ok(WeaponAttachGemArgs(
         weapon,

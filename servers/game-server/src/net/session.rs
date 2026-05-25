@@ -9,6 +9,7 @@ use crate::net::{
 use crate::player::Player;
 use config::BeyondAssets;
 use perlica_db::{PlayerDb, PlayerRecordRef};
+use perlica_logic::traits::SyncWriteBack;
 use perlica_muip::GmResponse;
 use perlica_proto::{CsHead, prost::Message};
 use tokio::{
@@ -127,7 +128,7 @@ async fn logic_loop(
     };
 
     if registered {
-        player.movement.sync_to_world(&mut player.world);
+        player.movement.write_back_into(&mut player.world);
 
         let record_ref = PlayerRecordRef {
             char_bag: &player.char_bag,

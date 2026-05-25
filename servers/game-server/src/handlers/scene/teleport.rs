@@ -5,6 +5,7 @@
 //! don't get clobbered.
 
 use crate::net::NetContext;
+use perlica_logic::traits::SyncWriteBack;
 use perlica_proto::{CsSceneTeleport, ScSceneTeleport, Vector};
 use tracing::debug;
 
@@ -61,7 +62,7 @@ pub async fn on_cs_scene_teleport(
     ctx.player
         .movement
         .update_rotation(rotation_vec.x, rotation_vec.y, rotation_vec.z);
-    ctx.player.movement.sync_to_world(&mut ctx.player.world);
+    ctx.player.movement.write_back_into(&mut ctx.player.world);
 
     let team_idx = ctx.player.char_bag.meta.curr_team_index as usize;
     let obj_id_list = ctx

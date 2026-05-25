@@ -12,5 +12,6 @@ pub mod movement;
 pub mod player;
 pub mod scene;
 pub mod spatial;
+pub mod traits;
 
 pub use error::{LogicError, Result};

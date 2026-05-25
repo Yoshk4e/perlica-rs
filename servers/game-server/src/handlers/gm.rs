@@ -2,6 +2,7 @@ use crate::handlers::{char_bag, scene};
 use crate::net::NetContext;
 use common::time::now_ms;
 use perlica_logic::character::char_bag::CharIndex;
+use perlica_logic::traits::SyncWriteBack;
 use perlica_proto::{ScObjectEnterView, ScSyncBaseData, SceneObjectDetailContainer, Vector};
 use std::collections::HashSet;
 
@@ -172,7 +173,7 @@ async fn teleport_command(ctx: &mut NetContext<'_>, args: &[&str]) -> Result<GmO
 
     ctx.player.movement.update_position(x, y, z);
     ctx.player.movement.update_rotation(0.0, rot_y, 0.0);
-    ctx.player.movement.sync_to_world(&mut ctx.player.world);
+    ctx.player.movement.write_back_into(&mut ctx.player.world);
 
     if is_scene_change {
         ctx.player.world.last_scene = scene_name.clone();

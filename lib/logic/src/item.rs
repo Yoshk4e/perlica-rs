@@ -1,4 +1,5 @@
 use crate::error::{LogicError, Result};
+use crate::traits::{KeyedContainerExt, Lockable, NewFlaggable};
 use common::time::now_ms;
 use config::BeyondAssets;
 use config::item::{CraftShowingType, ItemDepotType, ItemKind};
@@ -310,17 +311,15 @@ impl WeaponDepot {
     }
 
     pub fn set_lock(&mut self, id: WeaponInstId, is_lock: bool) -> Result<()> {
-        self.weapons
-            .get_mut(&id)
-            .ok_or_else(|| LogicError::NotFound("Weapon not found".into()))
-            .map(|w| w.is_lock = is_lock)
+        self.get_mut_or_not_found(id, "Weapon not found")?
+            .set_locked(is_lock);
+        Ok(())
     }
 
     pub fn clear_new_flag(&mut self, id: WeaponInstId) -> Result<()> {
-        self.weapons
-            .get_mut(&id)
-            .ok_or_else(|| LogicError::NotFound("Weapon not found".into()))
-            .map(|w| w.is_new = false)
+        self.get_mut_or_not_found(id, "Weapon not found")?
+            .mark_seen();
+        Ok(())
     }
 
     fn calculate_fodder_exp(
@@ -879,31 +878,29 @@ impl GemDepot {
     }
 
     pub fn set_lock(&mut self, id: GemInstId, lock: bool) -> Result<()> {
-        self.gems
-            .get_mut(&id)
-            .ok_or_else(|| LogicError::NotFound("Gem not found".into()))
-            .map(|g| g.is_lock = lock)
+        self.get_mut_or_not_found(id, "Gem not found")?
+            .set_locked(lock);
+        Ok(())
     }
 
     pub fn clear_new_flag(&mut self, id: GemInstId) -> Result<()> {
-        self.gems
-            .get_mut(&id)
-            .ok_or_else(|| LogicError::NotFound("Gem not found".into()))
-            .map(|g| g.is_new = false)
+        self.get_mut_or_not_found(id, "Gem not found")?.mark_seen();
+        Ok(())
     }
 
     pub(crate) fn set_socket(&mut self, id: GemInstId, weapon_id: u64) -> Result<()> {
-        self.gems
-            .get_mut(&id)
-            .ok_or_else(|| LogicError::NotFound("Gem not found".into()))
-            .map(|g| g.attach_weapon_id = weapon_id)
+        // No Attachable mutator exists by design (attachment is enforced
+        // by the depot, not the instance), so we still touch the field
+        // directly, but the lookup goes through KeyedContainerExt.
+        self.get_mut_or_not_found(id, "Gem not found")?
+            .attach_weapon_id = weapon_id;
+        Ok(())
     }
 
     pub(crate) fn clear_socket(&mut self, id: GemInstId) -> Result<()> {
-        self.gems
-            .get_mut(&id)
-            .ok_or_else(|| LogicError::NotFound("Gem not found".into()))
-            .map(|g| g.attach_weapon_id = 0)
+        self.get_mut_or_not_found(id, "Gem not found")?
+            .attach_weapon_id = 0;
+        Ok(())
     }
 
     pub fn contains(&self, id: GemInstId) -> bool {
@@ -1137,17 +1134,15 @@ impl EquipDepot {
     }
 
     pub fn set_lock(&mut self, id: EquipInstId, lock: bool) -> Result<()> {
-        self.pieces
-            .get_mut(&id)
-            .ok_or_else(|| LogicError::NotFound("Equip piece not found".into()))
-            .map(|p| p.is_lock = lock)
+        self.get_mut_or_not_found(id, "Equip piece not found")?
+            .set_locked(lock);
+        Ok(())
     }
 
     pub fn clear_new_flag(&mut self, id: EquipInstId) -> Result<()> {
-        self.pieces
-            .get_mut(&id)
-            .ok_or_else(|| LogicError::NotFound("Equip piece not found".into()))
-            .map(|p| p.is_new = false)
+        self.get_mut_or_not_found(id, "Equip piece not found")?
+            .mark_seen();
+        Ok(())
     }
 
     pub fn get_in_slot(&self, char_id: u64, slot: CraftShowingType) -> Option<&EquipInstance> {
