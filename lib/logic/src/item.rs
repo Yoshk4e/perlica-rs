@@ -827,6 +827,14 @@ impl GemDepot {
         id
     }
 
+    pub fn next_inst_id(&self) -> u64 {
+        self.next_inst_id
+    }
+
+    pub fn set_next_inst_id(&mut self, id: u64) {
+        self.next_inst_id = id;
+    }
+
     pub fn add_gem(
         &mut self,
         template_id: String,
@@ -1010,6 +1018,14 @@ impl EquipDepot {
         let id = EquipInstId::new(self.next_inst_id);
         self.next_inst_id += 1;
         id
+    }
+
+    pub fn next_inst_id(&self) -> u64 {
+        self.next_inst_id
+    }
+
+    pub fn set_next_inst_id(&mut self, id: u64) {
+        self.next_inst_id = id;
     }
 
     pub fn add_equip(

@@ -46,6 +46,23 @@ macro_rules! impl_instance_id {
 
 impl_instance_id!(WeaponInstId, GemInstId, EquipInstId);
 
+// Bare `u64` is the key shape used by the non-newtyped collections
+// (`EntityManager`, `MailManager`).  Implementing `InstanceId` directly on
+// `u64` lets those managers participate in the same generic id-allocation
+// and migration helpers as the typed-id depots.
+impl AsU64 for u64 {
+    #[inline]
+    fn as_u64(&self) -> u64 {
+        *self
+    }
+}
+impl InstanceId for u64 {
+    #[inline]
+    fn new(raw: u64) -> Self {
+        raw
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -57,5 +74,14 @@ mod tests {
         assert!(!<WeaponInstId as InstanceId>::is_zero(&id));
         let zero: WeaponInstId = <WeaponInstId as InstanceId>::new(0);
         assert!(<WeaponInstId as InstanceId>::is_zero(&zero));
+    }
+
+    #[test]
+    fn bare_u64_instance_id() {
+        let id: u64 = <u64 as InstanceId>::new(7);
+        assert_eq!(<u64 as AsU64>::as_u64(&id), 7);
+        assert!(!<u64 as InstanceId>::is_zero(&id));
+        let zero: u64 = <u64 as InstanceId>::new(0);
+        assert!(<u64 as InstanceId>::is_zero(&zero));
     }
 }

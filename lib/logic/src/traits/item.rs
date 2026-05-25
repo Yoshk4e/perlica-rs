@@ -134,10 +134,78 @@ impl_item_traits!(WeaponInstance, WeaponInstId, attach: equip_char_id,);
 impl_item_traits!(GemInstance,    GemInstId,    attach: attach_weapon_id,);
 impl_item_traits!(EquipInstance,  EquipInstId,  attach: equip_char_id,);
 
+// `StoredMail` and `SceneEntity` aren't "items" but they share two facets
+// every item carries:
+//
+//   * a stable, untyped `u64` id  -> `Identifiable<Id = u64>`
+//   * a string template id        -> `Templated`
+//
+// Implementing the traits lets the same generic helpers
+// (`count_by_template`, `KeyedContainerExt::get_or_not_found`, future
+// rendering helpers) work over them without further specialisation.
+use crate::entity::SceneEntity;
+use crate::mail::StoredMail;
+
+impl Identifiable for StoredMail {
+    type Id = u64;
+    #[inline]
+    fn id(&self) -> u64 {
+        self.mail_id
+    }
+}
+impl Templated for StoredMail {
+    #[inline]
+    fn template_id(&self) -> &str {
+        &self.template_id
+    }
+}
+
+impl Identifiable for SceneEntity {
+    type Id = u64;
+    #[inline]
+    fn id(&self) -> u64 {
+        self.id
+    }
+}
+impl Templated for SceneEntity {
+    #[inline]
+    fn template_id(&self) -> &str {
+        &self.template_id
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::item::{WeaponInstId, WeaponInstance};
+
+    use crate::entity::{EntityKind, SceneEntity};
+    use crate::mail::StoredMail;
+
+    #[test]
+    fn stored_mail_facets() {
+        let mut m = StoredMail::make_welcome_mail();
+        m.mail_id = 7;
+        m.template_id = "mail_welcome".into();
+        assert_eq!(<StoredMail as Identifiable>::id(&m), 7);
+        assert_eq!(<StoredMail as Templated>::template_id(&m), "mail_welcome");
+    }
+
+    #[test]
+    fn scene_entity_facets() {
+        let e = SceneEntity {
+            id: 42,
+            template_id: "npc_innkeeper".into(),
+            kind: EntityKind::Npc,
+            pos_x: 0.0,
+            pos_y: 0.0,
+            pos_z: 0.0,
+            level_logic_id: 0,
+            belong_level_script_id: 0,
+        };
+        assert_eq!(<SceneEntity as Identifiable>::id(&e), 42);
+        assert_eq!(<SceneEntity as Templated>::template_id(&e), "npc_innkeeper");
+    }
 
     #[test]
     fn weapon_instance_traits() {

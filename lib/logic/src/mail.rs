@@ -110,6 +110,14 @@ impl MailManager {
         id
     }
 
+    pub fn next_id(&self) -> u64 {
+        self.next_id
+    }
+
+    pub fn set_next_id(&mut self, id: u64) {
+        self.next_id = id;
+    }
+
     pub fn all_ids(&self) -> Vec<u64> {
         self.mails.iter().map(|m| m.mail_id).collect()
     }

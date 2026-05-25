@@ -49,6 +49,21 @@ impl EntityManager {
         id
     }
 
+    /// Read-only view of the next monster id this manager would hand out
+    /// (already accounting for the +1000 offset).
+    pub fn peek_next_monster_id(&self) -> u64 {
+        1000 + self.next_monster_id
+    }
+
+    /// Ensure the next monster id is at least `at_least`. No-op if the
+    /// counter is already past it. Used by save/migration code.
+    pub fn bump_next_monster_id_to(&mut self, at_least: u64) {
+        let internal = at_least.saturating_sub(1000);
+        if internal > self.next_monster_id {
+            self.next_monster_id = internal;
+        }
+    }
+
     // Inserting the same id twice is an update, make sure IDs come from
     // `next_monster_id()` or character object IDs to avoid accidental collisions.
     pub fn insert(&mut self, entity: SceneEntity) {

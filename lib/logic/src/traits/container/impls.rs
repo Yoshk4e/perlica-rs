@@ -82,6 +82,19 @@ impl KeyedContainer for GemDepot {
         self.get_mut(key)
     }
 }
+impl IdAllocator for GemDepot {
+    type Id = GemInstId;
+    #[inline]
+    fn peek_next_id(&self) -> u64 {
+        self.next_inst_id()
+    }
+    #[inline]
+    fn bump_next_id_to(&mut self, at_least: u64) {
+        if at_least > self.next_inst_id() {
+            self.set_next_inst_id(at_least);
+        }
+    }
+}
 impl DepotKind for GemDepot {
     const DEPOT_TYPE: i32 = GemDepot::DEPOT_TYPE;
 }
@@ -110,6 +123,19 @@ impl KeyedContainer for EquipDepot {
     #[inline]
     fn get_mut_ref(&mut self, key: Self::Key) -> Option<&mut EquipInstance> {
         self.get_mut(key)
+    }
+}
+impl IdAllocator for EquipDepot {
+    type Id = EquipInstId;
+    #[inline]
+    fn peek_next_id(&self) -> u64 {
+        self.next_inst_id()
+    }
+    #[inline]
+    fn bump_next_id_to(&mut self, at_least: u64) {
+        if at_least > self.next_inst_id() {
+            self.set_next_inst_id(at_least);
+        }
     }
 }
 impl DepotKind for EquipDepot {
@@ -182,5 +208,71 @@ impl KeyedContainer for MailManager {
     #[inline]
     fn get_mut_ref(&mut self, key: u64) -> Option<&mut StoredMail> {
         self.mails.iter_mut().find(|m| m.mail_id == key)
+    }
+}
+impl IdAllocator for MailManager {
+    /// Mail ids are bare `u64` (no newtype), so the generic `IdAllocator`
+    /// surface still works thanks to the `InstanceId for u64` blanket impl
+    /// in [`crate::traits::id`].
+    type Id = u64;
+    #[inline]
+    fn peek_next_id(&self) -> u64 {
+        self.next_id()
+    }
+    #[inline]
+    fn bump_next_id_to(&mut self, at_least: u64) {
+        if at_least > self.next_id() {
+            self.set_next_id(at_least);
+        }
+    }
+}
+
+// EntityManager allocates monster ids via an internal counter.  Exposing it
+// as `IdAllocator` lets the same save / migration helpers reseed the
+// counter without naming the concrete type.
+impl IdAllocator for EntityManager {
+    type Id = u64;
+    #[inline]
+    fn peek_next_id(&self) -> u64 {
+        // EntityManager offsets ids by 1000 internally; expose the next id
+        // it *would* hand out so migration code can keep pace.
+        self.peek_next_monster_id()
+    }
+    #[inline]
+    fn bump_next_id_to(&mut self, at_least: u64) {
+        self.bump_next_monster_id_to(at_least);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::traits::IdAllocator;
+
+    #[test]
+    fn gem_depot_id_allocator() {
+        let mut d = GemDepot::new();
+        let start = d.peek_next_id();
+        d.bump_next_id_to(start + 10);
+        assert!(d.peek_next_id() >= start + 10);
+        // Lower bumps are no-ops.
+        d.bump_next_id_to(0);
+        assert!(d.peek_next_id() >= start + 10);
+    }
+
+    #[test]
+    fn equip_depot_id_allocator() {
+        let mut d = EquipDepot::new();
+        let start = d.peek_next_id();
+        d.bump_next_id_to(start + 5);
+        assert!(d.peek_next_id() >= start + 5);
+    }
+
+    #[test]
+    fn mail_manager_id_allocator() {
+        let mut m = MailManager::new();
+        let start = m.peek_next_id();
+        m.bump_next_id_to(start + 3);
+        assert!(m.peek_next_id() >= start + 3);
     }
 }
