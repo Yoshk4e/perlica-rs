@@ -3,6 +3,7 @@
 use crate::net::NetContext;
 use perlica_logic::character::char_bag::CharIndex;
 use perlica_logic::scene::EntityDestroyReason;
+use perlica_logic::traits::Classified;
 use perlica_proto::{
     BattleInfo, CsSceneKillChar, CsSceneKillMonster, CsSceneRevival, CsSceneSetLastRecordCampid,
     ScCharSyncStatus, ScObjectEnterView, ScSceneSetLastRecordCampid,
@@ -13,12 +14,7 @@ use tracing::{debug, error, info};
 pub async fn on_cs_scene_kill_monster(ctx: &mut NetContext<'_>, req: CsSceneKillMonster) {
     debug!("Monster killed: {}", req.id);
 
-    if let Some(entity) = ctx
-        .player
-        .entities
-        .remove(req.id)
-        .filter(|e| e.kind == perlica_logic::entity::EntityKind::Enemy)
-    {
+    if let Some(entity) = ctx.player.entities.remove(req.id).filter(|e| e.is_enemy()) {
         ctx.player.scene.on_entity_killed(entity.level_logic_id);
     }
 

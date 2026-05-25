@@ -1,68 +1,54 @@
 use crate::player::WorldState;
 
+#[derive(Debug, Clone, Copy, Default)]
+pub struct Pos<T> {
+    pub inner: [T; 3],
+}
+
+impl<T> Pos<T> {
+    pub fn new(x: T, y: T, z: T) -> Self {
+        Self { inner: [x, y, z] }
+    }
+
+    pub fn get_x(&self) -> &T {
+        &self.inner[0]
+    }
+
+    pub fn get_y(&self) -> &T {
+        &self.inner[1]
+    }
+
+    pub fn get_z(&self) -> &T {
+        &self.inner[2]
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct MovementManager {
-    pub pos_x: f32,
-    pub pos_y: f32,
-    pub pos_z: f32,
-    pub rot_x: f32,
-    pub rot_y: f32,
-    pub rot_z: f32,
+    pub pos: Pos<f32>,
+    pub rot: Pos<f32>,
 }
 
 impl From<&WorldState> for MovementManager {
     fn from(world: &WorldState) -> Self {
         Self {
-            pos_x: world.pos_x,
-            pos_y: world.pos_y,
-            pos_z: world.pos_z,
-            rot_x: world.rot_x,
-            rot_y: world.rot_y,
-            rot_z: world.rot_z,
+            pos: Pos::new(world.pos_x, world.pos_y, world.pos_z),
+            rot: Pos::new(world.rot_x, world.rot_y, world.rot_z),
         }
     }
 }
 
 impl MovementManager {
-    pub fn new(pos_x: f32, pos_y: f32, pos_z: f32, rot_x: f32, rot_y: f32, rot_z: f32) -> Self {
-        Self {
-            pos_x,
-            pos_y,
-            pos_z,
-            rot_x,
-            rot_y,
-            rot_z,
-        }
-    }
-
-    // Write current position back into WorldState before saving to db
-    pub fn sync_to_world(&self, world: &mut WorldState) {
-        world.pos_x = self.pos_x;
-        world.pos_y = self.pos_y;
-        world.pos_z = self.pos_z;
-        world.rot_x = self.rot_x;
-        world.rot_y = self.rot_y;
-        world.rot_z = self.rot_z;
+    pub fn new(pos: Pos<f32>, rot: Pos<f32>) -> Self {
+        Self { pos, rot }
     }
 
     pub fn update_position(&mut self, x: f32, y: f32, z: f32) {
-        self.pos_x = x;
-        self.pos_y = y;
-        self.pos_z = z;
+        self.pos = Pos::new(x, y, z);
     }
 
     pub fn update_rotation(&mut self, x: f32, y: f32, z: f32) {
-        self.rot_x = x;
-        self.rot_y = y;
-        self.rot_z = z;
-    }
-
-    // Teleport: same as update_position but signals intentional jumps,
-    // e.g. respawn at checkpoint, scene warp, etc.
-    pub fn teleport(&mut self, x: f32, y: f32, z: f32) {
-        self.pos_x = x;
-        self.pos_y = y;
-        self.pos_z = z;
+        self.rot = Pos::new(x, y, z);
     }
 }
 

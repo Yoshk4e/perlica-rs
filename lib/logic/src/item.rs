@@ -80,8 +80,13 @@ impl WeaponInstance {
         }
     }
 
+    /// Domain alias: returns `true` when the weapon is equipped to a character.
+    ///
+    /// Thin wrapper over [`Attachable::is_attached`]; use the trait method in
+    /// generic contexts, this name in concrete weapon-specific code.
+    #[inline]
     pub fn is_equipped(&self) -> bool {
-        self.equip_char_id != 0
+        <Self as crate::traits::Attachable>::is_attached(self)
     }
 }
 
@@ -232,10 +237,6 @@ impl WeaponDepot {
 
     pub fn len(&self) -> usize {
         self.weapons.len()
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.weapons.is_empty()
     }
 
     pub fn equip_weapon(
@@ -778,8 +779,13 @@ impl GemInstance {
         }
     }
 
+    /// Domain alias: returns `true` when the gem is socketed into a weapon.
+    ///
+    /// Thin wrapper over [`Attachable::is_attached`]; use the trait method in
+    /// generic contexts, this name in concrete gem-specific code.
+    #[inline]
     pub fn is_socketed(&self) -> bool {
-        self.attach_weapon_id != 0
+        <Self as crate::traits::Attachable>::is_attached(self)
     }
 }
 
@@ -919,10 +925,6 @@ impl GemDepot {
         self.gems.len()
     }
 
-    pub fn is_empty(&self) -> bool {
-        self.gems.is_empty()
-    }
-
     pub fn iter(&self) -> impl Iterator<Item = &GemInstance> {
         self.gems.values()
     }
@@ -970,8 +972,13 @@ impl EquipInstance {
         }
     }
 
+    /// Domain alias: returns `true` when the piece is equipped to a character.
+    ///
+    /// Thin wrapper over [`Attachable::is_attached`]; use the trait method in
+    /// generic contexts, this name in concrete equip-specific code.
+    #[inline]
     pub fn is_equipped(&self) -> bool {
-        self.equip_char_id != 0
+        <Self as crate::traits::Attachable>::is_attached(self)
     }
 }
 
@@ -1204,10 +1211,6 @@ impl EquipDepot {
         self.pieces.len()
     }
 
-    pub fn is_empty(&self) -> bool {
-        self.pieces.is_empty()
-    }
-
     pub fn iter(&self) -> impl Iterator<Item = &EquipInstance> {
         self.pieces.values()
     }
@@ -1280,10 +1283,6 @@ impl StackableDepot {
         } else {
             *self.counts.entry(id.to_owned()).or_insert(0) = count;
         }
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.counts.is_empty()
     }
 
     pub fn len(&self) -> usize {

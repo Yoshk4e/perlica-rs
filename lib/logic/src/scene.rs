@@ -916,25 +916,23 @@ impl SceneManager {
         char_bag: &CharBag,
         movement: &MovementManager,
     ) -> Vec<SceneCharacter> {
-        let spawn_pos = Vector {
-            x: movement.pos_x,
-            y: movement.pos_y,
-            z: movement.pos_z,
-        };
-        let spawn_rot = Vector {
-            x: movement.rot_x,
-            y: movement.rot_y,
-            z: movement.rot_z,
-        };
-
         char_ids
             .iter()
             .filter_map(|&objid| {
                 let idx = CharIndex::from_object_id(objid);
-                char_bag
-                    .chars
-                    .get(idx.as_usize())
-                    .map(|char_data| SceneCharacter {
+                char_bag.chars.get(idx.as_usize()).map(|char_data| {
+                    let spawn_pos = Vector {
+                        x: *movement.pos.get_x(),
+                        y: *movement.pos.get_y(),
+                        z: *movement.pos.get_z(),
+                    };
+                    let spawn_rot = Vector {
+                        x: *movement.rot.get_x(),
+                        y: *movement.rot.get_y(),
+                        z: *movement.rot.get_z(),
+                    };
+
+                    SceneCharacter {
                         common_info: Some(SceneObjectCommonInfo {
                             id: objid,
                             templateid: char_data.template_id.clone(),
@@ -945,7 +943,8 @@ impl SceneManager {
                         }),
                         level: char_data.level,
                         name: "Player".to_string(),
-                    })
+                    }
+                })
             })
             .collect()
     }
@@ -1045,23 +1044,23 @@ impl SceneManager {
     ) -> Vec<SceneCharacter> {
         let team = &char_bag.teams[char_bag.meta.curr_team_index as usize];
 
-        let spawn_pos = Vector {
-            x: movement.pos_x,
-            y: movement.pos_y,
-            z: movement.pos_z,
-        };
-        let spawn_rot = Vector {
-            x: movement.rot_x,
-            y: movement.rot_y,
-            z: movement.rot_z,
-        };
-
         let mut chars: Vec<SceneCharacter> = team
             .char_team
             .iter()
             .filter_map(|slot| slot.char_index())
             .map(|idx| {
                 let char_data = &char_bag.chars[idx.as_usize()];
+                let spawn_pos = Vector {
+                    x: *movement.pos.get_x(),
+                    y: *movement.pos.get_y(),
+                    z: *movement.pos.get_z(),
+                };
+                let spawn_rot = Vector {
+                    x: *movement.rot.get_x(),
+                    y: *movement.rot.get_y(),
+                    z: *movement.rot.get_z(),
+                };
+
                 SceneCharacter {
                     common_info: Some(SceneObjectCommonInfo {
                         id: idx.object_id(),
@@ -1083,6 +1082,7 @@ impl SceneManager {
         chars
     }
 
+    #[deprecated]
     pub fn pack_scene_monsters(
         &self,
         _assets: &BeyondAssets,

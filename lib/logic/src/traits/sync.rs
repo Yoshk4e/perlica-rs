@@ -17,8 +17,14 @@ pub trait SyncWriteBack<T> {
 // retardism but well for now
 impl SyncWriteBack<WorldState> for MovementManager {
     #[inline]
-    fn write_back_into(&self, target: &mut WorldState) {
-        self.sync_to_world(target);
+    fn write_back_into(&self, world: &mut WorldState) {
+        world.pos_x = *self.pos.get_x();
+        world.pos_y = *self.pos.get_y();
+        world.pos_z = *self.pos.get_z();
+
+        world.rot_x = *self.rot.get_x();
+        world.rot_y = *self.rot.get_y();
+        world.rot_z = *self.rot.get_z();
     }
 }
 

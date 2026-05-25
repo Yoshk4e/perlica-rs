@@ -167,7 +167,7 @@ async fn teleport_command(ctx: &mut NetContext<'_>, args: &[&str]) -> Result<GmO
         .get(4)
         .map(|v| parse_f32(v, "rot_y"))
         .transpose()?
-        .unwrap_or(ctx.player.movement.rot_y);
+        .unwrap_or(*ctx.player.movement.rot.get_y());
 
     let is_scene_change = ctx.player.scene.current_scene != scene_name;
 
@@ -262,9 +262,9 @@ async fn spawn_command(ctx: &mut NetContext<'_>, args: &[&str]) -> Result<GmOutc
         )
     } else {
         (
-            ctx.player.movement.pos_x,
-            ctx.player.movement.pos_y,
-            ctx.player.movement.pos_z,
+            *ctx.player.movement.pos.get_x(),
+            *ctx.player.movement.pos.get_y(),
+            *ctx.player.movement.pos.get_z(),
             1usize,
         )
     };

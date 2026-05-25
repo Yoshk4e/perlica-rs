@@ -153,14 +153,14 @@ fn build_role_base_info(ctx: &NetContext<'_>) -> RoleBaseInfo {
     RoleBaseInfo {
         leader_char_id: ctx.player.get_leader_objid(),
         leader_position: Some(perlica_proto::Vector {
-            x: ctx.player.movement.pos_x,
-            y: ctx.player.movement.pos_y,
-            z: ctx.player.movement.pos_z,
+            x: *ctx.player.movement.pos.get_x(),
+            y: *ctx.player.movement.pos.get_y(),
+            z: *ctx.player.movement.pos.get_z(),
         }),
         leader_rotation: Some(perlica_proto::Vector {
-            x: ctx.player.movement.rot_x,
-            y: ctx.player.movement.rot_y,
-            z: ctx.player.movement.rot_z,
+            x: *ctx.player.movement.pos.get_x(),
+            y: *ctx.player.movement.pos.get_y(),
+            z: *ctx.player.movement.pos.get_z(),
         }),
         scene_name: ctx.player.scene.scene_name().to_string(),
         server_ts: now_ms(),

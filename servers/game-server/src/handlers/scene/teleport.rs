@@ -47,17 +47,17 @@ pub async fn on_cs_scene_teleport(
         .unwrap_or(ctx.player.scene.scene_id);
 
     let position = req.position.unwrap_or(Vector {
-        x: ctx.player.movement.pos_x,
-        y: ctx.player.movement.pos_y,
-        z: ctx.player.movement.pos_z,
+        x: *ctx.player.movement.pos.get_x(),
+        y: *ctx.player.movement.pos.get_y(),
+        z: *ctx.player.movement.pos.get_z(),
     });
     ctx.player
         .movement
         .update_position(position.x, position.y, position.z);
     let rotation_vec = req.rotation.unwrap_or(Vector {
-        x: ctx.player.movement.rot_x,
-        y: ctx.player.movement.rot_y,
-        z: ctx.player.movement.rot_z,
+        x: *ctx.player.movement.pos.get_x(),
+        y: *ctx.player.movement.pos.get_y(),
+        z: *ctx.player.movement.pos.get_z(),
     });
     ctx.player
         .movement

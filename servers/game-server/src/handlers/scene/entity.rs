@@ -2,6 +2,7 @@
 
 use crate::net::NetContext;
 use perlica_logic::scene::EntityDestroyReason;
+use perlica_logic::traits::Classified;
 use perlica_proto::{
     CsSceneCreateEntity, CsSceneDestroyEntity, ScSceneCreateEntity, SceneMonster,
     SceneObjectCommonInfo, Vector,
@@ -94,7 +95,7 @@ pub async fn on_cs_scene_destroy_entity(ctx: &mut NetContext<'_>, req: CsSceneDe
         if let Some(removed) = ctx.player.entities.remove(id) {
             // Only enemies record a respawn cooldown.  Interactives /
             // NPCs just need their interest entry cleared.
-            if removed.kind == perlica_logic::entity::EntityKind::Enemy {
+            if removed.is_enemy() {
                 ctx.player.scene.on_entity_killed(removed.level_logic_id);
             } else {
                 // Non-enemy: skip the dead_entities cooldown but still

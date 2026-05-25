@@ -16,9 +16,9 @@ pub async fn notify_enter_scene(ctx: &mut NetContext<'_>) -> bool {
             .get_scene_id(&ctx.player.world.last_scene)
             .unwrap_or(0),
         position: Some(Vector {
-            x: ctx.player.movement.pos_x,
-            y: ctx.player.movement.pos_y,
-            z: ctx.player.movement.pos_z,
+            x: *ctx.player.movement.pos.get_x(),
+            y: *ctx.player.movement.pos.get_y(),
+            z: *ctx.player.movement.pos.get_z(),
         }),
     };
 

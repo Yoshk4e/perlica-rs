@@ -22,7 +22,7 @@ use tracing::debug;
 /// Known exclusions:
 ///  - `is_G_Ob_Over` (script 5): set by action 29 immediately after
 ///    `isWalkLimitFinish` (action 28) in the walk-limit leave-trigger chain.
-///    One player event → two property packets → two advances.  Only
+///    One player event -> two property packets -> two advances.  Only
 ///    `isWalkLimitFinish` belongs here.
 fn is_progression_flag(scene: &str, script_id: i32, key: &str) -> bool {
     matches!(
@@ -55,14 +55,14 @@ fn build_role_base_info(ctx: &NetContext<'_>) -> RoleBaseInfo {
     RoleBaseInfo {
         leader_char_id: ctx.player.get_leader_objid(),
         leader_position: Some(perlica_proto::Vector {
-            x: ctx.player.movement.pos_x,
-            y: ctx.player.movement.pos_y,
-            z: ctx.player.movement.pos_z,
+            x: *ctx.player.movement.pos.get_x(),
+            y: *ctx.player.movement.pos.get_y(),
+            z: *ctx.player.movement.pos.get_z(),
         }),
         leader_rotation: Some(perlica_proto::Vector {
-            x: ctx.player.movement.rot_x,
-            y: ctx.player.movement.rot_y,
-            z: ctx.player.movement.rot_z,
+            x: *ctx.player.movement.rot.get_x(),
+            y: *ctx.player.movement.rot.get_y(),
+            z: *ctx.player.movement.rot.get_z(),
         }),
         scene_name: ctx.player.scene.scene_name().to_string(),
         server_ts: common::time::now_ms(),
@@ -285,9 +285,9 @@ pub async fn on_cs_scene_level_script_event_trigger(
     //    This picks up script 20001 (LeaveSplineMove) when the player is
     //    within its activeShape but not its startShape.
     let player_pos = (
-        ctx.player.movement.pos_x,
-        ctx.player.movement.pos_y,
-        ctx.player.movement.pos_z,
+        *ctx.player.movement.pos.get_x(),
+        *ctx.player.movement.pos.get_y(),
+        *ctx.player.movement.pos.get_z(),
     );
     let proximate = ctx
         .player
@@ -306,7 +306,7 @@ pub async fn on_cs_scene_level_script_event_trigger(
     }
 
     // 3. Catch shape-less OnScriptActive scripts designed for server
-    //    activation (e.g. script 20006 — end-game FMV/cutscene sequence).
+    //    activation (e.g. script 20006 - end-game FMV/cutscene sequence).
     //    The client can never trigger these by proximity because they
     //    have no spatial shapes.
     let server_triggered = ctx

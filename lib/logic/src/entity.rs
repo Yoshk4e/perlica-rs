@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 
+use crate::traits::Classified;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum EntityKind {
     Character,
@@ -85,25 +87,19 @@ impl EntityManager {
     }
 
     pub fn monsters(&self) -> impl Iterator<Item = &SceneEntity> {
-        self.entities
-            .values()
-            .filter(|e| e.kind == EntityKind::Enemy)
+        self.entities.values().filter(|e| e.is_enemy())
     }
 
     pub fn characters(&self) -> impl Iterator<Item = &SceneEntity> {
-        self.entities
-            .values()
-            .filter(|e| e.kind == EntityKind::Character)
+        self.entities.values().filter(|e| e.is_character())
     }
 
     pub fn interactives(&self) -> impl Iterator<Item = &SceneEntity> {
-        self.entities
-            .values()
-            .filter(|e| e.kind == EntityKind::Interactive)
+        self.entities.values().filter(|e| e.is_interactive())
     }
 
     pub fn npcs(&self) -> impl Iterator<Item = &SceneEntity> {
-        self.entities.values().filter(|e| e.kind == EntityKind::Npc)
+        self.entities.values().filter(|e| e.is_npc())
     }
 
     // Nukes all entities and resets the ID counter. Call on scene transition.
@@ -114,10 +110,6 @@ impl EntityManager {
 
     pub fn len(&self) -> usize {
         self.entities.len()
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.entities.is_empty()
     }
 
     pub fn ids(&self) -> Vec<u64> {

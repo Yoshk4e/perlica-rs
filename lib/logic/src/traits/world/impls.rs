@@ -2,7 +2,7 @@
 
 use super::{Positioned3D, Positioned3DMut, Rotated3D, Rotated3DMut};
 use crate::entity::SceneEntity;
-use crate::movement::MovementManager;
+use crate::movement::{MovementManager, Pos};
 use crate::player::WorldState;
 use crate::scene::CheckpointInfo;
 
@@ -26,15 +26,15 @@ impl Positioned3D for SceneEntity {
 impl Positioned3D for MovementManager {
     #[inline]
     fn pos_x(&self) -> f32 {
-        self.pos_x
+        *self.pos.get_x()
     }
     #[inline]
     fn pos_y(&self) -> f32 {
-        self.pos_y
+        *self.pos.get_y()
     }
     #[inline]
     fn pos_z(&self) -> f32 {
-        self.pos_z
+        *self.pos.get_z()
     }
 }
 impl Positioned3DMut for MovementManager {
@@ -46,15 +46,15 @@ impl Positioned3DMut for MovementManager {
 impl Rotated3D for MovementManager {
     #[inline]
     fn rot_x(&self) -> f32 {
-        self.rot_x
+        *self.rot.get_x()
     }
     #[inline]
     fn rot_y(&self) -> f32 {
-        self.rot_y
+        *self.rot.get_y()
     }
     #[inline]
     fn rot_z(&self) -> f32 {
-        self.rot_z
+        *self.rot.get_z()
     }
 }
 impl Rotated3DMut for MovementManager {
@@ -139,8 +139,8 @@ mod tests {
 
     #[test]
     fn movement_positioned_ext() {
-        let a = MovementManager::new(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
-        let b = MovementManager::new(3.0, 0.0, 4.0, 0.0, 0.0, 0.0);
+        let a = MovementManager::new(Pos::new(0.0, 0.0, 0.0), Pos::new(0.0, 0.0, 0.0));
+        let b = MovementManager::new(Pos::new(3.0, 0.0, 4.0), Pos::new(0.0, 0.0, 0.0));
         assert!((a.distance_to(&b) - 5.0).abs() < 1e-5);
         assert!(a.within_radius(&b, 6.0));
         assert!(!a.within_radius(&b, 4.0));
