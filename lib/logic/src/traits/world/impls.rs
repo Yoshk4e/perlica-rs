@@ -5,6 +5,82 @@ use crate::entity::SceneEntity;
 use crate::movement::{MovementManager, Pos};
 use crate::player::WorldState;
 use crate::scene::CheckpointInfo;
+use config::tables::level_data::{LvEntityBase, Vector3f};
+
+impl Positioned3D for (f32, f32, f32) {
+    #[inline]
+    fn pos_x(&self) -> f32 {
+        self.0
+    }
+    #[inline]
+    fn pos_y(&self) -> f32 {
+        self.1
+    }
+    #[inline]
+    fn pos_z(&self) -> f32 {
+        self.2
+    }
+}
+
+impl Positioned3D for Vector3f {
+    #[inline]
+    fn pos_x(&self) -> f32 {
+        self.x
+    }
+    #[inline]
+    fn pos_y(&self) -> f32 {
+        self.y
+    }
+    #[inline]
+    fn pos_z(&self) -> f32 {
+        self.z
+    }
+}
+
+impl Rotated3D for Vector3f {
+    #[inline]
+    fn rot_x(&self) -> f32 {
+        self.x
+    }
+    #[inline]
+    fn rot_y(&self) -> f32 {
+        self.y
+    }
+    #[inline]
+    fn rot_z(&self) -> f32 {
+        self.z
+    }
+}
+
+impl Positioned3D for LvEntityBase {
+    #[inline]
+    fn pos_x(&self) -> f32 {
+        self.position.x
+    }
+    #[inline]
+    fn pos_y(&self) -> f32 {
+        self.position.y
+    }
+    #[inline]
+    fn pos_z(&self) -> f32 {
+        self.position.z
+    }
+}
+
+impl Rotated3D for LvEntityBase {
+    #[inline]
+    fn rot_x(&self) -> f32 {
+        self.rotation.x
+    }
+    #[inline]
+    fn rot_y(&self) -> f32 {
+        self.rotation.y
+    }
+    #[inline]
+    fn rot_z(&self) -> f32 {
+        self.rotation.z
+    }
+}
 
 // Read-only, scene entities are spatial snapshots, mutated through the
 // EntityManager rather than in-place.

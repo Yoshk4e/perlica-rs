@@ -6,6 +6,7 @@ use crate::interest::{InterestManager, ReplicationZone, StreamBucket, ZONE_NAMES
 use crate::level_script::LevelScriptManager;
 use crate::movement::MovementManager;
 use crate::spatial::SpatialGrid;
+use crate::traits::{Positioned3D, PositionedExt, Rotated3D};
 use config::BeyondAssets;
 use config::tables::level_data::LvProperty;
 use perlica_proto::{
@@ -74,7 +75,7 @@ impl SceneCache {
                 .level_data
                 .enemies(scene_id)
                 .iter()
-                .map(|e| (e.base.position.x, e.base.position.z)),
+                .map(|e| e.base.xz()),
             CELL_SIZE,
         );
         let interactive_grid = SpatialGrid::build(
@@ -82,15 +83,11 @@ impl SceneCache {
                 .level_data
                 .interactives(scene_id)
                 .iter()
-                .map(|i| (i.base.position.x, i.base.position.z)),
+                .map(|i| i.base.xz()),
             CELL_SIZE,
         );
         let npc_grid = SpatialGrid::build(
-            assets
-                .level_data
-                .npcs(scene_id)
-                .iter()
-                .map(|n| (n.base.position.x, n.base.position.z)),
+            assets.level_data.npcs(scene_id).iter().map(|n| n.base.xz()),
             CELL_SIZE,
         );
 
@@ -1390,10 +1387,7 @@ impl SceneManager {
             let Some(enemy) = spawns.get(idx) else {
                 continue;
             };
-            let dx = enemy.base.position.x - pos.0;
-            let dy = enemy.base.position.y - pos.1;
-            let dz = enemy.base.position.z - pos.2;
-            let dist_sq = dx * dx + dy * dy + dz * dz;
+            let dist_sq = enemy.base.position.distance_sq_to(&pos);
             if dist_sq > query_radius_sq {
                 continue;
             }
@@ -1428,27 +1422,21 @@ impl SceneManager {
 
             // Height-band occlusion only on the inner-most zone.
             if zone == ReplicationZone::Immediate
-                && self.interest.is_occluded(
-                    logic_id,
-                    pos,
-                    (
-                        enemy.base.position.x,
-                        enemy.base.position.y,
-                        enemy.base.position.z,
-                    ),
-                    now,
-                )
+                && self
+                    .interest
+                    .is_occluded(logic_id, pos, enemy.base.position.position(), now)
             {
                 continue;
             }
 
+            let (epx, epy, epz) = enemy.base.position.position();
             entities.insert(SceneEntity {
                 id: logic_id,
                 template_id: enemy.base.template_id.clone(),
                 kind: EntityKind::Enemy,
-                pos_x: enemy.base.position.x,
-                pos_y: enemy.base.position.y,
-                pos_z: enemy.base.position.z,
+                pos_x: epx,
+                pos_y: epy,
+                pos_z: epz,
                 level_logic_id: logic_id,
                 belong_level_script_id: enemy.base.belong_level_script_id,
             });
@@ -1537,10 +1525,7 @@ impl SceneManager {
                 continue;
             }
 
-            let dx = interactive.base.position.x - pos.0;
-            let dy = interactive.base.position.y - pos.1;
-            let dz = interactive.base.position.z - pos.2;
-            let dist_sq = dx * dx + dy * dy + dz * dz;
+            let dist_sq = interactive.base.position.distance_sq_to(&pos);
             if dist_sq > query_radius_sq {
                 continue;
             }
@@ -1649,10 +1634,7 @@ impl SceneManager {
             let Some(npc) = spawns.get(idx) else {
                 continue;
             };
-            let dx = npc.base.position.x - pos.0;
-            let dy = npc.base.position.y - pos.1;
-            let dz = npc.base.position.z - pos.2;
-            let dist_sq = dx * dx + dy * dy + dz * dz;
+            let dist_sq = npc.base.position.distance_sq_to(&pos);
             if dist_sq > query_radius_sq {
                 continue;
             }
