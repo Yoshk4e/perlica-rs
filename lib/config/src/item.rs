@@ -60,6 +60,16 @@ impl TryFrom<u32> for CraftShowingType {
     }
 }
 
+impl TryFrom<i32> for CraftShowingType {
+    type Error = i32;
+    fn try_from(v: i32) -> std::result::Result<Self, i32> {
+        if v < 0 {
+            return Err(v);
+        }
+        Self::try_from(v as u32).map_err(|_| v)
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(u32)]
 pub enum ItemDepotType {

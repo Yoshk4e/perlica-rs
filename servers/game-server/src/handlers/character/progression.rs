@@ -2,54 +2,13 @@
 //! break / ascension (`on_cs_char_break`).
 
 use crate::net::NetContext;
+use perlica_logic::character::progression::{calculate_level_from_total_exp, cumulative_exp};
 use perlica_logic::item::ConsumedItems;
 use perlica_proto::{
     CsCharBreak, CsCharLevelUp, ScCharBreak, ScCharLevelUp, ScCharSyncLevelExp, ScItemBagSyncModify,
 };
 use std::collections::HashMap;
 use tracing::{debug, error, info, warn};
-
-/// Cumulative exp required to reach `target_level` from level 1.
-fn cumulative_exp(level_up_exp: &[i32], target_level: i32) -> i64 {
-    let mut total = 0i64;
-    for i in 0..(target_level - 1) as usize {
-        let cost = level_up_exp.get(i).copied().unwrap_or(0);
-        if cost < 0 {
-            break;
-        }
-        total += cost as i64;
-    }
-    total
-}
-
-/// Advances `current_level` as far as possible given `new_total_exp`, capped at `max_level`.
-/// Returns `(achieved_level, remaining_exp_within_that_level)`.
-fn calculate_level_from_total_exp(
-    level_up_exp: &[i32],
-    current_level: i32,
-    new_total_exp: i64,
-    max_level: i32,
-) -> (i32, i32) {
-    let mut lv = current_level;
-    loop {
-        if lv >= max_level {
-            break;
-        }
-        let cost = level_up_exp.get(lv as usize - 1).copied().unwrap_or(-1);
-        if cost < 0 {
-            break;
-        }
-        let cum_next = cumulative_exp(level_up_exp, lv + 1);
-        if new_total_exp >= cum_next {
-            lv += 1;
-        } else {
-            break;
-        }
-    }
-    let cum_at_lv = cumulative_exp(level_up_exp, lv);
-    let remaining = (new_total_exp - cum_at_lv).max(0) as i32;
-    (lv, remaining)
-}
 
 /// Consumes exp items and advances the character's level.
 pub async fn on_cs_char_level_up(ctx: &mut NetContext<'_>, req: CsCharLevelUp) -> ScCharLevelUp {
@@ -92,7 +51,6 @@ pub async fn on_cs_char_level_up(ctx: &mut NetContext<'_>, req: CsCharLevelUp) -
 
     let level_up_exp = ctx.assets.characters.char_const().level_up_exp.as_slice();
 
-    // Exp the character still needs to advance from their current level.
     let cum_at_current = cumulative_exp(level_up_exp, current_level);
 
     let mut total_exp_gained: i64 = 0;

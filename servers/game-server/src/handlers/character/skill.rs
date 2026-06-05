@@ -1,6 +1,7 @@
 //! Character skill handlers: equip normal skill, level a skill up, set team skill.
 
 use crate::net::NetContext;
+use perlica_logic::character::skill::max_skill_level;
 use perlica_proto::{
     CsCharSetNormalSkill, CsCharSetTeamSkill, CsCharSkillLevelUp, ScCharSetNormalSkill,
     ScCharSetTeamSkill, ScCharSkillLevelUp, SkillLevelInfo,
@@ -45,12 +46,7 @@ pub async fn on_cs_char_skill_level_up(
         };
     };
     let template_id = char_data.template_id.clone();
-    let bundles = ctx.assets.char_skills.get_char_skills(&template_id);
-    let max_level = bundles
-        .iter()
-        .find(|b| b.entries.iter().any(|e| e.skill_id == req.skill_id))
-        .and_then(|b| b.entries.iter().map(|e| e.level).max())
-        .unwrap_or(1);
+    let max_level = max_skill_level(&template_id, &req.skill_id, ctx.assets);
     let current = char_data
         .skill_levels
         .get(&req.skill_id)

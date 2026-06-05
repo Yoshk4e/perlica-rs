@@ -8,15 +8,6 @@ use perlica_proto::{
 use std::collections::HashMap;
 use tracing::{debug, error, info, warn};
 
-fn slot_from_part_type(part_type: i32) -> CraftShowingType {
-    match part_type {
-        0 => CraftShowingType::EquipBody,
-        1 => CraftShowingType::EquipHead,
-        2 => CraftShowingType::EquipRing,
-        _ => CraftShowingType::None,
-    }
-}
-
 pub async fn on_cs_equip_puton(ctx: &mut NetContext<'_>, req: CsEquipPuton) -> ScEquipPuton {
     debug!(
         "EquipPuton: uid={}, char_id={}, slot={}, equip_id={}",
@@ -148,7 +139,7 @@ pub async fn on_cs_equip_putoff(ctx: &mut NetContext<'_>, req: CsEquipPutoff) ->
         "EquipPutoff: uid={}, char_id={}, slot={}",
         ctx.player.uid, req.charid, req.slotid
     );
-    let slot = slot_from_part_type(req.slotid);
+    let slot = CraftShowingType::try_from(req.slotid).unwrap_or(CraftShowingType::None);
     let inst_id = ctx
         .player
         .char_bag
