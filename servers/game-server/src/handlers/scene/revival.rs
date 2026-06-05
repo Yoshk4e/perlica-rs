@@ -11,20 +11,26 @@ use perlica_proto::{
 };
 use tracing::{debug, error, info, warn};
 
+const CAMPFIRE_POS_MAX_DELTA: f32 = 5.0;
+
 /// Removes a monster entity and notifies the client with `ScSceneDestroyEntity`.
 pub async fn on_cs_scene_kill_monster(ctx: &mut NetContext<'_>, req: CsSceneKillMonster) {
     debug!("Monster killed: {}", req.id);
 
     // If the entity exists but isn't an enemy (e.g. it's an interactive or NPC),
     // silently ignore the request to prevent abuse.
-    if let Some(entity) = ctx.player.entities.get(req.id) {
+    if let Some(entity) = ctx.player.entities.get(req.id).and_then(|entity| {
         if !entity.is_enemy() {
-            warn!(
-                "Rejected monster kill: id={} is not an enemy (kind={:?})",
-                req.id, entity.kind
-            );
-            return;
+            Some(entity)
+        } else {
+            None
         }
+    }) {
+        warn!(
+            "Rejected monster kill: id={} is not an enemy (kind={:?})",
+            req.id, entity.kind
+        );
+        return;
     }
 
     if let Some(entity) = ctx.player.entities.remove(req.id).filter(|e| e.is_enemy()) {
@@ -172,6 +178,12 @@ async fn send_revival_status_updates(ctx: &mut NetContext<'_>) {
 
 /// Stores the campfire as the current checkpoint so revival/repatriation return here.
 ///
+/// The client sends `req.position` which could be spoofed. We
+/// cross-check against the server-known position of the campfire
+/// entity in `ctx.player.entities`. If the entity exists and the
+/// client position is too far from the server position, the server
+/// position overrides.
+///
 /// Send order:
 ///   1. `ScSceneSetLastRecordCampid` - ACK echoing the camp id back.
 pub async fn on_cs_scene_set_last_record_campid(
@@ -180,12 +192,47 @@ pub async fn on_cs_scene_set_last_record_campid(
 ) -> ScSceneSetLastRecordCampid {
     info!("Setting last campfire: camp_id={}", req.last_camp_id);
 
-    if let Some(pos) = &req.position {
+    if let Some(client_pos) = &req.position {
+        let (pos_x, pos_y, pos_z) = if let Some(entity) =
+            ctx.player.entities.get(req.last_camp_id as u64)
+        {
+            let dx = client_pos.x - entity.pos_x;
+            let dy = client_pos.y - entity.pos_y;
+            let dz = client_pos.z - entity.pos_z;
+            let dist_sq = dx * dx + dy * dy + dz * dz;
+
+            if dist_sq > CAMPFIRE_POS_MAX_DELTA * CAMPFIRE_POS_MAX_DELTA {
+                warn!(
+                    "Campfire position spoofing detected: camp_id={}, client=({:.1}, {:.1}, {:.1}), server=({:.1}, {:.1}, {:.1}), dist={:.1} > max={}",
+                    req.last_camp_id,
+                    client_pos.x,
+                    client_pos.y,
+                    client_pos.z,
+                    entity.pos_x,
+                    entity.pos_y,
+                    entity.pos_z,
+                    dist_sq.sqrt(),
+                    CAMPFIRE_POS_MAX_DELTA,
+                );
+                // Use the server-known position instead.
+                (entity.pos_x, entity.pos_y, entity.pos_z)
+            } else {
+                // Close enough, accept the client position.
+                (client_pos.x, client_pos.y, client_pos.z)
+            }
+        } else {
+            // No server entity for this camp_id (e.g. entity was already
+            // cleaned up or the ID doesn't correspond to a tracked entity).
+            // Accept the client position as-is since we have nothing to
+            // cross-check against.
+            (client_pos.x, client_pos.y, client_pos.z)
+        };
+
         let checkpoint = perlica_logic::scene::CheckpointInfo {
             scene_name: ctx.player.scene.scene_name().to_string(),
-            pos_x: pos.x,
-            pos_y: pos.y,
-            pos_z: pos.z,
+            pos_x,
+            pos_y,
+            pos_z,
         };
         ctx.player.scene.set_checkpoint(checkpoint);
     }

@@ -5,11 +5,14 @@ use config::item::{CraftShowingType, ItemDepotType, ItemKind};
 use perlica_db::{Persistable, SceneSaveState};
 use perlica_logic::enums::{ParamRealType, ParamValueType};
 use perlica_proto::{
-    CsSceneInteractiveEventTrigger, CsSceneSetSafeZone, DynamicParameter, RewardItem,
+    Code, CsSceneInteractiveEventTrigger, CsSceneSetSafeZone, DynamicParameter, RewardItem,
     ScRewardToSceneBegin, ScSceneCollectionSync, ScSceneInteractiveEventTrigger,
     ScSceneSetSafeZone, ScSceneUpdateInteractiveProperty, SceneCollection,
 };
 use tracing::{debug, info, warn};
+
+// FIXME: keys i handle as of now but this should be handled better..
+const WRITABLE_INTERACTIVE_KEYS: &[&str] = &["is_collected", "is_enabled"];
 
 fn is_campfire(entity: &perlica_logic::entity::SceneEntity) -> bool {
     entity.template_id.to_ascii_lowercase().contains("campfire")
@@ -33,6 +36,16 @@ fn read_string_param(p: &DynamicParameter) -> Option<&str> {
     p.value_string_list.first().map(|s| s.as_str())
 }
 
+fn filter_writable_properties(
+    client_props: &std::collections::HashMap<String, DynamicParameter>,
+) -> std::collections::HashMap<String, DynamicParameter> {
+    client_props
+        .iter()
+        .filter(|(key, _)| WRITABLE_INTERACTIVE_KEYS.contains(&key.as_str()))
+        .map(|(k, v)| (k.clone(), v.clone()))
+        .collect()
+}
+
 pub async fn on_cs_scene_interactive_event_trigger(
     ctx: &mut NetContext<'_>,
     req: CsSceneInteractiveEventTrigger,
@@ -41,6 +54,23 @@ pub async fn on_cs_scene_interactive_event_trigger(
         "Interactive event trigger: scene={}, id={}, event={}, props={:?}",
         req.scene_name, req.id, req.event_name, req.properties
     );
+
+    // scene name must match the player's current scene
+    if req.scene_name != ctx.player.scene.current_scene {
+        warn!(
+            "Rejected interactive event: request scene='{}' does not match current scene='{}'",
+            req.scene_name, ctx.player.scene.current_scene
+        );
+        ctx.send_error(
+            Code::ErrSceneNameNotExist,
+            format!(
+                "scene '{}' does not match current scene '{}'",
+                req.scene_name, ctx.player.scene.current_scene
+            ),
+        )
+        .await;
+        return ScSceneInteractiveEventTrigger {};
+    }
 
     let kind = ctx
         .player
@@ -122,8 +152,9 @@ async fn handle_activate(ctx: &mut NetContext<'_>, req: &CsSceneInteractiveEvent
     let mut updated_props = std::collections::HashMap::new();
     updated_props.insert("is_enabled".to_string(), enabled_param);
 
-    for (key, value) in &req.properties {
-        updated_props.insert(key.clone(), value.clone());
+    let filtered = filter_writable_properties(&req.properties);
+    for (key, value) in filtered {
+        updated_props.insert(key, value);
     }
 
     let prop_update = ScSceneUpdateInteractiveProperty {
@@ -281,8 +312,10 @@ async fn mark_chest_collected(
 
     let mut updated_props = std::collections::HashMap::new();
     updated_props.insert("is_collected".to_string(), collected);
-    for (key, value) in client_props {
-        updated_props.insert(key.clone(), value.clone());
+
+    let filtered = filter_writable_properties(client_props);
+    for (key, value) in filtered {
+        updated_props.insert(key, value);
     }
 
     let msg = ScSceneUpdateInteractiveProperty {

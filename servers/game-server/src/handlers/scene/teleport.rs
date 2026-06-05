@@ -7,7 +7,7 @@
 use crate::net::NetContext;
 use perlica_db::Persistable;
 use perlica_logic::traits::SyncWriteBack;
-use perlica_proto::{CsSceneTeleport, ScSceneTeleport, Vector};
+use perlica_proto::{Code, CsSceneTeleport, ScSceneTeleport, Vector};
 use tracing::{debug, warn};
 
 pub async fn on_cs_scene_teleport(
@@ -18,6 +18,52 @@ pub async fn on_cs_scene_teleport(
         "Scene teleport: scene={}, position={:?}, rotation={:?}, reason={}",
         req.scene_name, req.position, req.rotation, req.teleport_reason
     );
+
+    // validate scene name exists in asset tables
+    if ctx
+        .assets
+        .str_id_num
+        .get_scene_id(&req.scene_name)
+        .is_none()
+    {
+        warn!(
+            "Rejected teleport to unknown scene: '{}' is not in str_id_num",
+            req.scene_name
+        );
+        ctx.send_error(
+            Code::ErrSceneNameNotExist,
+            format!("unknown scene '{}'", req.scene_name),
+        )
+        .await;
+        // Return a teleport that keeps the player in their current scene
+        // at their current position so the client doesn't get stuck.
+        let current_pos = Vector {
+            x: *ctx.player.movement.pos.get_x(),
+            y: *ctx.player.movement.pos.get_y(),
+            z: *ctx.player.movement.pos.get_z(),
+        };
+        let team_idx = ctx.player.char_bag.meta.curr_team_index as usize;
+        let obj_id_list = ctx
+            .player
+            .char_bag
+            .teams
+            .get(team_idx)
+            .map(|team| {
+                team.char_team
+                    .iter()
+                    .filter_map(|slot| slot.object_id())
+                    .collect::<Vec<u64>>()
+            })
+            .unwrap_or_default();
+        return ctx.player.scene.teleport(
+            obj_id_list,
+            current_pos,
+            None,
+            common::time::now_ms() as u32,
+            req.teleport_reason,
+            None,
+        );
+    }
 
     // Only wipe and re-initialise level-script state when we are actually
     // moving to a *different* scene. Intra-scene warps (reason=1, same

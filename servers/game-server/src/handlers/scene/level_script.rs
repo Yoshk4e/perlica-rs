@@ -3,12 +3,13 @@
 use crate::net::NetContext;
 use perlica_db::Persistable;
 use perlica_proto::{
-    CsSceneCommitLevelScriptCacheStep, CsSceneLevelScriptEventTrigger, CsSceneSetLevelScriptActive,
-    CsSceneUpdateInteractiveProperty, CsSceneUpdateLevelScriptProperty, DynamicParameter,
-    MissionState, QuestState, RoleBaseInfo, ScSceneLevelScriptEventTrigger,
-    ScSceneUpdateInteractiveProperty, ScSceneUpdateLevelScriptProperty,
+    Code, CsSceneCommitLevelScriptCacheStep, CsSceneLevelScriptEventTrigger,
+    CsSceneSetLevelScriptActive, CsSceneUpdateInteractiveProperty,
+    CsSceneUpdateLevelScriptProperty, DynamicParameter, MissionState, QuestState, RoleBaseInfo,
+    ScSceneLevelScriptEventTrigger, ScSceneUpdateInteractiveProperty,
+    ScSceneUpdateLevelScriptProperty,
 };
-use tracing::debug;
+use tracing::{debug, warn};
 
 /// Server-driven prologue / tutorial flags. When the client flips ANY of
 /// these to `true` **for the first time in this session**, the server pushes
@@ -196,6 +197,20 @@ async fn maybe_drive_quest_progression<'a>(
     }
 }
 
+/// Helper: check that `req_scene` matches the player's current scene.
+/// Returns `true` if the scene matches, `false` if it was rejected
+/// (with an error already sent to the client).
+fn validate_scene_match(ctx: &NetContext<'_>, req_scene: &str) -> bool {
+    if req_scene == ctx.player.scene.current_scene {
+        return true;
+    }
+    warn!(
+        "Rejected level-script operation: request scene='{}' does not match current scene='{}'",
+        req_scene, ctx.player.scene.current_scene
+    );
+    false
+}
+
 pub async fn on_cs_scene_set_level_script_active(
     ctx: &mut NetContext<'_>,
     req: CsSceneSetLevelScriptActive,
@@ -204,6 +219,18 @@ pub async fn on_cs_scene_set_level_script_active(
         "Set level script active: scene={}, script_id={}, is_active={}",
         req.scene_name, req.script_id, req.is_active
     );
+
+    if !validate_scene_match(ctx, &req.scene_name) {
+        ctx.send_error(
+            Code::ErrSceneNameNotExist,
+            format!(
+                "scene '{}' does not match current scene '{}'",
+                req.scene_name, ctx.player.scene.current_scene
+            ),
+        )
+        .await;
+        return;
+    }
 
     let level_scripts = &mut ctx.player.scene.level_scripts;
 
@@ -225,6 +252,25 @@ pub async fn on_cs_scene_update_level_script_property(
         "Update level script property: scene={}, script_id={}, props={:?}",
         req.scene_name, req.script_id, req.properties
     );
+
+    if !validate_scene_match(ctx, &req.scene_name) {
+        ctx.send_error(
+            Code::ErrSceneNameNotExist,
+            format!(
+                "scene '{}' does not match current scene '{}'",
+                req.scene_name, ctx.player.scene.current_scene
+            ),
+        )
+        .await;
+        // Return the request as-is but with client_operate=false so the
+        // client knows its write was not accepted. i think. :thonk:
+        return ScSceneUpdateLevelScriptProperty {
+            scene_name: req.scene_name,
+            script_id: req.script_id,
+            properties: req.properties,
+            client_operate: false,
+        };
+    }
 
     ctx.player.scene.level_scripts.update_properties(
         &req.scene_name,
@@ -268,6 +314,18 @@ pub async fn on_cs_scene_level_script_event_trigger(
         "Level script event trigger: scene={}, script_id={}, event={}, props={:?}",
         req.scene_name, req.script_id, req.event_name, req.properties
     );
+
+    if !validate_scene_match(ctx, &req.scene_name) {
+        ctx.send_error(
+            Code::ErrSceneNameNotExist,
+            format!(
+                "scene '{}' does not match current scene '{}'",
+                req.scene_name, ctx.player.scene.current_scene
+            ),
+        )
+        .await;
+        return ScSceneLevelScriptEventTrigger {};
+    }
 
     ctx.player.scene.level_scripts.update_properties(
         &req.scene_name,
@@ -350,6 +408,18 @@ pub async fn on_cs_scene_commit_level_script_cache_step(
         "Commit level script cache step: scene={}, script_id={}",
         req.scene_name, req.script_id
     );
+
+    if !validate_scene_match(ctx, &req.scene_name) {
+        ctx.send_error(
+            Code::ErrSceneNameNotExist,
+            format!(
+                "scene '{}' does not match current scene '{}'",
+                req.scene_name, ctx.player.scene.current_scene
+            ),
+        )
+        .await;
+        return;
+    }
 
     let level_scripts = &mut ctx.player.scene.level_scripts;
 
