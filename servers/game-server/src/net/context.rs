@@ -3,8 +3,9 @@
 use crate::player::Player;
 use config::BeyondAssets;
 use perlica_db::PlayerDb;
-use perlica_proto::{CsHead, NetMessage, prost::Message};
+use perlica_proto::{Code, CsHead, NetMessage, ScNtfErrorCode, prost::Message};
 use tokio::sync::mpsc;
+use tracing::warn;
 
 /// Everything a handler needs for a single request, player state, assets, DB, and the
 /// outbound channel. Created fresh per command and dropped when the handler returns.
@@ -45,6 +46,25 @@ impl<'a> NetContext<'a> {
     /// Sends a server-initiated notification (no matching client request).
     pub async fn notify<T: NetMessage>(&mut self, message: T) -> std::io::Result<()> {
         self.write_frame(message, false).await
+    }
+
+    /// Sends an error notification to the client using `SC_NTF_ERROR_CODE`.
+    ///
+    /// This should be called when a handler rejects a request due to
+    /// validation failure (bad objid, unowned character, invalid input, etc.)
+    pub async fn send_error(&mut self, code: Code, details: impl Into<String>) {
+        if let Err(e) = self
+            .notify(ScNtfErrorCode {
+                error_code: code as i32,
+                details: details.into(),
+            })
+            .await
+        {
+            warn!(
+                "Failed to send error notification: code={:?}, err={:?}",
+                code, e
+            );
+        }
     }
 
     /// Frames and sends a message over the outbound channel.

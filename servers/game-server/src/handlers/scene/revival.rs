@@ -6,14 +6,26 @@ use perlica_logic::character::char_bag::CharIndex;
 use perlica_logic::scene::EntityDestroyReason;
 use perlica_logic::traits::Classified;
 use perlica_proto::{
-    BattleInfo, CsSceneKillChar, CsSceneKillMonster, CsSceneRevival, CsSceneSetLastRecordCampid,
-    ScCharSyncStatus, ScObjectEnterView, ScSceneSetLastRecordCampid,
+    BattleInfo, Code, CsSceneKillChar, CsSceneKillMonster, CsSceneRevival,
+    CsSceneSetLastRecordCampid, ScCharSyncStatus, ScObjectEnterView, ScSceneSetLastRecordCampid,
 };
 use tracing::{debug, error, info, warn};
 
 /// Removes a monster entity and notifies the client with `ScSceneDestroyEntity`.
 pub async fn on_cs_scene_kill_monster(ctx: &mut NetContext<'_>, req: CsSceneKillMonster) {
     debug!("Monster killed: {}", req.id);
+
+    // If the entity exists but isn't an enemy (e.g. it's an interactive or NPC),
+    // silently ignore the request to prevent abuse.
+    if let Some(entity) = ctx.player.entities.get(req.id) {
+        if !entity.is_enemy() {
+            warn!(
+                "Rejected monster kill: id={} is not an enemy (kind={:?})",
+                req.id, entity.kind
+            );
+            return;
+        }
+    }
 
     if let Some(entity) = ctx.player.entities.remove(req.id).filter(|e| e.is_enemy()) {
         ctx.player.scene.on_entity_killed(entity.level_logic_id);
@@ -31,6 +43,33 @@ pub async fn on_cs_scene_kill_monster(ctx: &mut NetContext<'_>, req: CsSceneKill
 
 pub async fn on_cs_scene_kill_char(ctx: &mut NetContext<'_>, req: CsSceneKillChar) {
     debug!("Character killed: {}", req.id);
+
+    // Check if the character is on the active team
+    let team_idx = ctx.player.char_bag.meta.curr_team_index as usize;
+    let in_active_team = ctx
+        .player
+        .char_bag
+        .teams
+        .get(team_idx)
+        .map(|team| {
+            team.char_team
+                .iter()
+                .any(|slot| slot.object_id() == Some(req.id))
+        })
+        .unwrap_or(false);
+
+    if !in_active_team {
+        warn!(
+            "Rejected character kill: id={} not in active team (team_idx={})",
+            req.id, team_idx
+        );
+        ctx.send_error(
+            Code::ErrSceneCharNil,
+            format!("id {} is not in the current active team", req.id),
+        )
+        .await;
+        return;
+    }
 
     if let Some(char_data) = ctx.player.char_bag.get_char_by_objid_mut(req.id) {
         char_data.is_dead = true;

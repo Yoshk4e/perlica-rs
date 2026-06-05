@@ -3,10 +3,17 @@
 use crate::net::NetContext;
 use perlica_logic::character::char_bag::{CharIndex, Team, TeamSlot};
 use perlica_proto::{
-    CsCharBagSetCurrTeamIndex, CsCharBagSetTeam, CsCharBagSetTeamLeader, CsCharBagSetTeamName,
-    ScCharBagSetCurrTeamIndex, ScCharBagSetTeam, ScCharBagSetTeamLeader, ScCharBagSetTeamName,
+    Code, CsCharBagSetCurrTeamIndex, CsCharBagSetTeam, CsCharBagSetTeamLeader,
+    CsCharBagSetTeamName, ScCharBagSetCurrTeamIndex, ScCharBagSetTeam, ScCharBagSetTeamLeader,
+    ScCharBagSetTeamName,
 };
 use tracing::{debug, error, warn};
+
+const MAX_TEAM_NAME_LEN: usize = 20;
+
+fn strip_control_chars(s: &str) -> String {
+    s.chars().filter(|c| !c.is_control()).collect()
+}
 
 pub async fn on_cs_char_bag_set_team_leader(
     ctx: &mut NetContext<'_>,
@@ -129,6 +136,41 @@ pub async fn on_cs_char_bag_set_team(ctx: &mut NetContext<'_>, req: CsCharBagSet
             .await;
         return;
     }
+
+    // every non-zero objid must be an owned character
+    let char_count = ctx.player.char_bag.chars.len();
+    for (slot_i, &objid) in req.char_team.iter().enumerate().take(Team::SLOTS_COUNT) {
+        if objid == 0 {
+            continue; // Empty slot, fine.
+        }
+        let idx = CharIndex::from_object_id(objid);
+        if idx.as_usize() >= char_count {
+            warn!(
+                "Rejected set_team: objid={} at slot {} is not an owned character (char_count={})",
+                objid, slot_i, char_count
+            );
+            ctx.send_error(
+                Code::ErrCharBagSetTeamFailed,
+                format!("objid {} is not owned by player", objid),
+            )
+            .await;
+
+            // Echo back the *current* team so the client isn't stuck
+            let current_team = &ctx.player.char_bag.teams[team_index];
+            let _ = ctx
+                .send(ScCharBagSetTeam {
+                    team_index: req.team_index,
+                    char_team: current_team
+                        .char_team
+                        .iter()
+                        .filter_map(|s| s.object_id())
+                        .collect(),
+                })
+                .await;
+            return;
+        }
+    }
+
     let old_ids: Vec<u64> = ctx.player.char_bag.teams[team_index]
         .char_team
         .iter()
@@ -216,8 +258,23 @@ pub async fn on_cs_char_bag_set_team_name(
     req: CsCharBagSetTeamName,
 ) -> ScCharBagSetTeamName {
     let team_index = req.team_index as usize;
+
+    let sanitized = strip_control_chars(&req.team_name);
+    let sanitized = if sanitized.len() > MAX_TEAM_NAME_LEN {
+        let truncated: String = sanitized.chars().take(MAX_TEAM_NAME_LEN).collect();
+        warn!(
+            "Team name truncated: team_index={}, original_len={}, max={}",
+            team_index,
+            sanitized.len(),
+            MAX_TEAM_NAME_LEN
+        );
+        truncated
+    } else {
+        sanitized
+    };
+
     if let Some(team) = ctx.player.char_bag.teams.get_mut(team_index) {
-        team.name = req.team_name.clone();
+        team.name = sanitized.clone();
     } else {
         return ScCharBagSetTeamName {
             team_index: req.team_index,
@@ -238,6 +295,6 @@ pub async fn on_cs_char_bag_set_team_name(
 
     ScCharBagSetTeamName {
         team_index: req.team_index,
-        team_name: req.team_name,
+        team_name: sanitized,
     }
 }
