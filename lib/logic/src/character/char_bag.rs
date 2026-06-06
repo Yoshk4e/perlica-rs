@@ -773,7 +773,11 @@ pub fn handle_weapon_add_exp(
     let weapon_template = match assets.weapons.get(&template_id) {
         Some(t) => t,
         None => {
-            let weapon = char_bag.item_manager.weapons.get(target_id).unwrap();
+            let weapon = char_bag
+                .item_manager
+                .weapons
+                .get(target_id)
+                .ok_or(LogicError::WeaponNotFound(target_id))?;
             return Ok(WeaponAddExpResult {
                 response: weapon.into(),
                 consumed: ConsumedItems::new(),
@@ -787,7 +791,11 @@ pub fn handle_weapon_add_exp(
         .weapons
         .get_effective_max_lv(&template_id, current_breakthrough);
     if current_level >= max_level {
-        let weapon = char_bag.item_manager.weapons.get(target_id).unwrap();
+        let weapon = char_bag
+            .item_manager
+            .weapons
+            .get(target_id)
+            .ok_or(LogicError::WeaponNotFound(target_id))?;
         return Ok(WeaponAddExpResult {
             response: weapon.into(),
             consumed: ConsumedItems::new(),
@@ -801,7 +809,11 @@ pub fn handle_weapon_add_exp(
         .get_upgrade_sum(&weapon_template.level_template_id)
         .is_none()
     {
-        let weapon = char_bag.item_manager.weapons.get(target_id).unwrap();
+        let weapon = char_bag
+            .item_manager
+            .weapons
+            .get(target_id)
+            .ok_or(LogicError::WeaponNotFound(target_id))?;
         return Ok(WeaponAddExpResult {
             response: weapon.into(),
             consumed: ConsumedItems::new(),

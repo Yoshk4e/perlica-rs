@@ -8,7 +8,7 @@ use perlica_proto::{
     CsCharBreak, CsCharLevelUp, ScCharBreak, ScCharLevelUp, ScCharSyncLevelExp, ScItemBagSyncModify,
 };
 use std::collections::HashMap;
-use tracing::{debug, error, info, warn};
+use tracing::{debug, info, warn};
 
 /// Consumes exp items and advances the character's level.
 pub async fn on_cs_char_level_up(ctx: &mut NetContext<'_>, req: CsCharLevelUp) -> ScCharLevelUp {
@@ -132,28 +132,22 @@ pub async fn on_cs_char_level_up(ctx: &mut NetContext<'_>, req: CsCharLevelUp) -
         .into_iter()
         .find(|a| a.obj_id == req.char_obj_id)
     {
-        let _ = ctx
-            .notify(attr_msg)
-            .await
-            .inspect_err(|e| error!("Failed to sync attrs after level up: {:?}", e));
+        let _ = ctx.notify(attr_msg).await;
     }
 
-    if let Err(e) = ctx
+    let _ = ctx
         .notify(ScCharSyncLevelExp {
             char_obj_id: req.char_obj_id,
             level: new_level,
             exp: synced_exp,
         })
-        .await
-    {
-        error!("Failed to sync level/exp: {:?}", e);
-    }
+        .await;
 
     if !consumed_items.is_empty() {
         let depot_modify = consumed_items.build_depot_map();
 
         if !depot_modify.is_empty() {
-            if let Err(e) = ctx
+            let _ = ctx
                 .notify(ScItemBagSyncModify {
                     depot: depot_modify,
                     bag: None,
@@ -162,10 +156,7 @@ pub async fn on_cs_char_level_up(ctx: &mut NetContext<'_>, req: CsCharLevelUp) -
                     use_blackboard: None,
                     is_new: false,
                 })
-                .await
-            {
-                error!("Failed to send item bag modify: {:?}", e);
-            }
+                .await;
         }
     }
 

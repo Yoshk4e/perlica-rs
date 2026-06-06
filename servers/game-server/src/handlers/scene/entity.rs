@@ -7,7 +7,7 @@ use perlica_proto::{
     CsSceneCreateEntity, CsSceneDestroyEntity, ScSceneCreateEntity, SceneMonster,
     SceneObjectCommonInfo, Vector,
 };
-use tracing::{debug, error, warn};
+use tracing::{debug, warn};
 
 /// Spawns a monster and returns the create/enter-view pair.
 /// `ScSceneCreateEntity` carries only the ID; full detail goes in `ScObjectEnterView`.
@@ -139,11 +139,6 @@ pub async fn on_cs_scene_destroy_entity(ctx: &mut NetContext<'_>, req: CsSceneDe
             .scene
             .destroy_entity(id, EntityDestroyReason::Dead);
 
-        if let Err(error) = ctx.notify(msg).await {
-            error!(
-                "Failed to send entity destroy notification for {}: {:?}",
-                id, error
-            );
-        }
+        let _ = ctx.notify(msg).await;
     }
 }

@@ -285,18 +285,17 @@ impl WeaponDepot {
         let w = self
             .weapons
             .get(&inst_id)
-            .ok_or_else(|| LogicError::NotFound("Weapon not found".into()))?;
+            .ok_or(LogicError::WeaponNotFound(inst_id))?;
         if w.is_equipped() {
-            return Err(LogicError::InvalidOperation(
-                "Cannot remove equipped weapon".into(),
-            ));
+            return Err(LogicError::WeaponEquipped(inst_id));
         }
         if w.is_lock {
-            return Err(LogicError::InvalidOperation(
-                "Cannot remove locked weapon".into(),
-            ));
+            return Err(LogicError::WeaponLocked(inst_id));
         }
-        let removed = self.weapons.remove(&inst_id).unwrap();
+        let removed = self
+            .weapons
+            .remove(&inst_id)
+            .ok_or(LogicError::WeaponNotFound(inst_id))?;
         self.pending.mark_removed(inst_id);
         Ok(removed)
     }
@@ -321,21 +320,19 @@ impl WeaponDepot {
         let w = self
             .weapons
             .get(&weapon_inst_id)
-            .ok_or_else(|| LogicError::NotFound("Weapon not found".into()))?;
+            .ok_or(LogicError::WeaponNotFound(weapon_inst_id))?;
         if w.equip_char_id == char_id {
-            return Err(LogicError::InvalidOperation(
-                "Weapon already equipped to this character".into(),
-            ));
+            return Err(LogicError::WeaponAlreadyEquipped(weapon_inst_id, char_id));
         }
         let prev_char = w.equip_char_id;
         let prev_weapon = self.unequip_from_char(char_id);
         if prev_char != 0 {
             self.equipped_weapons.remove(&prev_char);
-            if let Some(w) = self.weapons.get_mut(&weapon_inst_id) {
-                w.equip_char_id = 0;
-            }
         }
-        let w = self.weapons.get_mut(&weapon_inst_id).unwrap();
+        let w = self
+            .weapons
+            .get_mut(&weapon_inst_id)
+            .ok_or(LogicError::WeaponNotFound(weapon_inst_id))?;
         w.equip_char_id = char_id;
         self.equipped_weapons.insert(char_id, weapon_inst_id);
         self.pending.mark_dirty(weapon_inst_id);
@@ -450,12 +447,7 @@ impl WeaponDepot {
         let t = self
             .weapons
             .get(&target_inst_id)
-            .ok_or_else(|| LogicError::NotFound("Target weapon not found".into()))?;
-        if t.is_lock {
-            return Err(LogicError::InvalidOperation(
-                "Cannot upgrade locked weapon".into(),
-            ));
-        }
+            .ok_or(LogicError::WeaponNotFound(target_inst_id))?;
         let tmpl = t.template_id.clone();
         let cur_lv = t.weapon_lv;
         let cur_exp_relative = t.exp;
@@ -464,23 +456,17 @@ impl WeaponDepot {
         let fodder_count = fodder_inst_ids.len();
         for &fid in fodder_inst_ids {
             if fid == target_inst_id {
-                return Err(LogicError::InvalidOperation(
-                    "Cannot use weapon as its own fodder".into(),
-                ));
+                return Err(LogicError::WeaponFodderSelf(fid));
             }
             let f = self
                 .weapons
                 .get(&fid)
-                .ok_or_else(|| LogicError::NotFound("Fodder weapon not found".into()))?;
+                .ok_or(LogicError::WeaponFodderNotFound(fid))?;
             if f.is_lock {
-                return Err(LogicError::InvalidOperation(
-                    "Cannot use locked weapon as fodder".into(),
-                ));
+                return Err(LogicError::WeaponFodderLocked(fid));
             }
             if f.is_equipped() {
-                return Err(LogicError::InvalidOperation(
-                    "Cannot use equipped weapon as fodder".into(),
-                ));
+                return Err(LogicError::WeaponFodderEquipped(fid));
             }
             total_exp += Self::calculate_fodder_exp(f, assets.weapons.get(&f.template_id));
         }
@@ -501,7 +487,10 @@ impl WeaponDepot {
                     .map(|w| w.level_template_id.as_str())
                     .unwrap_or(""),
             ) else {
-                let t = self.weapons.get_mut(&target_inst_id).unwrap();
+                let t = self
+                    .weapons
+                    .get_mut(&target_inst_id)
+                    .ok_or(LogicError::WeaponNotFound(target_inst_id))?;
                 return Ok((t.exp, t.weapon_lv));
             };
 
@@ -538,7 +527,10 @@ impl WeaponDepot {
             (cur_lv, cur_exp_relative)
         };
 
-        let t = self.weapons.get_mut(&target_inst_id).unwrap();
+        let t = self
+            .weapons
+            .get_mut(&target_inst_id)
+            .ok_or(LogicError::WeaponNotFound(target_inst_id))?;
         t.weapon_lv = new_lv;
         t.exp = new_exp_relative;
         self.pending.mark_dirty(target_inst_id);
@@ -557,30 +549,24 @@ impl WeaponDepot {
         let w = self
             .weapons
             .get(&inst_id)
-            .ok_or_else(|| LogicError::NotFound("Weapon not found".into()))?;
-        if w.is_lock {
-            return Err(LogicError::InvalidOperation(
-                "Cannot breakthrough locked weapon".into(),
-            ));
-        }
+            .ok_or(LogicError::WeaponNotFound(inst_id))?;
         let tmpl = w.template_id.clone();
         let cur = w.breakthrough_lv;
         let lv = w.weapon_lv;
         let max = assets.weapons.get_max_breakthrough_lv(&tmpl);
         if cur >= max {
-            return Err(LogicError::InvalidOperation(
-                "Already at max breakthrough".into(),
-            ));
+            return Err(LogicError::WeaponMaxBreakthrough(inst_id));
         }
         let next_show_lv = cur + 1;
         let req = self
             .get_breakthrough_required_level(&tmpl, next_show_lv, assets)
             .unwrap_or(1);
         if lv < req {
-            return Err(LogicError::InvalidOperation(format!(
-                "Level {} below required {}",
-                lv, req
-            )));
+            return Err(LogicError::WeaponBreakthroughLevelTooLow {
+                id: inst_id,
+                current: lv,
+                required: req,
+            });
         }
         // Look up the material cost for this breakthrough stage.
         let (gold_cost, material_costs) = assets
@@ -607,7 +593,10 @@ impl WeaponDepot {
             })
             .unwrap_or((0, Vec::new()));
 
-        let w = self.weapons.get_mut(&inst_id).unwrap();
+        let w = self
+            .weapons
+            .get_mut(&inst_id)
+            .ok_or(LogicError::WeaponNotFound(inst_id))?;
         w.breakthrough_lv += 1;
         self.pending.mark_dirty(inst_id);
         info!(
@@ -638,40 +627,33 @@ impl WeaponDepot {
         let t = self
             .weapons
             .get(&target)
-            .ok_or_else(|| LogicError::NotFound("Target weapon not found".into()))?;
+            .ok_or(LogicError::WeaponNotFound(target))?;
         if t.is_lock {
-            return Err(LogicError::InvalidOperation(
-                "Cannot refine locked weapon".into(),
-            ));
+            return Err(LogicError::WeaponRefineTargetLocked(target));
         }
         let f = self
             .weapons
             .get(&fodder)
-            .ok_or_else(|| LogicError::NotFound("Fodder weapon not found".into()))?;
+            .ok_or(LogicError::WeaponFodderNotFound(fodder))?;
         if f.is_lock {
-            return Err(LogicError::InvalidOperation(
-                "Cannot use locked weapon as material".into(),
-            ));
+            return Err(LogicError::WeaponFodderLocked(fodder));
         }
         if f.is_equipped() {
-            return Err(LogicError::InvalidOperation(
-                "Cannot use equipped weapon as material".into(),
-            ));
+            return Err(LogicError::WeaponFodderEquipped(fodder));
         }
         if t.template_id != f.template_id {
-            return Err(LogicError::InvalidOperation(
-                "Refinement requires same weapon type".into(),
-            ));
+            return Err(LogicError::WeaponRefineTypeMismatch);
         }
         let tmpl = t.template_id.clone();
         if t.refine_lv >= Self::get_max_refine(assets.weapons.get(&tmpl)) {
-            return Err(LogicError::InvalidOperation(
-                "Already at max refinement".into(),
-            ));
+            return Err(LogicError::WeaponRefineMaxLevel(target));
         }
         self.weapons.remove(&fodder);
         self.pending.mark_removed(fodder);
-        let t = self.weapons.get_mut(&target).unwrap();
+        let t = self
+            .weapons
+            .get_mut(&target)
+            .ok_or(LogicError::WeaponNotFound(target))?;
         t.refine_lv += 1;
         self.pending.mark_dirty(target);
         info!(
@@ -691,17 +673,11 @@ impl WeaponDepot {
         let w = self
             .weapons
             .get_mut(&weapon_inst_id)
-            .ok_or_else(|| LogicError::NotFound("Weapon not found".into()))?;
+            .ok_or(LogicError::WeaponNotFound(weapon_inst_id))?;
         if w.is_lock {
-            return Err(LogicError::InvalidOperation(
-                "Cannot modify locked weapon".into(),
-            ));
+            return Err(LogicError::WeaponModifyLocked(weapon_inst_id));
         }
-        let prev = if w.attach_gem_id != 0 {
-            Some(w.attach_gem_id)
-        } else {
-            None
-        };
+        let prev = (w.attach_gem_id != 0).then_some(w.attach_gem_id);
         w.attach_gem_id = gem_inst_id;
         self.pending.mark_dirty(weapon_inst_id);
         Ok(prev)
@@ -711,16 +687,12 @@ impl WeaponDepot {
         let w = self
             .weapons
             .get_mut(&weapon_inst_id)
-            .ok_or_else(|| LogicError::NotFound("Weapon not found".into()))?;
+            .ok_or(LogicError::WeaponNotFound(weapon_inst_id))?;
         if w.is_lock {
-            return Err(LogicError::InvalidOperation(
-                "Cannot modify locked weapon".into(),
-            ));
+            return Err(LogicError::WeaponModifyLocked(weapon_inst_id));
         }
         if w.attach_gem_id == 0 {
-            return Err(LogicError::InvalidOperation(
-                "Weapon has no attached gem".into(),
-            ));
+            return Err(LogicError::WeaponNoAttachedGem(weapon_inst_id));
         }
         let gem_id = w.attach_gem_id;
         w.attach_gem_id = 0;
@@ -1015,50 +987,50 @@ impl GemDepot {
     }
 
     pub fn remove(&mut self, id: GemInstId) -> Result<GemInstance> {
-        let g = self
-            .gems
-            .get(&id)
-            .ok_or_else(|| LogicError::NotFound("Gem not found".into()))?;
+        let g = self.gems.get(&id).ok_or(LogicError::GemNotFound(id))?;
         if g.is_socketed() {
-            return Err(LogicError::InvalidOperation(
-                "Cannot remove socketed gem".into(),
-            ));
+            return Err(LogicError::GemSocketed(id));
         }
         if g.is_lock {
-            return Err(LogicError::InvalidOperation(
-                "Cannot remove locked gem".into(),
-            ));
+            return Err(LogicError::GemLocked(id));
         }
-        let removed = self.gems.remove(&id).unwrap();
+        let removed = self.gems.remove(&id).ok_or(LogicError::GemNotFound(id))?;
+
         self.pending.mark_removed(id);
         Ok(removed)
     }
 
     pub fn set_lock(&mut self, id: GemInstId, lock: bool) -> Result<()> {
-        self.get_mut_or_not_found(id, "Gem not found")?
+        self.gems
+            .get_mut(&id)
+            .ok_or(LogicError::GemNotFound(id))?
             .set_locked(lock);
         self.pending.mark_dirty(id);
         Ok(())
     }
 
     pub fn clear_new_flag(&mut self, id: GemInstId) -> Result<()> {
-        self.get_mut_or_not_found(id, "Gem not found")?.mark_seen();
+        self.gems
+            .get_mut(&id)
+            .ok_or(LogicError::GemNotFound(id))?
+            .mark_seen();
         self.pending.mark_dirty(id);
         Ok(())
     }
 
     pub(crate) fn set_socket(&mut self, id: GemInstId, weapon_id: u64) -> Result<()> {
-        // No Attachable mutator exists by design (attachment is enforced
-        // by the depot, not the instance), so we still touch the field
-        // directly, but the lookup goes through KeyedContainerExt.
-        self.get_mut_or_not_found(id, "Gem not found")?
+        self.gems
+            .get_mut(&id)
+            .ok_or(LogicError::GemNotFound(id))?
             .attach_weapon_id = weapon_id;
         self.pending.mark_dirty(id);
         Ok(())
     }
 
     pub(crate) fn clear_socket(&mut self, id: GemInstId) -> Result<()> {
-        self.get_mut_or_not_found(id, "Gem not found")?
+        self.gems
+            .get_mut(&id)
+            .ok_or(LogicError::GemNotFound(id))?
             .attach_weapon_id = 0;
         self.pending.mark_dirty(id);
         Ok(())
@@ -1246,11 +1218,10 @@ impl EquipDepot {
         let p = self
             .pieces
             .get(&piece_inst_id)
-            .ok_or_else(|| LogicError::NotFound("Equip piece not found".into()))?;
+            .ok_or(LogicError::EquipNotFound(piece_inst_id))?;
+
         if p.equip_char_id == char_id {
-            return Err(LogicError::InvalidOperation(
-                "Already equipped to this character".into(),
-            ));
+            return Err(LogicError::EquipAlreadyEquipped(piece_inst_id, char_id));
         }
         let slot = p.slot;
         let prev_owner = p.equip_char_id;
@@ -1275,7 +1246,12 @@ impl EquipDepot {
                 .or_default()
                 .remove(&slot);
         }
-        let p = self.pieces.get_mut(&piece_inst_id).unwrap();
+
+        let p = self
+            .pieces
+            .get_mut(&piece_inst_id)
+            .ok_or(LogicError::EquipNotFound(piece_inst_id))?;
+
         p.equip_char_id = char_id;
         self.equipped_by_char
             .entry(char_id)
@@ -1293,7 +1269,7 @@ impl EquipDepot {
         let p = self
             .pieces
             .get_mut(&id)
-            .ok_or_else(|| LogicError::NotFound("Equip piece not found".into()))?;
+            .ok_or(LogicError::EquipNotFound(id))?;
         if !p.is_equipped() {
             return Ok(false);
         }
@@ -1308,34 +1284,34 @@ impl EquipDepot {
     }
 
     pub fn remove(&mut self, id: EquipInstId) -> Result<EquipInstance> {
-        let p = self
+        let e = self.pieces.get(&id).ok_or(LogicError::EquipNotFound(id))?;
+        if e.is_equipped() {
+            return Err(LogicError::EquipEquipped(id));
+        }
+        if e.is_lock {
+            return Err(LogicError::EquipLocked(id));
+        }
+        let removed = self
             .pieces
-            .get(&id)
-            .ok_or_else(|| LogicError::NotFound("Equip piece not found".into()))?;
-        if p.is_equipped() {
-            return Err(LogicError::InvalidOperation(
-                "Cannot remove equipped piece".into(),
-            ));
-        }
-        if p.is_lock {
-            return Err(LogicError::InvalidOperation(
-                "Cannot remove locked piece".into(),
-            ));
-        }
-        let removed = self.pieces.remove(&id).unwrap();
+            .remove(&id)
+            .ok_or(LogicError::EquipNotFound(id))?;
         self.pending.mark_removed(id);
         Ok(removed)
     }
 
     pub fn set_lock(&mut self, id: EquipInstId, lock: bool) -> Result<()> {
-        self.get_mut_or_not_found(id, "Equip piece not found")?
+        self.pieces
+            .get_mut(&id)
+            .ok_or(LogicError::EquipNotFound(id))?
             .set_locked(lock);
         self.pending.mark_dirty(id);
         Ok(())
     }
 
     pub fn clear_new_flag(&mut self, id: EquipInstId) -> Result<()> {
-        self.get_mut_or_not_found(id, "Equip piece not found")?
+        self.pieces
+            .get_mut(&id)
+            .ok_or(LogicError::EquipNotFound(id))?
             .mark_seen();
         self.pending.mark_dirty(id);
         Ok(())
@@ -1454,7 +1430,8 @@ impl StackableDepot {
             self.counts.remove(template_id);
             self.pending.mark_removed(template_id.to_owned());
         } else {
-            *self.counts.get_mut(template_id).unwrap() = rem;
+            // Safe: the entry exists, and insert will just update it.
+            self.counts.insert(template_id.to_owned(), rem);
             self.pending.mark_dirty(template_id.to_owned());
         }
         Ok(rem)
@@ -1645,9 +1622,7 @@ impl ItemManager {
         count: u32,
     ) -> Result<u32> {
         self.stackable_depot_mut(depot_type)
-            .ok_or_else(|| {
-                LogicError::InvalidOperation(format!("Depot {:?} is instanced", depot_type))
-            })
+            .ok_or(LogicError::DepotInstanced(depot_type))
             .map(|d| d.add(template_id, count))
     }
 
@@ -1658,9 +1633,7 @@ impl ItemManager {
         count: u32,
     ) -> Result<u32> {
         self.stackable_depot_mut(depot_type)
-            .ok_or_else(|| {
-                LogicError::InvalidOperation(format!("Depot {:?} is instanced", depot_type))
-            })
+            .ok_or(LogicError::DepotInstanced(depot_type))
             .and_then(|d| d.consume(template_id, count))
     }
 
@@ -1681,17 +1654,20 @@ impl ItemManager {
         weapon_inst_id: WeaponInstId,
         gem_inst_id: GemInstId,
     ) -> Result<Option<GemInstId>> {
-        self.weapons
-            .get(weapon_inst_id)
-            .ok_or_else(|| LogicError::NotFound("Weapon not found".into()))?;
         let gem = self
             .gems
             .get(gem_inst_id)
-            .ok_or_else(|| LogicError::NotFound("Gem not found".into()))?;
+            .ok_or(LogicError::GemNotFound(gem_inst_id))?;
         if gem.is_socketed() {
-            return Err(LogicError::InvalidOperation("Gem already socketed".into()));
+            return Err(LogicError::GemSocketed(gem_inst_id));
         }
-        let prev_raw = self.weapons.get(weapon_inst_id).unwrap().attach_gem_id;
+        let prev_raw = {
+            self.weapons
+                .get_mut(weapon_inst_id)
+                .ok_or(LogicError::WeaponNotFound(weapon_inst_id))?
+                .attach_gem_id
+        };
+
         let prev_gem = if prev_raw != 0 {
             let id = GemInstId::new(prev_raw);
             self.gems.clear_socket(id)?;

@@ -5,7 +5,7 @@ use config::BeyondAssets;
 use perlica_db::PlayerDb;
 use perlica_proto::{Code, CsHead, NetMessage, ScNtfErrorCode, prost::Message};
 use tokio::sync::mpsc;
-use tracing::warn;
+use tracing::error;
 
 /// Everything a handler needs for a single request, player state, assets, DB, and the
 /// outbound channel. Created fresh per command and dropped when the handler returns.
@@ -40,12 +40,16 @@ impl<'a> NetContext<'a> {
 
     /// Sends a direct response to the client, echoing the client's sequence ID.
     pub async fn send<T: NetMessage>(&mut self, message: T) -> std::io::Result<()> {
-        self.write_frame(message, true).await
+        self.write_frame(message, true)
+            .await
+            .inspect_err(|e| error!("Failed to send response {:?}", e))
     }
 
     /// Sends a server-initiated notification (no matching client request).
     pub async fn notify<T: NetMessage>(&mut self, message: T) -> std::io::Result<()> {
-        self.write_frame(message, false).await
+        self.write_frame(message, false)
+            .await
+            .inspect_err(|e| error!("Failed to send notification {:?}", e))
     }
 
     /// Sends an error notification to the client using `SC_NTF_ERROR_CODE`.
@@ -53,18 +57,12 @@ impl<'a> NetContext<'a> {
     /// This should be called when a handler rejects a request due to
     /// validation failure (bad objid, unowned character, invalid input, etc.)
     pub async fn send_error(&mut self, code: Code, details: impl Into<String>) {
-        if let Err(e) = self
+        let _ = self
             .notify(ScNtfErrorCode {
                 error_code: code as i32,
                 details: details.into(),
             })
-            .await
-        {
-            warn!(
-                "Failed to send error notification: code={:?}, err={:?}",
-                code, e
-            );
-        }
+            .await;
     }
 
     /// Frames and sends a message over the outbound channel.

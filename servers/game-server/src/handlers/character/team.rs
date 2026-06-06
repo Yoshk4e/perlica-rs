@@ -7,7 +7,7 @@ use perlica_proto::{
     CsCharBagSetTeamName, ScCharBagSetCurrTeamIndex, ScCharBagSetTeam, ScCharBagSetTeamLeader,
     ScCharBagSetTeamName,
 };
-use tracing::{debug, error, warn};
+use tracing::{debug, warn};
 
 const MAX_TEAM_NAME_LEN: usize = 20;
 
@@ -88,15 +88,11 @@ pub async fn on_cs_char_bag_set_curr_team_index(
     ctx.player.char_bag.meta.curr_team_index = new as u32;
     // curr_team_index lives on the `beyond_players` scalar row.
     ctx.player.char_bag.mark_meta_dirty();
-    if let Err(e) = ctx
+    let _ = ctx
         .send(ScCharBagSetCurrTeamIndex {
             team_index: req.team_index,
         })
-        .await
-    {
-        error!("Failed to ack team index change: {:?}", e);
-        return;
-    }
+        .await;
     let (leave, enter, self_info) = ctx.player.scene.handle_team_index_switch(
         &old_ids,
         &new_ids,
@@ -125,7 +121,6 @@ pub async fn on_cs_char_bag_set_curr_team_index(
 }
 
 pub async fn on_cs_char_bag_set_team(ctx: &mut NetContext<'_>, req: CsCharBagSetTeam) {
-    let uid = ctx.player.uid.clone();
     let team_index = req.team_index as usize;
     if team_index >= ctx.player.char_bag.teams.len() {
         let _ = ctx
@@ -205,16 +200,13 @@ pub async fn on_cs_char_bag_set_team(ctx: &mut NetContext<'_>, req: CsCharBagSet
     }
     ctx.player.char_bag.mark_team_dirty(team_index);
 
-    if let Err(e) = ctx
+    let _ = ctx
         .send(ScCharBagSetTeam {
             team_index: req.team_index,
             char_team: req.char_team.clone(),
         })
-        .await
-    {
-        error!("Failed to ack set team: uid={}, {:?}", uid, e);
-        return;
-    }
+        .await;
+
     if is_active {
         let (leave, enter, self_info) = ctx.player.scene.handle_active_team_update(
             &old_ids,

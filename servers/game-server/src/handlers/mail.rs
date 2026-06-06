@@ -42,17 +42,11 @@ pub async fn deliver_login_mails(ctx: &mut NetContext<'_>, is_new_player: bool) 
         new_id
     );
 
-    if let Err(e) = ctx
+    let _ = ctx
         .notify(ScNewMailNotify {
             mail_id_list: vec![new_id],
         })
-        .await
-    {
-        warn!(
-            "Failed to notify new mail: uid={}, error={}",
-            ctx.player.uid, e
-        );
-    }
+        .await;
 
     if let Err(e) = ctx.player.mail.persist(&ctx.player.uid, ctx.db).await {
         warn!(

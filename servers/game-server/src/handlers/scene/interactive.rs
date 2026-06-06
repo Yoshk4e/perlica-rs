@@ -164,9 +164,7 @@ async fn handle_activate(ctx: &mut NetContext<'_>, req: &CsSceneInteractiveEvent
         client_operate: false,
     };
 
-    if let Err(e) = ctx.notify(prop_update).await {
-        warn!("Failed to send interactive property update: {:?}", e);
-    }
+    let _ = ctx.notify(prop_update).await;
 
     if is_camp {
         if let Some(entity) = ctx.player.entities.get(entity_id) {
@@ -263,15 +261,12 @@ async fn handle_chest_open(ctx: &mut NetContext<'_>, req: &CsSceneInteractiveEve
 
     mark_chest_collected(ctx, entity_id, &scene_name, &req.properties).await;
 
-    if let Err(e) = ctx
+    let _ = ctx
         .notify(ScRewardToSceneBegin {
             reward_source_type: REWARD_SOURCE_TYPE_CHEST,
             source_template_id: template_id.clone(),
         })
-        .await
-    {
-        warn!("Failed to send ScRewardToSceneBegin: {:?}", e);
-    }
+        .await;
 
     let collection_list = bundles
         .iter()
@@ -282,9 +277,7 @@ async fn handle_chest_open(ctx: &mut NetContext<'_>, req: &CsSceneInteractiveEve
         })
         .collect();
 
-    if let Err(e) = ctx.notify(ScSceneCollectionSync { collection_list }).await {
-        warn!("Failed to send ScSceneCollectionSync: {:?}", e);
-    }
+    let _ = ctx.notify(ScSceneCollectionSync { collection_list }).await;
 
     /*if let Err(e) = ctx.notify(ScRewardToSceneEnd {}).await {
         warn!("Failed to send ScRewardToSceneEnd: {:?}", e);
@@ -324,12 +317,8 @@ async fn mark_chest_collected(
         properties: updated_props,
         client_operate: false,
     };
-    if let Err(e) = ctx.notify(msg).await {
-        warn!(
-            "Failed to send chest property update for id={}: {:?}",
-            entity_id, e
-        );
-    }
+
+    let _ = ctx.notify(msg).await;
 }
 
 #[allow(dead_code)]

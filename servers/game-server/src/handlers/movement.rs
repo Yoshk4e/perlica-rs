@@ -108,23 +108,11 @@ pub async fn on_cs_move_object_move(
                 );
 
                 if let Some(msg) = enter_view {
-                    let _ = ctx.notify(msg).await.inspect_err(|e| {
-                        tracing::error!(
-                            "Failed to send dynamic enter view: uid={}, error={:?}",
-                            ctx.player.uid,
-                            e
-                        );
-                    });
+                    let _ = ctx.notify(msg).await;
                 }
 
                 if let Some(msg) = leave_view {
-                    let _ = ctx.notify(msg).await.inspect_err(|e| {
-                        tracing::error!(
-                            "Failed to send dynamic leave view: uid={}, error={:?}",
-                            ctx.player.uid,
-                            e
-                        );
-                    });
+                    let _ = ctx.notify(msg).await;
                 }
             }
             break;

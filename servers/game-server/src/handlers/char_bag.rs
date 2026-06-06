@@ -40,11 +40,7 @@ pub async fn push_char_attrs(ctx: &mut NetContext<'_>) -> bool {
     );
 
     for msg in msgs {
-        if let Err(error) = ctx.notify(msg).await {
-            error!(
-                "Failed to push character attributes: uid={}, error={:?}",
-                ctx.player.uid, error
-            );
+        if !ctx.notify(msg).await.is_ok() {
             return false;
         }
     }
@@ -62,11 +58,7 @@ pub async fn push_char_status(ctx: &mut NetContext<'_>) -> bool {
     );
 
     for msg in msgs {
-        if let Err(error) = ctx.notify(msg).await {
-            error!(
-                "Failed to push character status: uid={}, error={:?}",
-                ctx.player.uid, error
-            );
+        if !ctx.notify(msg).await.is_ok() {
             return false;
         }
     }
@@ -102,11 +94,7 @@ pub async fn push_char_status_for_ids(ctx: &mut NetContext<'_>, obj_ids: &[u64])
     );
 
     for msg in updates {
-        if let Err(error) = ctx.notify(msg).await {
-            error!(
-                "Failed to push character status: uid={}, error={:?}",
-                ctx.player.uid, error
-            );
+        if !ctx.notify(msg).await.is_ok() {
             return false;
         }
     }

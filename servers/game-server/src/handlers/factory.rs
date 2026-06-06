@@ -8,7 +8,7 @@ use perlica_proto::{
     ScdFactorySyncNode, ScdFactorySyncRegion, ScdFactorySyncScene, ScdFactorySyncSceneBandwidth,
     ScdFactorySyncTransform, ScdFactoryVector2Int, Vector, scd_factory_sync_component,
 };
-use tracing::{debug, error};
+use tracing::debug;
 
 // Thanks xeondev for pointing this out
 //
@@ -139,13 +139,5 @@ pub async fn push_factory(ctx: &mut NetContext<'_>) -> bool {
         HUB_TEMPLATE,
     );
 
-    if let Err(error) = ctx.notify(msg).await {
-        error!(
-            "Failed to push factory context: uid={}, error={:?}",
-            ctx.player.uid, error
-        );
-        return false;
-    }
-
-    true
+    ctx.notify(msg).await.is_ok()
 }

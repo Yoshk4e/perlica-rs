@@ -9,7 +9,7 @@ use perlica_proto::{
     BattleInfo, Code, CsSceneKillChar, CsSceneKillMonster, CsSceneRevival,
     CsSceneSetLastRecordCampid, ScCharSyncStatus, ScObjectEnterView, ScSceneSetLastRecordCampid,
 };
-use tracing::{debug, error, info, warn};
+use tracing::{debug, info, warn};
 
 const CAMPFIRE_POS_MAX_DELTA: f32 = 5.0;
 
@@ -42,9 +42,7 @@ pub async fn on_cs_scene_kill_monster(ctx: &mut NetContext<'_>, req: CsSceneKill
         .scene
         .destroy_entity(req.id, EntityDestroyReason::Dead);
 
-    if let Err(error) = ctx.notify(msg).await {
-        error!("Failed to send monster kill notification: {:?}", error);
-    }
+    let _ = ctx.notify(msg).await;
 }
 
 pub async fn on_cs_scene_kill_char(ctx: &mut NetContext<'_>, req: CsSceneKillChar) {
@@ -86,9 +84,7 @@ pub async fn on_cs_scene_kill_char(ctx: &mut NetContext<'_>, req: CsSceneKillCha
         .scene
         .destroy_entity(req.id, EntityDestroyReason::Dead);
 
-    if let Err(error) = ctx.notify(msg).await {
-        error!("Failed to send character kill notification: {:?}", error);
-    }
+    let _ = ctx.notify(msg).await;
     // no `.persist()` here - the dirty flag is enough.
 }
 
@@ -116,13 +112,8 @@ pub async fn on_cs_scene_revival(
 
     send_revival_status_updates(ctx).await;
 
-    if let Err(error) = ctx.notify(self_info).await {
-        error!("Failed to send revival self info: {:?}", error);
-    }
-
-    if let Err(error) = ctx.notify(revival).await {
-        error!("Failed to send revival notification: {:?}", error);
-    }
+    let _ = ctx.notify(self_info).await;
+    let _ = ctx.notify(revival).await;
 
     if let Err(e) = ctx
         .db
@@ -160,19 +151,13 @@ async fn send_revival_status_updates(ctx: &mut NetContext<'_>) {
         .collect();
 
     for (objid, hp, ultimatesp) in updates {
-        if let Err(error) = ctx
+        let _ = ctx
             .notify(ScCharSyncStatus {
                 objid,
                 is_dead: false,
                 battle_info: Some(BattleInfo { hp, ultimatesp }),
             })
-            .await
-        {
-            error!(
-                "Failed to send revival status update for {}: {:?}",
-                objid, error
-            );
-        }
+            .await;
     }
 }
 

@@ -1,7 +1,7 @@
 use crate::net::NetContext;
 use perlica_logic::enums::UnlockSystemType;
 use perlica_proto::{AreaUnlockInfo, ScSyncAllRoleScene, ScSyncAllUnlock};
-use tracing::{debug, error};
+use tracing::debug;
 
 /// Pushes `ScSyncAllUnlock` with every system unlocked. Called once during login.
 pub async fn push_unlocks(ctx: &mut NetContext<'_>) -> bool {
@@ -13,11 +13,7 @@ pub async fn push_unlocks(ctx: &mut NetContext<'_>) -> bool {
         ctx.player.uid,
         msg.unlock_systems.len()
     );
-    if let Err(e) = ctx.notify(msg).await {
-        error!("unlocks push failed: uid={}, error={}", ctx.player.uid, e);
-        return false;
-    }
-    true
+    ctx.notify(msg).await.is_ok()
 }
 
 //for now tho idk what its used for anyways
@@ -30,9 +26,5 @@ pub async fn all_role_sync(ctx: &mut NetContext<'_>) -> bool {
             unlock_area_id: vec!["areaId101".to_string()],
         }],
     };
-    if let Err(e) = ctx.notify(msg).await {
-        error!("push failed: uid={}, error={}", ctx.player.uid, e);
-        return false;
-    }
-    true
+    ctx.notify(msg).await.is_ok()
 }

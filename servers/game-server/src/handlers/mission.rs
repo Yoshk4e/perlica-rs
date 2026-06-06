@@ -223,9 +223,9 @@ fn build_role_base_info(ctx: &NetContext<'_>) -> RoleBaseInfo {
             z: *ctx.player.movement.pos.get_z(),
         }),
         leader_rotation: Some(perlica_proto::Vector {
-            x: *ctx.player.movement.pos.get_x(),
-            y: *ctx.player.movement.pos.get_y(),
-            z: *ctx.player.movement.pos.get_z(),
+            x: *ctx.player.movement.rot.get_x(),
+            y: *ctx.player.movement.rot.get_y(),
+            z: *ctx.player.movement.rot.get_z(),
         }),
         scene_name: ctx.player.scene.scene_name().to_string(),
         server_ts: now_ms(),

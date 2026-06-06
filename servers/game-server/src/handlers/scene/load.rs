@@ -25,12 +25,7 @@ pub async fn notify_enter_scene(ctx: &mut NetContext<'_>) -> bool {
 
     debug!("Entering scene: {}", msg.scene_name);
 
-    if let Err(error) = ctx.notify(msg).await {
-        error!("Failed to send enter scene notification: {:?}", error);
-        return false;
-    }
-
-    true
+    ctx.notify(msg).await.is_ok()
 }
 
 /// Handles `CsSceneLoadFinish`. Finalises scene state and syncs all entities and character state.
@@ -49,9 +44,7 @@ pub async fn on_scene_load_finish(
         &mut ctx.player.entities,
     );
 
-    if let Err(error) = ctx.notify(enter_view).await {
-        error!("Failed to send object enter view: {:?}", error);
-    }
+    let _ = ctx.notify(enter_view).await;
 
     let pos = ctx.player.movement.position();
     let (initial_enter, _) =
@@ -60,13 +53,7 @@ pub async fn on_scene_load_finish(
             .update_visible_entities(pos, ctx.assets, &mut ctx.player.entities);
 
     if let Some(msg) = initial_enter {
-        let _ = ctx.notify(msg).await.inspect_err(|error| {
-            error!("Failed to send initial dynamic enter view: {:?}", error);
-        });
-    }
-
-    if !crate::handlers::factory::push_factory(ctx).await {
-        error!("Failed to sync factory context");
+        let _ = ctx.notify(msg).await;
     }
 
     if !post_load_sync(ctx).await {

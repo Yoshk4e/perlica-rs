@@ -102,9 +102,9 @@ pub async fn on_cs_scene_teleport(
         .movement
         .update_position(position.x, position.y, position.z);
     let rotation_vec = req.rotation.unwrap_or(Vector {
-        x: *ctx.player.movement.pos.get_x(),
-        y: *ctx.player.movement.pos.get_y(),
-        z: *ctx.player.movement.pos.get_z(),
+        x: *ctx.player.movement.rot.get_x(),
+        y: *ctx.player.movement.rot.get_y(),
+        z: *ctx.player.movement.rot.get_z(),
     });
     ctx.player
         .movement
