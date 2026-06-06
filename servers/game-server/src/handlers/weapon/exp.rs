@@ -1,184 +1,45 @@
 use crate::net::NetContext;
-use perlica_logic::item::{ConsumedItems, WeaponInstId};
+use perlica_logic::character::char_bag::handle_weapon_add_exp;
 use perlica_proto::{CsWeaponAddExp, ScItemBagSyncModify, ScWeaponAddExp, ScdItemDepotModify};
 use std::collections::HashMap;
-use tracing::{debug, info, warn};
+use tracing::warn;
 
 pub async fn on_cs_weapon_add_exp(ctx: &mut NetContext<'_>, req: CsWeaponAddExp) -> ScWeaponAddExp {
-    let target_id = WeaponInstId::new(req.weaponid);
+    let result = handle_weapon_add_exp(
+        &mut ctx.player.char_bag,
+        req.weaponid,
+        &req.cost_item_id2_count,
+        &req.cost_weapon_ids,
+        ctx.assets,
+    );
 
-    let (template_id, current_level, current_exp, current_breakthrough) = {
-        let Some(weapon_data) = ctx.player.char_bag.item_manager.weapons.get(target_id) else {
-            warn!("WeaponAddExp failed: unknown weapon_id={}", req.weaponid);
+    let result = match result {
+        Ok(r) => r,
+        Err(e) => {
+            warn!(
+                "WeaponAddExp failed: uid={}, weapon={}, err={:?}",
+                ctx.player.uid, req.weaponid, e
+            );
             return ScWeaponAddExp {
                 weaponid: req.weaponid,
                 new_exp: 0,
                 weapon_lv: 1,
             };
-        };
-        (
-            weapon_data.template_id.clone(),
-            weapon_data.weapon_lv,
-            weapon_data.exp,
-            weapon_data.breakthrough_lv,
-        )
+        }
     };
 
-    let Some(weapon_template) = ctx.assets.weapons.get(&template_id) else {
-        return ScWeaponAddExp {
-            weaponid: req.weaponid,
-            new_exp: current_exp,
-            weapon_lv: current_level,
-        };
-    };
-
-    let max_level = ctx
-        .assets
-        .weapons
-        .get_effective_max_lv(&template_id, current_breakthrough);
-    if current_level >= max_level {
-        return ScWeaponAddExp {
-            weaponid: req.weaponid,
-            new_exp: current_exp,
-            weapon_lv: current_level,
-        };
-    }
-
-    let upgrade_sum_template = ctx
-        .assets
-        .weapons
-        .get_upgrade_sum(&weapon_template.level_template_id);
-    if upgrade_sum_template.is_none() {
-        return ScWeaponAddExp {
-            weaponid: req.weaponid,
-            new_exp: current_exp,
-            weapon_lv: current_level,
-        };
-    }
-    let upgrade_sum_list = &upgrade_sum_template.unwrap().list;
-
-    let mut total_exp_gained: i64 = 0;
-    let mut consumed_items = ConsumedItems::new();
-
-    for (item_id, &count) in &req.cost_item_id2_count {
-        if count == 0 {
-            continue;
-        }
-        let count = count as u32;
-        let exp_per_unit = ctx.assets.weapons.weapon_exp_for_item(item_id);
-        if exp_per_unit == 0 {
-            continue;
-        }
-
-        match ctx
-            .player
-            .char_bag
-            .item_manager
-            .consume_stackable_auto(item_id, count)
-        {
-            Ok((depot_type, remaining)) => {
-                total_exp_gained += exp_per_unit as i64 * count as i64;
-                consumed_items.record(depot_type, item_id.clone(), remaining);
-            }
-            Err(e) => {
-                debug!(
-                    "WeaponAddExp: could not consume {} * {}: {:?}",
-                    count, item_id, e
-                );
-            }
-        }
-    }
-
-    let mut valid_fodders: Vec<WeaponInstId> = Vec::new();
-    let mut fodder_exp: i64 = 0;
-
-    for &fid in &req.cost_weapon_ids {
-        let fid = WeaponInstId::new(fid);
-        if fid == target_id {
-            continue;
-        }
-
-        if let Some(f) = ctx.player.char_bag.item_manager.weapons.get(fid) {
-            if f.is_lock || f.is_equipped() {
-                continue;
-            }
-
-            let base: i64 = ctx
-                .assets
-                .weapons
-                .get(&f.template_id)
-                .map(|w| match w.rarity {
-                    6 => 5000,
-                    5 => 3000,
-                    4 => 1500,
-                    3 => 800,
-                    _ => 400,
-                })
-                .unwrap_or(400);
-
-            fodder_exp += base + (f.weapon_lv as f64 * 0.1 * base as f64) as i64;
-            valid_fodders.push(fid);
-        }
-    }
-
-    for &fid in &valid_fodders {
-        let _ = ctx.player.char_bag.item_manager.weapons.remove_weapon(fid);
-    }
-
-    total_exp_gained += fodder_exp;
-
-    let (final_lv, final_exp) = if total_exp_gained > 0 {
-        let cum_at_current = upgrade_sum_list
-            .iter()
-            .find(|item| item.weapon_lv as u64 == current_level)
-            .map(|item| item.lv_up_exp_sum as i64)
-            .unwrap_or(0);
-
-        let new_total_exp = cum_at_current + (current_exp as i64) + total_exp_gained;
-        let mut new_level = current_level;
-        let mut final_cum_sum = cum_at_current;
-
-        for item in upgrade_sum_list {
-            if item.weapon_lv as u64 > max_level {
-                break;
-            }
-            if new_total_exp >= item.lv_up_exp_sum as i64 {
-                new_level = item.weapon_lv as u64;
-                final_cum_sum = item.lv_up_exp_sum as i64;
-            } else {
-                break;
-            }
-        }
-
-        let synced_exp = if new_level >= max_level {
-            0
-        } else {
-            (new_total_exp - final_cum_sum).max(0)
-        };
-        (new_level, synced_exp as u64)
-    } else {
-        (current_level, current_exp)
-    };
-
-    if let Some(w) = ctx.player.char_bag.item_manager.weapons.get_mut(target_id) {
-        w.weapon_lv = final_lv;
-        w.exp = final_exp;
-    }
-
-    let del_inst_list: Vec<u64> = valid_fodders.iter().map(|id| id.as_u64()).collect();
-    let mut depot = consumed_items.build_depot_map();
-
-    if !del_inst_list.is_empty() {
+    // Notify the client of consumed items + dissolved fodder weapons.
+    let mut depot = result.consumed.build_depot_map();
+    if !result.removed_fodder.is_empty() {
         depot.insert(
             1i32,
             ScdItemDepotModify {
                 items: HashMap::new(),
                 inst_list: vec![],
-                del_inst_list,
+                del_inst_list: result.removed_fodder,
             },
         );
     }
-
     if !depot.is_empty() {
         let _ = ctx
             .notify(ScItemBagSyncModify {
@@ -192,11 +53,6 @@ pub async fn on_cs_weapon_add_exp(ctx: &mut NetContext<'_>, req: CsWeaponAddExp)
             .await;
     }
 
-    info!(
-        "WeaponAddExp: uid={}, weapon={}, +{}exp, lv {}->{}",
-        ctx.player.uid, req.weaponid, total_exp_gained, current_level, final_lv
-    );
-
     if let Err(e) = ctx
         .db
         .persist_char_bag_incremental(&ctx.player.uid, &mut ctx.player.char_bag)
@@ -208,9 +64,5 @@ pub async fn on_cs_weapon_add_exp(ctx: &mut NetContext<'_>, req: CsWeaponAddExp)
         );
     }
 
-    ScWeaponAddExp {
-        weaponid: req.weaponid,
-        new_exp: final_exp,
-        weapon_lv: final_lv,
-    }
+    result.response
 }

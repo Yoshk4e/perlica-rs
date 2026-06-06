@@ -742,28 +742,144 @@ fn attrs_from_stats(a: &config::tables::character::Attributes) -> Vec<AttrInfo> 
     ]
 }
 
+pub struct WeaponAddExpResult {
+    pub response: ScWeaponAddExp,
+    pub consumed: ConsumedItems,
+    pub removed_fodder: Vec<u64>,
+    pub exp_gained: i64,
+}
+
 pub fn handle_weapon_add_exp(
     char_bag: &mut CharBag,
     weapon_id: u64,
+    cost_items: &HashMap<String, u64>,
     cost_weapon_ids: &[u64],
     assets: &BeyondAssets,
-) -> Result<ScWeaponAddExp> {
+) -> Result<WeaponAddExpResult> {
     let target_id = WeaponInstId::new(weapon_id);
+
+    // weapon must exist.
+    let weapon_data = char_bag
+        .item_manager
+        .weapons
+        .get_or_not_found(target_id, "Target weapon not found")?;
+    let template_id = weapon_data.template_id.clone();
+    let current_level = weapon_data.weapon_lv;
+    let current_exp = weapon_data.exp;
+    let current_breakthrough = weapon_data.breakthrough_lv;
+
+    // weapon template must exist.
+    let weapon_template = match assets.weapons.get(&template_id) {
+        Some(t) => t,
+        None => {
+            let weapon = char_bag.item_manager.weapons.get(target_id).unwrap();
+            return Ok(WeaponAddExpResult {
+                response: weapon.into(),
+                consumed: ConsumedItems::new(),
+                removed_fodder: vec![],
+                exp_gained: 0,
+            });
+        }
+    };
+
+    let max_level = assets
+        .weapons
+        .get_effective_max_lv(&template_id, current_breakthrough);
+    if current_level >= max_level {
+        let weapon = char_bag.item_manager.weapons.get(target_id).unwrap();
+        return Ok(WeaponAddExpResult {
+            response: weapon.into(),
+            consumed: ConsumedItems::new(),
+            removed_fodder: vec![],
+            exp_gained: 0,
+        });
+    }
+
+    if assets
+        .weapons
+        .get_upgrade_sum(&weapon_template.level_template_id)
+        .is_none()
+    {
+        let weapon = char_bag.item_manager.weapons.get(target_id).unwrap();
+        return Ok(WeaponAddExpResult {
+            response: weapon.into(),
+            consumed: ConsumedItems::new(),
+            removed_fodder: vec![],
+            exp_gained: 0,
+        });
+    }
+
+    let mut consumed = ConsumedItems::new();
+    let mut item_exp: u64 = 0;
+    for (item_id, &count) in cost_items {
+        if count == 0 {
+            continue;
+        }
+        let count = count as u32;
+        let exp_per_unit = assets.weapons.weapon_exp_for_item(item_id);
+        if exp_per_unit == 0 {
+            continue;
+        }
+        match char_bag.item_manager.consume_stackable_auto(item_id, count) {
+            Ok((depot_type, remaining)) => {
+                item_exp += exp_per_unit * count as u64;
+                consumed.record(depot_type, item_id.clone(), remaining);
+            }
+            Err(e) => {
+                debug!(
+                    "WeaponAddExp: skipping item {} * {} (not owned): {:?}",
+                    item_id, count, e
+                );
+            }
+        }
+    }
+
     let fodder_ids: Vec<WeaponInstId> = cost_weapon_ids
         .iter()
         .map(|&id| WeaponInstId::new(id))
+        .filter(|&id| {
+            if id == target_id {
+                return false;
+            }
+            char_bag
+                .item_manager
+                .weapons
+                .get(id)
+                .map(|f| !f.is_lock && !f.is_equipped())
+                .unwrap_or(false)
+        })
         .collect();
 
     char_bag
         .item_manager
         .weapons
-        .add_exp(target_id, &fodder_ids, assets)?;
+        .add_exp(target_id, &fodder_ids, item_exp, assets)?;
 
     let weapon = char_bag
         .item_manager
         .weapons
         .get_or_not_found(target_id, "Weapon not found after add_exp")?;
-    Ok(weapon.into())
+
+    let exp_gained = item_exp as i64;
+    let removed_fodder: Vec<u64> = fodder_ids.iter().map(|id| id.as_u64()).collect();
+
+    info!(
+        "WeaponAddExp complete: weapon={}, item_exp={}, fodder={}, lv {}->{}",
+        weapon_id,
+        item_exp,
+        fodder_ids.len(),
+        current_level,
+        weapon.weapon_lv,
+    );
+
+    let _ = current_exp;
+
+    Ok(WeaponAddExpResult {
+        response: weapon.into(),
+        consumed,
+        removed_fodder,
+        exp_gained,
+    })
 }
 
 pub struct BreakthroughResult {

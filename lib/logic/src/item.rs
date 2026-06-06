@@ -444,6 +444,7 @@ impl WeaponDepot {
         &mut self,
         target_inst_id: WeaponInstId,
         fodder_inst_ids: &[WeaponInstId],
+        extra_exp: u64,
         assets: &BeyondAssets,
     ) -> Result<(u64, u64)> {
         let t = self
@@ -459,7 +460,7 @@ impl WeaponDepot {
         let cur_lv = t.weapon_lv;
         let cur_exp_relative = t.exp;
         let breakthrough_count = t.breakthrough_lv;
-        let mut total_exp = 0u64;
+        let mut total_exp = extra_exp;
         let fodder_count = fodder_inst_ids.len();
         for &fid in fodder_inst_ids {
             if fid == target_inst_id {
@@ -542,8 +543,8 @@ impl WeaponDepot {
         t.exp = new_exp_relative;
         self.pending.mark_dirty(target_inst_id);
         info!(
-            "Weapon {} +{}exp from {} fodder, lv {}->{}",
-            target_inst_id, total_exp, fodder_count, cur_lv, new_lv
+            "Weapon {} +{}exp ({} from items, rest from {} fodder), lv {}->{}",
+            target_inst_id, total_exp, extra_exp, fodder_count, cur_lv, new_lv
         );
         Ok((t.exp, t.weapon_lv))
     }
