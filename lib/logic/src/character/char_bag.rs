@@ -749,6 +749,7 @@ pub struct WeaponAddExpResult {
     pub exp_gained: i64,
 }
 
+// TODO: Actually grant exp from consumed fodders
 pub fn handle_weapon_add_exp(
     char_bag: &mut CharBag,
     weapon_id: u64,

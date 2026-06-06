@@ -284,6 +284,10 @@ impl MissionManager {
         );
     }
 
+    pub fn has_mission(&self, mission_id: &str) -> bool {
+        self.missions.contains_key(mission_id)
+    }
+
     pub fn update_track_mission(&mut self, mission_id: &str) {
         self.track_mission_id = mission_id.to_string();
     }

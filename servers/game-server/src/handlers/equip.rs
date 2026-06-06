@@ -14,14 +14,15 @@ pub async fn on_cs_equip_puton(ctx: &mut NetContext<'_>, req: CsEquipPuton) -> S
         ctx.player.uid, req.charid, req.slotid, req.equipid
     );
     let inst_id = EquipInstId::new(req.equipid);
-    if ctx
+    let equip_slot = ctx
         .player
         .char_bag
         .item_manager
         .equips
         .get(inst_id)
-        .is_none()
-    {
+        .map(|e| e.slot);
+
+    let Some(equip_slot) = equip_slot else {
         warn!(
             "EquipPuton rejected: equip inst {} not found, uid={}",
             req.equipid, ctx.player.uid
@@ -34,6 +35,23 @@ pub async fn on_cs_equip_puton(ctx: &mut NetContext<'_>, req: CsEquipPuton) -> S
             put_off_charid: 0,
             old_owner_suitinfo: HashMap::new(),
         };
+    };
+
+    if let Ok(requested_slot) = CraftShowingType::try_from(req.slotid) {
+        if requested_slot != equip_slot {
+            warn!(
+                "EquipPuton rejected: slot mismatch, uid={}, requested={:?}, actual={:?}, equip={}",
+                ctx.player.uid, requested_slot, equip_slot, req.equipid
+            );
+            return ScEquipPuton {
+                charid: req.charid,
+                slotid: req.slotid,
+                equipid: 0,
+                suitinfo: HashMap::new(),
+                put_off_charid: 0,
+                old_owner_suitinfo: HashMap::new(),
+            };
+        }
     }
 
     // If already equipped to this char, treat as no-op and return current state

@@ -1,9 +1,9 @@
 //! Character skill handlers: equip normal skill, level a skill up, set team skill.
 
 use crate::net::NetContext;
-use perlica_logic::character::skill::max_skill_level;
+use perlica_logic::character::skill::{max_skill_level, skill_exists};
 use perlica_proto::{
-    CsCharSetNormalSkill, CsCharSetTeamSkill, CsCharSkillLevelUp, ScCharSetNormalSkill,
+    Code, CsCharSetNormalSkill, CsCharSetTeamSkill, CsCharSkillLevelUp, ScCharSetNormalSkill,
     ScCharSetTeamSkill, ScCharSkillLevelUp, SkillLevelInfo,
 };
 use tracing::{info, warn};
@@ -12,6 +12,25 @@ pub async fn on_cs_char_set_normal_skill(
     ctx: &mut NetContext<'_>,
     req: CsCharSetNormalSkill,
 ) -> ScCharSetNormalSkill {
+    if let Some(char_data) = ctx.player.char_bag.get_char_by_objid(req.char_obj_id) {
+        let template_id = char_data.template_id.clone();
+        if !skill_exists(&template_id, &req.normal_skillid, ctx.assets) {
+            warn!(
+                "Rejected unknown skill id: uid={}, char={}, skill={}",
+                ctx.player.uid, req.char_obj_id, req.normal_skillid
+            );
+            ctx.send_error(
+                Code::ErrCommonParamInvalid,
+                "skill id does not belong to this character",
+            )
+            .await;
+            return ScCharSetNormalSkill {
+                char_obj_id: req.char_obj_id,
+                normal_skillid: String::new(),
+            };
+        }
+    }
+
     if let Some(char_data) = ctx.player.char_bag.get_char_by_objid_mut(req.char_obj_id) {
         char_data
             .skill_levels
@@ -85,6 +104,26 @@ pub async fn on_cs_char_set_team_skill(
     ctx: &mut NetContext<'_>,
     req: CsCharSetTeamSkill,
 ) -> ScCharSetTeamSkill {
+    if let Some(char_data) = ctx.player.char_bag.get_char_by_objid(req.objid) {
+        let template_id = char_data.template_id.clone();
+        if !skill_exists(&template_id, &req.normal_skillid, ctx.assets) {
+            warn!(
+                "Rejected unknown skill id: uid={}, char={}, skill={}",
+                ctx.player.uid, req.objid, req.normal_skillid
+            );
+            ctx.send_error(
+                Code::ErrCommonParamInvalid,
+                "skill id does not belong to this character",
+            )
+            .await;
+            return ScCharSetTeamSkill {
+                objid: req.objid,
+                team_idx: req.team_idx,
+                normal_skillid: String::new(),
+            };
+        }
+    }
+
     if let Some(char_data) = ctx.player.char_bag.get_char_by_objid_mut(req.objid) {
         char_data
             .skill_levels

@@ -2,7 +2,7 @@ use crate::net::NetContext;
 use common::time::now_ms;
 use perlica_db::Persistable;
 use perlica_proto::{
-    CsCompleteGuideGroup, CsCompleteGuideGroupKeyStep, CsStopTrackingMission, CsTrackMission,
+    Code, CsCompleteGuideGroup, CsCompleteGuideGroupKeyStep, CsStopTrackingMission, CsTrackMission,
     CsUpdateQuestObjective, MissionState, QuestState, RoleBaseInfo, ScCompleteGuideGroup,
     ScCompleteGuideGroupKeyStep, ScQuestObjectivesUpdate, ScTrackMissionChange,
 };
@@ -93,6 +93,20 @@ pub async fn on_cs_complete_guide_group(
     ctx: &mut NetContext<'_>,
     req: CsCompleteGuideGroup,
 ) -> ScCompleteGuideGroup {
+    if ctx.assets.missions.get(&req.guide_group_id).is_none()
+        && !req.guide_group_id.starts_with("guide_")
+    {
+        warn!(
+            "Rejected unknown guide group id: uid={}, guide_group_id={}",
+            ctx.player.uid, req.guide_group_id
+        );
+        ctx.send_error(Code::ErrCommonParamInvalid, "guide group id not recognized")
+            .await;
+        return ScCompleteGuideGroup {
+            guide_group_id: String::new(),
+        };
+    }
+
     ctx.player.guides.mark_group_completed(&req.guide_group_id);
 
     let scene_name = ctx.player.scene.scene_name().to_string();
@@ -138,6 +152,21 @@ pub async fn on_cs_track_mission(
     ctx: &mut NetContext<'_>,
     req: CsTrackMission,
 ) -> ScTrackMissionChange {
+    if !ctx.player.missions.has_mission(&req.mission_id) {
+        warn!(
+            "Rejected track for unknown mission: uid={}, mission_id={}",
+            ctx.player.uid, req.mission_id
+        );
+        ctx.send_error(
+            Code::ErrCommonParamInvalid,
+            "mission id not in player state",
+        )
+        .await;
+        return ScTrackMissionChange {
+            mission_id: String::new(),
+        };
+    }
+
     ctx.player.missions.update_track_mission(&req.mission_id);
     if let Err(e) = ctx.player.missions.persist(&ctx.player.uid, ctx.db).await {
         warn!(

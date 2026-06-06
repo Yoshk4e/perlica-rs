@@ -16,3 +16,15 @@ pub fn max_skill_level(template_id: &str, skill_id: &str, assets: &BeyondAssets)
         .and_then(|b| b.entries.iter().map(|e| e.level).max())
         .unwrap_or(1)
 }
+
+/// Returns `true` if `skill_id` belongs to the character identified by `template_id`.
+///
+/// Searches the character's skill bundles for any entry whose `skill_id` matches.
+/// Used to reject client-sent skill IDs that do not belong to the character's template.
+pub fn skill_exists(template_id: &str, skill_id: &str, assets: &BeyondAssets) -> bool {
+    assets
+        .char_skills
+        .get_char_skills(template_id)
+        .iter()
+        .any(|b| b.entries.iter().any(|e| e.skill_id == skill_id))
+}
