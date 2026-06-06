@@ -159,6 +159,13 @@ async fn logic_loop(
             );
         }
 
+        if let Err(e) = player.wallet.persist(&player.uid, ctx.db).await {
+            error!(
+                "Wallet persist failed on disconnect: UID={}, Error={e}",
+                player.uid
+            );
+        }
+
         if let Err(e) = ctx
             .db
             .persist_char_bag_incremental(&player.uid, &mut player.char_bag)

@@ -1,12 +1,13 @@
 use crate::error::{DbError, Result};
 use crate::persistable::Persistable;
-use crate::subsystems::{bitsets, char_bag, guides, mail, missions, player_root, scene};
+use crate::subsystems::{bitsets, char_bag, guides, mail, missions, player_root, scene, wallet};
 use perlica_logic::bitset::BitsetManager;
 use perlica_logic::character::char_bag::CharBag;
 use perlica_logic::mail::MailManager;
 use perlica_logic::mission::{GuideManager, MissionManager};
 use perlica_logic::player::WorldState;
 use perlica_logic::scene::{CheckpointInfo, RevivalMode};
+use perlica_logic::wallet::WalletState;
 use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions, SqliteSynchronous};
 use sqlx::{Sqlite, SqlitePool, Transaction};
 use std::path::{Path, PathBuf};
@@ -24,6 +25,7 @@ pub struct PlayerRecord {
     pub missions: MissionManager,
     pub guides: GuideManager,
     pub mail: MailManager,
+    pub wallet: WalletState,
 }
 
 pub struct PlayerRecordRef<'a> {
@@ -35,6 +37,7 @@ pub struct PlayerRecordRef<'a> {
     pub missions: &'a MissionManager,
     pub guides: &'a GuideManager,
     pub mail: &'a MailManager,
+    pub wallet: &'a WalletState,
 }
 
 impl<'a> PlayerRecordRef<'a> {
@@ -48,6 +51,7 @@ impl<'a> PlayerRecordRef<'a> {
         missions: &'a MissionManager,
         guides: &'a GuideManager,
         mail: &'a MailManager,
+        wallet: &'a WalletState,
     ) -> Self {
         Self {
             char_bag,
@@ -58,6 +62,7 @@ impl<'a> PlayerRecordRef<'a> {
             missions,
             guides,
             mail,
+            wallet,
         }
     }
 }
@@ -152,6 +157,8 @@ impl PlayerDb {
         let mut mail = mail::load(&self.pool, uid).await?;
         mail.set_next_id(root.mail_next_id);
 
+        let wallet = wallet::load(&self.pool, uid).await?;
+
         let world = WorldState {
             role_level: root.role_level,
             role_exp: root.role_exp,
@@ -189,6 +196,7 @@ impl PlayerDb {
             missions,
             guides,
             mail,
+            wallet,
         }))
     }
 
@@ -231,6 +239,7 @@ impl PlayerDb {
         missions::write(&mut tx, uid, record.missions).await?;
         guides::write(&mut tx, uid, record.guides).await?;
         mail::write(&mut tx, uid, record.mail).await?;
+        wallet::write(&mut tx, uid, record.wallet).await?;
 
         tx.commit().await?;
         debug!("Full save complete for uid={}", uid);
@@ -345,6 +354,16 @@ impl Persistable for MailManager {
         PlayerDb::ensure_player_row(&mut tx, uid).await?;
         player_root::update_mail_next_id(&mut tx, uid, self.next_id()).await?;
         mail::write(&mut tx, uid, self).await?;
+        tx.commit().await?;
+        Ok(())
+    }
+}
+
+impl Persistable for WalletState {
+    async fn persist(&self, uid: &str, db: &PlayerDb) -> Result<()> {
+        let mut tx = db.pool.begin().await?;
+        PlayerDb::ensure_player_row(&mut tx, uid).await?;
+        wallet::write(&mut tx, uid, self).await?;
         tx.commit().await?;
         Ok(())
     }

@@ -1,7 +1,7 @@
 //! Central player state. Handlers receive a `&mut Player` through `NetContext`.
 //!
 //! Persisted to DB on disconnect: `char_bag`, `world`, `bitsets`,
-//! `scene.checkpoint`, `scene.current_revival_mode`, `missions`, `guides`.
+//! `scene.checkpoint`, `scene.current_revival_mode`, `missions`, `guides`, `wallet`.
 //! Everything else (`movement`, `entities`, scene loading state) is runtime-only.
 use perlica_logic::{
     bitset::BitsetManager,
@@ -12,6 +12,7 @@ use perlica_logic::{
     movement::MovementManager,
     player::WorldState,
     scene::SceneManager,
+    wallet::WalletState,
 };
 /// Whether the login sequence has finished pushing initial state to the client.
 #[derive(PartialEq, Eq, Debug, Clone, Copy)]
@@ -32,6 +33,7 @@ pub struct Player {
     pub missions: MissionManager,
     pub guides: GuideManager,
     pub mail: MailManager,
+    pub wallet: WalletState,
     pub is_new_player: bool,
 }
 impl Player {
@@ -62,6 +64,7 @@ impl Default for Player {
             missions: MissionManager::default(),
             guides: GuideManager::default(),
             mail: MailManager::new(),
+            wallet: WalletState::default(),
             is_new_player: false,
         }
     }

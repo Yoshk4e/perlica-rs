@@ -22,6 +22,7 @@ pub async fn on_login(ctx: &mut NetContext<'_>, req: CsLogin) -> ScLogin {
             ctx.player.missions = record.missions;
             ctx.player.guides = record.guides;
             ctx.player.mail = record.mail;
+            ctx.player.wallet = record.wallet;
             false
         }
         Ok(None) => {

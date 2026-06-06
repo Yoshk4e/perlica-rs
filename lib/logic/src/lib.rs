@@ -13,5 +13,6 @@ pub mod player;
 pub mod scene;
 pub mod spatial;
 pub mod traits;
+pub mod wallet;
 
 pub use error::{LogicError, Result};

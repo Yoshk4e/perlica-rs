@@ -6,3 +6,4 @@ pub(crate) mod missions;
 pub(crate) mod player_root;
 pub(crate) mod prune;
 pub(crate) mod scene;
+pub(crate) mod wallet;
