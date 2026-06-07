@@ -638,6 +638,7 @@ impl SceneManager {
         }
     }
 
+    //TODO: pass correct objecr type
     pub fn object_leave_view(&self, entity_ids: Vec<u64>) -> ScObjectLeaveView {
         let obj_list = entity_ids
             .into_iter()
@@ -1793,5 +1794,929 @@ impl SceneManager {
             .get_scene_id(&world.last_scene)
             .unwrap_or(0);
         self.level_scripts.sync_scene(&self.current_scene, assets);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn resident_teleport() {
+        assert!(is_always_resident_interactive("int_teleport_zone_001", 0));
+    }
+
+    #[test]
+    fn resident_campfire() {
+        assert!(is_always_resident_interactive("int_campfire_01", 0));
+    }
+
+    #[test]
+    fn resident_save_point() {
+        assert!(is_always_resident_interactive("int_save_point_02", 0));
+    }
+
+    #[test]
+    fn resident_checkpoint() {
+        assert!(is_always_resident_interactive("int_checkpoint_main", 0));
+    }
+
+    #[test]
+    fn resident_repatriate() {
+        assert!(is_always_resident_interactive("int_repatriate_a", 0));
+    }
+
+    #[test]
+    fn resident_barrierwall() {
+        assert!(is_always_resident_interactive("int_barrierwall_adv", 0));
+    }
+
+    #[test]
+    fn resident_blockage() {
+        assert!(is_always_resident_interactive("int_blockage_path", 0));
+    }
+
+    #[test]
+    fn resident_levelgate() {
+        assert!(is_always_resident_interactive("int_levelgate_01", 0));
+    }
+
+    #[test]
+    fn resident_dungeon_entry() {
+        assert!(is_always_resident_interactive("int_dungeon_entry", 0));
+    }
+
+    #[test]
+    fn resident_tp_substring() {
+        assert!(is_always_resident_interactive("obj_tp_zone", 0));
+    }
+
+    #[test]
+    fn resident_edoor() {
+        assert!(is_always_resident_interactive("int_edoor_main", 0));
+    }
+
+    #[test]
+    fn non_resident_regular_interactive() {
+        assert!(!is_always_resident_interactive("int_loot_chest_01", 0));
+    }
+
+    #[test]
+    fn non_resident_random_string() {
+        assert!(!is_always_resident_interactive("enemy_spawn_01", 0));
+    }
+
+    #[test]
+    fn resident_case_insensitive() {
+        assert!(is_always_resident_interactive("INT_TELEPORT_ZONE", 0));
+        assert!(is_always_resident_interactive("Int_Campfire_01", 0));
+    }
+
+    #[test]
+    fn resident_by_entity_type() {
+        // With empty ALWAYS_RESIDENT_ENTITY_TYPES, no entity_type matches
+        assert!(!is_always_resident_interactive("some_template", 32));
+    }
+
+    fn make_scene_char(id: u64) -> SceneCharacter {
+        SceneCharacter {
+            common_info: Some(SceneObjectCommonInfo {
+                id,
+                templateid: format!("char_{}", id),
+                position: None,
+                rotation: None,
+                belong_level_script_id: 0,
+                r#type: 8,
+            }),
+            level: 1,
+            name: "Test".to_string(),
+        }
+    }
+
+    #[test]
+    fn move_leader_already_at_front() {
+        let mut chars = vec![make_scene_char(1), make_scene_char(2), make_scene_char(3)];
+        move_leader_to_front(&mut chars, 1);
+        assert_eq!(chars[0].common_info.as_ref().unwrap().id, 1);
+    }
+
+    #[test]
+    fn move_leader_from_back_to_front() {
+        let mut chars = vec![make_scene_char(2), make_scene_char(3), make_scene_char(1)];
+        move_leader_to_front(&mut chars, 1);
+        assert_eq!(chars[0].common_info.as_ref().unwrap().id, 1);
+    }
+
+    #[test]
+    fn move_leader_from_middle() {
+        let mut chars = vec![make_scene_char(2), make_scene_char(1), make_scene_char(3)];
+        move_leader_to_front(&mut chars, 1);
+        assert_eq!(chars[0].common_info.as_ref().unwrap().id, 1);
+    }
+
+    #[test]
+    fn move_leader_not_found_no_change() {
+        let mut chars = vec![make_scene_char(2), make_scene_char(3)];
+        move_leader_to_front(&mut chars, 999);
+        assert_eq!(chars[0].common_info.as_ref().unwrap().id, 2);
+    }
+
+    #[test]
+    fn move_leader_empty_slice() {
+        let mut chars: Vec<SceneCharacter> = vec![];
+        move_leader_to_front(&mut chars, 1);
+        assert!(chars.is_empty());
+    }
+
+    #[test]
+    fn checkpoint_info_default() {
+        let cp = CheckpointInfo::default();
+        assert!(cp.scene_name.is_empty());
+    }
+
+    #[test]
+    fn scene_loading_state_default_is_idle() {
+        assert_eq!(SceneLoadingState::default(), SceneLoadingState::Idle);
+    }
+
+    #[test]
+    fn revival_mode_default() {
+        assert_eq!(RevivalMode::default(), RevivalMode::Default);
+    }
+
+    #[test]
+    fn self_info_reason_values() {
+        assert_eq!(SelfInfoReason::EnterScene as i32, 0);
+        assert_eq!(SelfInfoReason::ChangeTeam as i32, 3);
+    }
+
+    #[test]
+    fn entity_destroy_reason_values() {
+        assert_eq!(EntityDestroyReason::Immediately as i32, 0);
+        assert_eq!(EntityDestroyReason::Dead as i32, 1);
+    }
+
+    #[test]
+    fn scene_manager_new_matches_default() {
+        let new_mgr = SceneManager::new();
+        let default_mgr = SceneManager::default();
+        assert_eq!(new_mgr.current_scene, default_mgr.current_scene);
+        assert_eq!(new_mgr.scene_id, default_mgr.scene_id);
+        assert_eq!(new_mgr.loading_state, default_mgr.loading_state);
+        assert_eq!(new_mgr.in_battle, default_mgr.in_battle);
+        assert_eq!(
+            new_mgr.checkpoint.is_none(),
+            default_mgr.checkpoint.is_none()
+        );
+        assert_eq!(
+            new_mgr.current_revival_mode,
+            default_mgr.current_revival_mode
+        );
+    }
+
+    #[test]
+    fn scene_manager_default_values() {
+        let mgr = SceneManager::default();
+        assert_eq!(mgr.current_scene, "map01_lv001");
+        assert_eq!(mgr.scene_id, 0);
+        assert_eq!(mgr.loading_state, SceneLoadingState::Idle);
+        assert!(!mgr.in_battle);
+        assert!(mgr.checkpoint.is_none());
+        assert_eq!(mgr.current_revival_mode, RevivalMode::Default);
+        assert!(mgr.dead_entities.is_empty());
+    }
+
+    #[test]
+    fn set_revival_mode_changes_mode() {
+        let mut mgr = SceneManager::default();
+        assert_eq!(mgr.current_revival_mode, RevivalMode::Default);
+        mgr.set_revival_mode(RevivalMode::RepatriatePoint);
+        assert_eq!(mgr.current_revival_mode, RevivalMode::RepatriatePoint);
+        mgr.set_revival_mode(RevivalMode::CheckPoint);
+        assert_eq!(mgr.current_revival_mode, RevivalMode::CheckPoint);
+        mgr.set_revival_mode(RevivalMode::Default);
+        assert_eq!(mgr.current_revival_mode, RevivalMode::Default);
+    }
+
+    #[test]
+    fn set_battle_mode_toggles() {
+        let mut mgr = SceneManager::default();
+        assert!(!mgr.in_battle);
+        mgr.set_battle_mode(true);
+        assert!(mgr.in_battle);
+        mgr.set_battle_mode(false);
+        assert!(!mgr.in_battle);
+    }
+
+    #[test]
+    fn is_in_scene_false_when_idle() {
+        let mgr = SceneManager::default();
+        assert!(!mgr.is_in_scene());
+    }
+
+    #[test]
+    fn is_in_scene_false_when_loading() {
+        let mut mgr = SceneManager::default();
+        mgr.loading_state = SceneLoadingState::Loading;
+        assert!(!mgr.is_in_scene());
+    }
+
+    #[test]
+    fn is_in_scene_true_when_active() {
+        let mut mgr = SceneManager::default();
+        mgr.loading_state = SceneLoadingState::Active;
+        assert!(mgr.is_in_scene());
+    }
+
+    #[test]
+    fn scene_name_returns_current_scene() {
+        let mgr = SceneManager::default();
+        assert_eq!(mgr.scene_name(), "map01_lv001");
+    }
+
+    #[test]
+    fn destroy_entity_immediately() {
+        let mgr = SceneManager::default();
+        let result = mgr.destroy_entity(42, EntityDestroyReason::Immediately);
+        assert_eq!(result.id, 42);
+        assert_eq!(result.reason, EntityDestroyReason::Immediately as i32);
+        assert_eq!(result.scene_name, "map01_lv001");
+    }
+
+    #[test]
+    fn destroy_entity_dead() {
+        let mgr = SceneManager::default();
+        let result = mgr.destroy_entity(99, EntityDestroyReason::Dead);
+        assert_eq!(result.id, 99);
+        assert_eq!(result.reason, EntityDestroyReason::Dead as i32);
+    }
+
+    #[test]
+    fn create_entity_contains_id() {
+        let mgr = SceneManager::default();
+        let result = mgr.create_entity(123);
+        assert_eq!(result.id, 123);
+        assert_eq!(result.scene_name, "map01_lv001");
+    }
+
+    #[test]
+    fn object_enter_view_empty_lists() {
+        let mgr = SceneManager::default();
+        let result = mgr.object_enter_view(vec![], vec![]);
+        assert_eq!(result.scene_name, "map01_lv001");
+        assert_eq!(result.scene_id, 0);
+        assert!(!result.has_extra_object);
+        let detail = result.detail.unwrap();
+        assert!(detail.char_list.is_empty());
+        assert!(detail.monster_list.is_empty());
+        assert!(detail.interactive_list.is_empty());
+        assert!(detail.npc_list.is_empty());
+        assert!(detail.summon_list.is_empty());
+    }
+
+    #[test]
+    fn object_enter_view_with_chars() {
+        let mgr = SceneManager::default();
+        let chars = vec![make_scene_char(1), make_scene_char(2)];
+        let result = mgr.object_enter_view(chars, vec![]);
+        let detail = result.detail.unwrap();
+        assert_eq!(detail.char_list.len(), 2);
+        assert!(detail.interactive_list.is_empty());
+        assert!(detail.npc_list.is_empty());
+    }
+
+    #[test]
+    fn object_enter_view_full_with_data() {
+        let mgr = SceneManager::default();
+        let chars = vec![make_scene_char(1)];
+        let result = mgr.object_enter_view_full(chars, vec![], vec![], vec![]);
+        let detail = result.detail.unwrap();
+        assert_eq!(detail.char_list.len(), 1);
+        assert!(detail.monster_list.is_empty());
+        assert!(detail.interactive_list.is_empty());
+        assert!(detail.npc_list.is_empty());
+        assert!(detail.summon_list.is_empty());
+    }
+
+    #[test]
+    fn object_leave_view_maps_ids() {
+        let mgr = SceneManager::default();
+        let result = mgr.object_leave_view(vec![10, 20, 30]);
+        assert_eq!(result.scene_name, "map01_lv001");
+        assert_eq!(result.obj_list.len(), 3);
+        assert_eq!(result.obj_list[0].obj_id, 10);
+        assert_eq!(result.obj_list[1].obj_id, 20);
+        assert_eq!(result.obj_list[2].obj_id, 30);
+        // obj_type is always 0 in the current implementation
+        assert_eq!(result.obj_list[0].obj_type, 0);
+    }
+
+    #[test]
+    fn object_leave_view_empty_ids() {
+        let mgr = SceneManager::default();
+        let result = mgr.object_leave_view(vec![]);
+        assert!(result.obj_list.is_empty());
+    }
+
+    #[test]
+    fn teleport_uses_current_scene_by_default() {
+        let mgr = SceneManager::default();
+        let result = mgr.teleport(
+            vec![1, 2],
+            Vector {
+                x: 10.0,
+                y: 20.0,
+                z: 30.0,
+            },
+            None,
+            12345,
+            5,
+            None,
+        );
+        assert_eq!(result.scene_name, "map01_lv001");
+        assert_eq!(result.obj_id_list, vec![1, 2]);
+        let pos = result.position.unwrap();
+        assert_eq!(pos.x, 10.0);
+        assert_eq!(pos.y, 20.0);
+        assert_eq!(pos.z, 30.0);
+        assert_eq!(result.server_time, 12345);
+        assert_eq!(result.teleport_reason, 5);
+    }
+
+    #[test]
+    fn teleport_overrides_scene_name() {
+        let mgr = SceneManager::default();
+        let result = mgr.teleport(
+            vec![],
+            Vector {
+                x: 0.0,
+                y: 0.0,
+                z: 0.0,
+            },
+            None,
+            0,
+            0,
+            Some("custom_scene".to_string()),
+        );
+        assert_eq!(result.scene_name, "custom_scene");
+    }
+
+    #[test]
+    fn teleport_with_rotation() {
+        let mgr = SceneManager::default();
+        let rot = Vector {
+            x: 1.0,
+            y: 2.0,
+            z: 3.0,
+        };
+        let result = mgr.teleport(
+            vec![42],
+            Vector {
+                x: 0.0,
+                y: 0.0,
+                z: 0.0,
+            },
+            Some(rot.clone()),
+            0,
+            0,
+            None,
+        );
+        let result_rot = result.rotation.unwrap();
+        assert_eq!(result_rot.x, 1.0);
+        assert_eq!(result_rot.y, 2.0);
+        assert_eq!(result_rot.z, 3.0);
+    }
+
+    #[test]
+    fn set_and_get_checkpoint() {
+        let mut mgr = SceneManager::default();
+        assert!(mgr.get_checkpoint().is_none());
+        let cp = CheckpointInfo {
+            scene_name: "map01_lv002".to_string(),
+            pos_x: 100.0,
+            pos_y: 200.0,
+            pos_z: 300.0,
+        };
+        mgr.set_checkpoint(cp);
+        let result = mgr.get_checkpoint().unwrap();
+        assert_eq!(result.scene_name, "map01_lv002");
+        assert_eq!(result.pos_x, 100.0);
+        assert_eq!(result.pos_y, 200.0);
+        assert_eq!(result.pos_z, 300.0);
+    }
+
+    #[test]
+    fn checkpoint_overwrite() {
+        let mut mgr = SceneManager::default();
+        mgr.set_checkpoint(CheckpointInfo {
+            scene_name: "first".to_string(),
+            pos_x: 1.0,
+            pos_y: 2.0,
+            pos_z: 3.0,
+        });
+        mgr.set_checkpoint(CheckpointInfo {
+            scene_name: "second".to_string(),
+            pos_x: 4.0,
+            pos_y: 5.0,
+            pos_z: 6.0,
+        });
+        assert_eq!(mgr.get_checkpoint().unwrap().scene_name, "second");
+    }
+
+    #[test]
+    fn pack_single_monster_from_entity() {
+        let mgr = SceneManager::default();
+        let entity = SceneEntity {
+            id: 1001,
+            template_id: "monster_001".to_string(),
+            kind: EntityKind::Enemy,
+            pos_x: 10.0,
+            pos_y: 20.0,
+            pos_z: 30.0,
+            level_logic_id: 500,
+            belong_level_script_id: 7,
+        };
+        let result = mgr.pack_single_monster(&entity, 5, 500);
+        let common = result.common_info.unwrap();
+        assert_eq!(common.id, 1001);
+        assert_eq!(common.templateid, "monster_001");
+        assert_eq!(common.r#type, 16);
+        let pos = common.position.unwrap();
+        assert_eq!(pos.x, 10.0);
+        assert_eq!(pos.y, 20.0);
+        assert_eq!(pos.z, 30.0);
+        assert!(common.rotation.is_none());
+        assert_eq!(common.belong_level_script_id, 0);
+        assert_eq!(result.origin_id, 500);
+        assert_eq!(result.level, 5);
+    }
+
+    #[test]
+    fn pack_single_char_basic() {
+        let mgr = SceneManager::default();
+        let result = mgr.pack_single_char(
+            42,
+            "char_template".to_string(),
+            10,
+            Vector {
+                x: 1.0,
+                y: 2.0,
+                z: 3.0,
+            },
+            Vector {
+                x: 4.0,
+                y: 5.0,
+                z: 6.0,
+            },
+        );
+        let common = result.common_info.unwrap();
+        assert_eq!(common.id, 42);
+        assert_eq!(common.templateid, "char_template");
+        assert_eq!(common.r#type, 8);
+        let pos = common.position.unwrap();
+        assert_eq!(pos.x, 1.0);
+        assert_eq!(pos.y, 2.0);
+        assert_eq!(pos.z, 3.0);
+        let rot = common.rotation.unwrap();
+        assert_eq!(rot.x, 4.0);
+        assert_eq!(rot.y, 5.0);
+        assert_eq!(rot.z, 6.0);
+        assert_eq!(result.level, 10);
+        assert_eq!(result.name, "Player");
+    }
+
+    #[test]
+    fn self_info_reason_all_discriminants() {
+        assert_eq!(SelfInfoReason::EnterScene as i32, 0);
+        assert_eq!(SelfInfoReason::ReviveDead as i32, 1);
+        assert_eq!(SelfInfoReason::ReviveRest as i32, 2);
+        assert_eq!(SelfInfoReason::ChangeTeam as i32, 3);
+        assert_eq!(SelfInfoReason::ReviveByItem as i32, 4);
+        assert_eq!(SelfInfoReason::ResetDungeon as i32, 5);
+    }
+
+    #[test]
+    fn revival_mode_all_variants() {
+        assert_eq!(RevivalMode::Default as i32, 0);
+        assert_eq!(RevivalMode::RepatriatePoint as i32, 1);
+        assert_eq!(RevivalMode::CheckPoint as i32, 2);
+        assert_eq!(RevivalMode::default(), RevivalMode::Default);
+    }
+
+    #[test]
+    fn scene_loading_state_variants() {
+        assert_ne!(SceneLoadingState::Idle, SceneLoadingState::Loading);
+        assert_ne!(SceneLoadingState::Loading, SceneLoadingState::Active);
+        assert_ne!(SceneLoadingState::Idle, SceneLoadingState::Active);
+        assert_eq!(SceneLoadingState::default(), SceneLoadingState::Idle);
+    }
+
+    #[test]
+    fn checkpoint_info_with_values() {
+        let cp = CheckpointInfo {
+            scene_name: "test_scene".to_string(),
+            pos_x: 1.0,
+            pos_y: 2.0,
+            pos_z: 3.0,
+        };
+        assert_eq!(cp.scene_name, "test_scene");
+        assert_eq!(cp.pos_x, 1.0);
+        assert_eq!(cp.pos_y, 2.0);
+        assert_eq!(cp.pos_z, 3.0);
+    }
+
+    #[test]
+    fn lv_property_invalid_type() {
+        let prop = LvProperty {
+            key: "test".to_string(),
+            value: serde_json::json!({
+                "type": 0,
+                "valueArray": []
+            }),
+        };
+        let result = lv_property_to_dynamic_param(&prop);
+        assert_eq!(result.value_type, ParamValueType::Invalid as i32);
+        assert_eq!(result.real_type, 0);
+    }
+
+    #[test]
+    fn lv_property_enum_type() {
+        let prop = LvProperty {
+            key: "test".to_string(),
+            value: serde_json::json!({
+                "type": 35,
+                "valueArray": []
+            }),
+        };
+        let result = lv_property_to_dynamic_param(&prop);
+        assert_eq!(result.value_type, ParamValueType::Invalid as i32);
+        assert_eq!(result.real_type, 35);
+    }
+
+    #[test]
+    fn lv_property_bool_type() {
+        let prop = LvProperty {
+            key: "test".to_string(),
+            value: serde_json::json!({
+                "type": 1,
+                "valueArray": [
+                    {"valueBit64": 1},
+                    {"valueBit64": 0},
+                    {"valueBit64": 1}
+                ]
+            }),
+        };
+        let result = lv_property_to_dynamic_param(&prop);
+        assert_eq!(result.value_type, ParamRealType::Bool as i32);
+        assert_eq!(result.value_bool_list, vec![true, false, true]);
+    }
+
+    #[test]
+    fn lv_property_bool_list_type() {
+        let prop = LvProperty {
+            key: "test".to_string(),
+            value: serde_json::json!({
+                "type": 2,
+                "valueArray": [
+                    {"valueBit64": 0},
+                    {"valueBit64": 1}
+                ]
+            }),
+        };
+        let result = lv_property_to_dynamic_param(&prop);
+        assert_eq!(result.value_type, ParamRealType::BoolList as i32);
+        assert_eq!(result.value_bool_list, vec![false, true]);
+    }
+
+    #[test]
+    fn lv_property_int_type() {
+        let prop = LvProperty {
+            key: "test".to_string(),
+            value: serde_json::json!({
+                "type": 3,
+                "valueArray": [
+                    {"valueBit64": 42},
+                    {"valueBit64": -10}
+                ]
+            }),
+        };
+        let result = lv_property_to_dynamic_param(&prop);
+        assert_eq!(result.value_type, ParamValueType::Int as i32);
+        assert_eq!(result.value_int_list, vec![42, -10]);
+    }
+
+    #[test]
+    fn lv_property_int_list_type() {
+        let prop = LvProperty {
+            key: "test".to_string(),
+            value: serde_json::json!({
+                "type": 4,
+                "valueArray": [
+                    {"valueBit64": 1},
+                    {"valueBit64": 2},
+                    {"valueBit64": 3}
+                ]
+            }),
+        };
+        let result = lv_property_to_dynamic_param(&prop);
+        assert_eq!(result.value_type, ParamValueType::IntList as i32);
+        assert_eq!(result.value_int_list, vec![1, 2, 3]);
+    }
+
+    #[test]
+    fn lv_property_uint_type_mapped_to_int() {
+        let prop = LvProperty {
+            key: "test".to_string(),
+            value: serde_json::json!({
+                "type": 17,
+                "valueArray": [{"valueBit64": 999}]
+            }),
+        };
+        let result = lv_property_to_dynamic_param(&prop);
+        assert_eq!(result.value_type, ParamValueType::Int as i32);
+        assert_eq!(result.value_int_list, vec![999]);
+    }
+
+    #[test]
+    fn lv_property_float_type_positive() {
+        let bits = 3.14f32.to_bits() as i64;
+        let prop = LvProperty {
+            key: "test".to_string(),
+            value: serde_json::json!({
+                "type": 5,
+                "valueArray": [{"valueBit64": bits}]
+            }),
+        };
+        let result = lv_property_to_dynamic_param(&prop);
+        assert_eq!(result.value_type, ParamValueType::Float as i32);
+        assert!((result.value_float_list[0] - 3.14f32).abs() < 0.01);
+    }
+
+    #[test]
+    fn lv_property_float_type_negative_fallback_to_int() {
+        let prop = LvProperty {
+            key: "test".to_string(),
+            value: serde_json::json!({
+                "type": 5,
+                "valueArray": [{"valueBit64": -1}]
+            }),
+        };
+        let result = lv_property_to_dynamic_param(&prop);
+        assert_eq!(result.value_type, ParamValueType::Int as i32);
+        assert_eq!(result.value_int_list, vec![-1]);
+    }
+
+    #[test]
+    fn lv_property_float_list_type() {
+        let val1 = 1.5f32.to_bits() as i64;
+        let val2 = 2.5f32.to_bits() as i64;
+        let prop = LvProperty {
+            key: "test".to_string(),
+            value: serde_json::json!({
+                "type": 6,
+                "valueArray": [
+                    {"valueBit64": val1},
+                    {"valueBit64": val2}
+                ]
+            }),
+        };
+        let result = lv_property_to_dynamic_param(&prop);
+        assert_eq!(result.value_type, ParamValueType::FloatList as i32);
+        assert!((result.value_float_list[0] - 1.5f32).abs() < 0.01);
+        assert!((result.value_float_list[1] - 2.5f32).abs() < 0.01);
+    }
+
+    #[test]
+    fn lv_property_string_type() {
+        let prop = LvProperty {
+            key: "test".to_string(),
+            value: serde_json::json!({
+                "type": 7,
+                "valueArray": [
+                    {"valueString": "hello"},
+                    {"valueString": "world"}
+                ]
+            }),
+        };
+        let result = lv_property_to_dynamic_param(&prop);
+        assert_eq!(result.value_type, ParamValueType::String as i32);
+        assert_eq!(result.value_string_list, vec!["hello", "world"]);
+    }
+
+    #[test]
+    fn lv_property_string_list_type() {
+        let prop = LvProperty {
+            key: "test".to_string(),
+            value: serde_json::json!({
+                "type": 8,
+                "valueArray": [
+                    {"valueString": "a"},
+                    {"valueString": "b"}
+                ]
+            }),
+        };
+        let result = lv_property_to_dynamic_param(&prop);
+        assert_eq!(result.value_type, ParamValueType::StringList as i32);
+        assert_eq!(result.value_string_list, vec!["a", "b"]);
+    }
+
+    #[test]
+    fn lv_property_path_type_maps_to_string() {
+        let prop = LvProperty {
+            key: "test".to_string(),
+            value: serde_json::json!({
+                "type": 9,
+                "valueArray": [{"valueString": "/path/to/file"}]
+            }),
+        };
+        let result = lv_property_to_dynamic_param(&prop);
+        assert_eq!(result.value_type, ParamValueType::String as i32);
+        assert_eq!(result.value_string_list, vec!["/path/to/file"]);
+    }
+
+    #[test]
+    fn lv_property_path_list_type_maps_to_string_list() {
+        let prop = LvProperty {
+            key: "test".to_string(),
+            value: serde_json::json!({
+                "type": 10,
+                "valueArray": [{"valueString": "/a"}, {"valueString": "/b"}]
+            }),
+        };
+        let result = lv_property_to_dynamic_param(&prop);
+        assert_eq!(result.value_type, ParamValueType::StringList as i32);
+    }
+
+    #[test]
+    fn lv_property_vector3_type() {
+        let x_bits = 1.0f32.to_bits() as i64;
+        let y_bits = 2.0f32.to_bits() as i64;
+        let z_bits = 3.0f32.to_bits() as i64;
+        let prop = LvProperty {
+            key: "test".to_string(),
+            value: serde_json::json!({
+                "type": 11,
+                "valueArray": [
+                    {"valueBit64": x_bits},
+                    {"valueBit64": y_bits},
+                    {"valueBit64": z_bits}
+                ]
+            }),
+        };
+        let result = lv_property_to_dynamic_param(&prop);
+        assert_eq!(result.value_type, ParamValueType::FloatList as i32);
+        assert_eq!(result.value_float_list.len(), 3);
+    }
+
+    #[test]
+    fn lv_property_entity_ptr_maps_to_int() {
+        let prop = LvProperty {
+            key: "test".to_string(),
+            value: serde_json::json!({
+                "type": 13,
+                "valueArray": [{"valueBit64": 42}]
+            }),
+        };
+        let result = lv_property_to_dynamic_param(&prop);
+        assert_eq!(result.value_type, ParamValueType::Int as i32);
+        assert_eq!(result.value_int_list, vec![42]);
+    }
+
+    #[test]
+    fn lv_property_tag_type_maps_to_string() {
+        let prop = LvProperty {
+            key: "test".to_string(),
+            value: serde_json::json!({
+                "type": 15,
+                "valueArray": [{"valueString": "some_tag"}]
+            }),
+        };
+        let result = lv_property_to_dynamic_param(&prop);
+        assert_eq!(result.value_type, ParamValueType::String as i32);
+        assert_eq!(result.value_string_list, vec!["some_tag"]);
+    }
+
+    #[test]
+    fn lv_property_missing_type_defaults_to_invalid() {
+        let prop = LvProperty {
+            key: "test".to_string(),
+            value: serde_json::json!({
+                "valueArray": []
+            }),
+        };
+        let result = lv_property_to_dynamic_param(&prop);
+        assert_eq!(result.value_type, ParamValueType::Invalid as i32);
+        assert_eq!(result.real_type, 0);
+    }
+
+    #[test]
+    fn lv_property_missing_value_array_defaults_empty() {
+        let prop = LvProperty {
+            key: "test".to_string(),
+            value: serde_json::json!({
+                "type": 3
+            }),
+        };
+        let result = lv_property_to_dynamic_param(&prop);
+        assert_eq!(result.value_type, ParamValueType::Int as i32);
+        assert!(result.value_int_list.is_empty());
+    }
+
+    #[test]
+    fn lv_props_to_map_converts_multiple() {
+        let props = vec![
+            LvProperty {
+                key: "int_prop".to_string(),
+                value: serde_json::json!({"type": 3, "valueArray": [{"valueBit64": 10}]}),
+            },
+            LvProperty {
+                key: "bool_prop".to_string(),
+                value: serde_json::json!({"type": 1, "valueArray": [{"valueBit64": 1}]}),
+            },
+        ];
+        let map = lv_props_to_map(&props);
+        assert_eq!(map.len(), 2);
+        assert!(map.contains_key("int_prop"));
+        assert!(map.contains_key("bool_prop"));
+        assert_eq!(map["int_prop"].value_int_list, vec![10]);
+        assert_eq!(map["bool_prop"].value_bool_list, vec![true]);
+    }
+
+    #[test]
+    fn lv_props_to_map_empty() {
+        let map = lv_props_to_map(&[]);
+        assert!(map.is_empty());
+    }
+
+    #[test]
+    fn on_entity_killed_records_dead_and_ghosts_out() {
+        let mut mgr = SceneManager::default();
+        let now = common::time::now_ms();
+        mgr.interest
+            .ghost_in(1001, ReplicationZone::Immediate, StreamBucket::Enemy, now);
+        mgr.on_entity_killed(1001);
+        assert!(mgr.dead_entities.contains_key(&1001));
+        assert!(!mgr.interest.is_ghosted_in(1001));
+    }
+
+    #[test]
+    fn on_entity_despawned_ghosts_out_without_dead_record() {
+        let mut mgr = SceneManager::default();
+        let now = common::time::now_ms();
+        mgr.interest.ghost_in(
+            2001,
+            ReplicationZone::Immediate,
+            StreamBucket::Interactive,
+            now,
+        );
+        mgr.on_entity_despawned(2001);
+        assert!(!mgr.dead_entities.contains_key(&2001));
+        assert!(!mgr.interest.is_ghosted_in(2001));
+    }
+
+    #[test]
+    fn dead_entities_initially_empty() {
+        let mgr = SceneManager::default();
+        assert!(mgr.dead_entities.is_empty());
+    }
+
+    #[test]
+    fn resident_empty_pattern_is_ignored() {
+        // The filter(|p| !p.is_empty()) should skip empty patterns
+        assert!(!is_always_resident_interactive("some_random_thing", 0));
+    }
+
+    #[test]
+    fn resident_save_group() {
+        assert!(is_always_resident_interactive("int_save_group_01", 0));
+    }
+
+    #[test]
+    fn resident_locked_door() {
+        assert!(is_always_resident_interactive("int_locked_door_north", 0));
+    }
+
+    #[test]
+    fn move_leader_single_element_noop() {
+        let mut chars = vec![make_scene_char(5)];
+        move_leader_to_front(&mut chars, 5);
+        assert_eq!(chars.len(), 1);
+        assert_eq!(chars[0].common_info.as_ref().unwrap().id, 5);
+    }
+
+    #[test]
+    fn move_leader_preserves_other_order() {
+        let mut chars = vec![
+            make_scene_char(2),
+            make_scene_char(3),
+            make_scene_char(4),
+            make_scene_char(1),
+        ];
+        move_leader_to_front(&mut chars, 1);
+        assert_eq!(chars[0].common_info.as_ref().unwrap().id, 1);
+        // The remaining elements should be 2, 3, 4 (shifted right by the rotate)
+        assert_eq!(chars[1].common_info.as_ref().unwrap().id, 2);
+        assert_eq!(chars[2].common_info.as_ref().unwrap().id, 3);
+        assert_eq!(chars[3].common_info.as_ref().unwrap().id, 4);
     }
 }

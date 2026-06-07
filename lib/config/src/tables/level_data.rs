@@ -178,7 +178,7 @@ pub struct LvNpc {
     pub properties: Vec<LvProperty>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct LvLevelScript {
     #[serde(rename = "scriptId")]
     pub script_id: u64,
@@ -204,7 +204,7 @@ pub struct LvLevelScript {
     pub properties: Vec<LvProperty>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct LvShape {
     /// 1 = box, 2 = sphere
     #[serde(rename = "type")]

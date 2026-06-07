@@ -754,3 +754,203 @@ fn short_trigger_name(trigger_type: &str) -> &str {
         .next()
         .unwrap_or(trigger_type)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn level_script_state_default_is_enabled() {
+        assert_eq!(LevelScriptState::default(), LevelScriptState::Enabled);
+    }
+
+    #[test]
+    fn level_script_state_repr_values() {
+        assert_eq!(LevelScriptState::None as i32, 0);
+        assert_eq!(LevelScriptState::Disabled as i32, 1);
+        assert_eq!(LevelScriptState::Enabled as i32, 2);
+        assert_eq!(LevelScriptState::Active as i32, 3);
+    }
+
+    #[test]
+    fn short_trigger_name_simple() {
+        assert_eq!(short_trigger_name("OnScriptStart"), "OnScriptStart");
+    }
+
+    #[test]
+    fn short_trigger_name_with_namespace() {
+        assert_eq!(
+            short_trigger_name("Beyond.LevelScripts.OnScriptStart"),
+            "OnScriptStart"
+        );
+    }
+
+    #[test]
+    fn short_trigger_name_with_comma() {
+        assert_eq!(
+            short_trigger_name(
+                "Beyond.LevelScripts.OnScriptStart,Beyond.LevelScripts.OnScriptActive"
+            ),
+            "OnScriptStart"
+        );
+    }
+
+    #[test]
+    fn short_trigger_name_empty_string() {
+        assert_eq!(short_trigger_name(""), "");
+    }
+
+    #[test]
+    fn shape_contains_point_inside() {
+        let shape = config::tables::level_data::LvShape {
+            offset: config::tables::level_data::Vector3f {
+                x: 0.0,
+                y: 0.0,
+                z: 0.0,
+            },
+            radius: 10.0,
+            ..Default::default()
+        };
+        assert!(shape_contains_point(&shape, (5.0, 0.0, 0.0)));
+    }
+
+    #[test]
+    fn shape_contains_point_on_boundary() {
+        let shape = config::tables::level_data::LvShape {
+            offset: config::tables::level_data::Vector3f {
+                x: 0.0,
+                y: 0.0,
+                z: 0.0,
+            },
+            radius: 10.0,
+            ..Default::default()
+        };
+        // Exactly at radius distance
+        assert!(shape_contains_point(&shape, (10.0, 0.0, 0.0)));
+    }
+
+    #[test]
+    fn shape_contains_point_outside() {
+        let shape = config::tables::level_data::LvShape {
+            offset: config::tables::level_data::Vector3f {
+                x: 0.0,
+                y: 0.0,
+                z: 0.0,
+            },
+            radius: 10.0,
+            ..Default::default()
+        };
+        assert!(!shape_contains_point(&shape, (15.0, 0.0, 0.0)));
+    }
+
+    #[test]
+    fn shape_contains_point_with_offset() {
+        let shape = config::tables::level_data::LvShape {
+            offset: config::tables::level_data::Vector3f {
+                x: 100.0,
+                y: 0.0,
+                z: 100.0,
+            },
+            radius: 10.0,
+            ..Default::default()
+        };
+        assert!(shape_contains_point(&shape, (105.0, 0.0, 100.0)));
+        assert!(!shape_contains_point(&shape, (0.0, 0.0, 0.0)));
+    }
+
+    #[test]
+    fn script_initial_state_known_overrides() {
+        let script = config::tables::level_data::LvLevelScript {
+            script_id: 70001,
+            ..Default::default()
+        };
+        assert_eq!(
+            script_initial_state(&script, "map01_lv001"),
+            LevelScriptState::Active
+        );
+    }
+
+    #[test]
+    fn script_initial_state_default_is_enabled() {
+        let script = config::tables::level_data::LvLevelScript {
+            script_id: 99999,
+            ..Default::default()
+        };
+        assert_eq!(
+            script_initial_state(&script, "unknown_scene"),
+            LevelScriptState::Enabled
+        );
+    }
+
+    #[test]
+    fn has_root_on_script_start_true() {
+        let headers = vec![serde_json::json!({
+            "$type": "OnScriptStart",
+            "_ID": 0
+        })];
+        assert!(has_root_on_script_start(&headers));
+    }
+
+    #[test]
+    fn has_root_on_script_start_false_non_root() {
+        let headers = vec![serde_json::json!({
+            "$type": "OnScriptStart",
+            "_ID": 5
+        })];
+        assert!(!has_root_on_script_start(&headers));
+    }
+
+    #[test]
+    fn has_root_on_script_start_false_wrong_type() {
+        let headers = vec![serde_json::json!({
+            "$type": "OnScriptActive",
+            "_ID": 0
+        })];
+        assert!(!has_root_on_script_start(&headers));
+    }
+
+    #[test]
+    fn has_root_on_script_start_empty() {
+        let headers: Vec<serde_json::Value> = vec![];
+        assert!(!has_root_on_script_start(&headers));
+    }
+
+    #[test]
+    fn level_script_manager_default() {
+        let mgr = LevelScriptManager::default();
+        assert!(mgr.current_scene.is_empty());
+    }
+
+    #[test]
+    fn try_consume_progression_flag_first_call_true() {
+        let mut mgr = LevelScriptManager::default();
+        assert!(mgr.try_consume_progression_flag("test_scene", 1, "flag_a"));
+    }
+
+    #[test]
+    fn try_consume_progression_flag_duplicate_false() {
+        let mut mgr = LevelScriptManager::default();
+        mgr.try_consume_progression_flag("test_scene", 1, "flag_a");
+        assert!(!mgr.try_consume_progression_flag("test_scene", 1, "flag_a"));
+    }
+
+    #[test]
+    fn try_consume_progression_flag_different_flag_true() {
+        let mut mgr = LevelScriptManager::default();
+        mgr.try_consume_progression_flag("test_scene", 1, "flag_a");
+        assert!(mgr.try_consume_progression_flag("test_scene", 1, "flag_b"));
+    }
+
+    #[test]
+    fn try_consume_server_event_first_call_true() {
+        let mut mgr = LevelScriptManager::default();
+        assert!(mgr.try_consume_server_event("test_scene", 1, "event_a"));
+    }
+
+    #[test]
+    fn try_consume_server_event_duplicate_false() {
+        let mut mgr = LevelScriptManager::default();
+        mgr.try_consume_server_event("test_scene", 1, "event_a");
+        assert!(!mgr.try_consume_server_event("test_scene", 1, "event_a"));
+    }
+}

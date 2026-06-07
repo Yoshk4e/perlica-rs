@@ -1010,3 +1010,238 @@ pub fn handle_weapon_puton(
 ) -> Result<ScWeaponPuton> {
     char_bag.equip_weapon(char_id, weapon_id)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn char_index_object_id_is_one_based() {
+        let idx = CharIndex::from_usize(0);
+        assert_eq!(idx.object_id(), 1);
+        let idx = CharIndex::from_usize(4);
+        assert_eq!(idx.object_id(), 5);
+    }
+
+    #[test]
+    fn char_index_from_object_id() {
+        let idx = CharIndex::from_object_id(1);
+        assert_eq!(idx.as_usize(), 0);
+        let idx = CharIndex::from_object_id(5);
+        assert_eq!(idx.as_usize(), 4);
+    }
+
+    #[test]
+    fn char_index_roundtrip() {
+        for i in 0..10 {
+            let idx = CharIndex::from_usize(i);
+            assert_eq!(CharIndex::from_object_id(idx.object_id()).as_usize(), i);
+        }
+    }
+
+    #[test]
+    fn char_index_default() {
+        let idx = CharIndex::default();
+        assert_eq!(idx.as_usize(), 0);
+        assert_eq!(idx.object_id(), 1);
+    }
+
+    #[test]
+    fn team_slot_empty_default() {
+        assert!(matches!(TeamSlot::default(), TeamSlot::Empty));
+    }
+
+    #[test]
+    fn team_slot_empty_has_no_char_index() {
+        let slot = TeamSlot::Empty;
+        assert!(slot.char_index().is_none());
+        assert!(slot.object_id().is_none());
+    }
+
+    #[test]
+    fn team_slot_occupied_has_char_index() {
+        let idx = CharIndex::from_usize(2);
+        let slot = TeamSlot::Occupied(idx);
+        assert_eq!(slot.char_index(), Some(idx));
+        assert_eq!(slot.object_id(), Some(3));
+    }
+
+    #[test]
+    fn team_slots_count_is_four() {
+        assert_eq!(Team::SLOTS_COUNT, 4);
+    }
+
+    #[test]
+    fn team_default_has_empty_slots() {
+        let team = Team::default();
+        assert!(team.char_team.iter().all(|s| matches!(s, TeamSlot::Empty)));
+        assert_eq!(team.name, "");
+    }
+
+    #[test]
+    fn char_bag_default_is_empty() {
+        let bag = CharBag::default();
+        assert!(bag.chars.is_empty());
+        assert!(bag.teams.is_empty());
+    }
+
+    #[test]
+    fn add_char_returns_index() {
+        let mut bag = CharBag::default();
+        let char1 = Char {
+            template_id: "char_001".to_string(),
+            level: 1,
+            exp: 0,
+            break_stage: 0,
+            is_dead: false,
+            hp: 100.0,
+            ultimate_sp: 0.0,
+            cached_weapon_inst_id: None,
+            own_time: 0,
+            skill_levels: HashMap::new(),
+        };
+        let char2 = Char {
+            template_id: "char_002".to_string(),
+            ..char1.clone()
+        };
+        let idx1 = bag.add_char(char1);
+        let idx2 = bag.add_char(char2);
+        assert_eq!(idx1.as_usize(), 0);
+        assert_eq!(idx2.as_usize(), 1);
+        assert_eq!(bag.chars.len(), 2);
+    }
+
+    #[test]
+    fn get_char_returns_correct_char() {
+        let mut bag = CharBag::default();
+        let c = Char {
+            template_id: "test_char".to_string(),
+            level: 5,
+            exp: 100,
+            break_stage: 1,
+            is_dead: false,
+            hp: 200.0,
+            ultimate_sp: 50.0,
+            cached_weapon_inst_id: None,
+            own_time: 0,
+            skill_levels: HashMap::new(),
+        };
+        let idx = bag.add_char(c);
+        let retrieved = bag.get_char(idx).unwrap();
+        assert_eq!(retrieved.template_id, "test_char");
+        assert_eq!(retrieved.level, 5);
+    }
+
+    #[test]
+    fn get_char_out_of_bounds_returns_none() {
+        let bag = CharBag::default();
+        assert!(bag.get_char(CharIndex::from_usize(0)).is_none());
+    }
+
+    #[test]
+    fn char_index_by_id_finds_char() {
+        let mut bag = CharBag::default();
+        let c = Char {
+            template_id: "unique_char".to_string(),
+            level: 1,
+            exp: 0,
+            break_stage: 0,
+            is_dead: false,
+            hp: 100.0,
+            ultimate_sp: 0.0,
+            cached_weapon_inst_id: None,
+            own_time: 0,
+            skill_levels: HashMap::new(),
+        };
+        bag.add_char(c);
+        let found = bag.char_index_by_id("unique_char");
+        assert!(found.is_some());
+        assert_eq!(found.unwrap().as_usize(), 0);
+    }
+
+    #[test]
+    fn char_index_by_id_not_found() {
+        let bag = CharBag::default();
+        assert!(bag.char_index_by_id("nonexistent").is_none());
+    }
+
+    #[test]
+    fn get_char_by_objid() {
+        let mut bag = CharBag::default();
+        let c = Char {
+            template_id: "char_a".to_string(),
+            level: 1,
+            exp: 0,
+            break_stage: 0,
+            is_dead: false,
+            hp: 100.0,
+            ultimate_sp: 0.0,
+            cached_weapon_inst_id: None,
+            own_time: 0,
+            skill_levels: HashMap::new(),
+        };
+        let idx = bag.add_char(c);
+        let objid = idx.object_id();
+        let retrieved = bag.get_char_by_objid(objid).unwrap();
+        assert_eq!(retrieved.template_id, "char_a");
+    }
+
+    #[test]
+    fn update_battle_info() {
+        let mut bag = CharBag::default();
+        let c = Char {
+            template_id: "char_b".to_string(),
+            level: 1,
+            exp: 0,
+            break_stage: 0,
+            is_dead: false,
+            hp: 100.0,
+            ultimate_sp: 0.0,
+            cached_weapon_inst_id: None,
+            own_time: 0,
+            skill_levels: HashMap::new(),
+        };
+        let idx = bag.add_char(c);
+        let objid = idx.object_id();
+        bag.update_battle_info(objid, 50.0, 25.0);
+        let char_data = bag.get_char(idx).unwrap();
+        assert_eq!(char_data.hp, 50.0);
+        assert_eq!(char_data.ultimate_sp, 25.0);
+    }
+
+    #[test]
+    fn mark_char_dirty_by_objid_zero_is_noop() {
+        let mut bag = CharBag::default();
+        // Should not panic or mark anything for objid 0
+        bag.mark_char_dirty_by_objid(0);
+    }
+
+    #[test]
+    fn pending_changes_initially_false() {
+        let bag = CharBag::default();
+        assert!(!bag.has_pending_changes());
+    }
+
+    #[test]
+    fn meta_initially_not_dirty() {
+        let bag = CharBag::default();
+        assert!(!bag.is_meta_dirty());
+    }
+
+    #[test]
+    fn mark_meta_dirty() {
+        let mut bag = CharBag::default();
+        bag.mark_meta_dirty();
+        assert!(bag.is_meta_dirty());
+        bag.clear_meta_dirty();
+        assert!(!bag.is_meta_dirty());
+    }
+
+    #[test]
+    fn clear_all_pending() {
+        let mut bag = CharBag::default();
+        bag.mark_meta_dirty();
+        bag.clear_all_pending();
+        assert!(!bag.is_meta_dirty());
+    }
+}

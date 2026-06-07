@@ -303,3 +303,102 @@ impl From<i32> for ParamValueType {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn param_real_type_from_known_values() {
+        assert_eq!(ParamRealType::from(0), ParamRealType::Invalid);
+        assert_eq!(ParamRealType::from(1), ParamRealType::Bool);
+        assert_eq!(ParamRealType::from(5), ParamRealType::Float);
+        assert_eq!(ParamRealType::from(7), ParamRealType::String);
+        assert_eq!(ParamRealType::from(11), ParamRealType::Vector3);
+        assert_eq!(ParamRealType::from(35), ParamRealType::ENum);
+    }
+
+    #[test]
+    fn param_real_type_from_unknown_returns_invalid() {
+        assert_eq!(ParamRealType::from(999), ParamRealType::Invalid);
+        assert_eq!(ParamRealType::from(-1), ParamRealType::Invalid);
+    }
+
+    #[test]
+    fn param_real_type_repr_values() {
+        assert_eq!(ParamRealType::Invalid as i32, 0);
+        assert_eq!(ParamRealType::Bool as i32, 1);
+        assert_eq!(ParamRealType::Float as i32, 5);
+        assert_eq!(ParamRealType::ENum as i32, 35);
+    }
+
+    #[test]
+    fn param_value_type_from_known_values() {
+        assert_eq!(ParamValueType::from(0), ParamValueType::Invalid);
+        assert_eq!(ParamValueType::from(3), ParamValueType::Int);
+        assert_eq!(ParamValueType::from(5), ParamValueType::Float);
+        assert_eq!(ParamValueType::from(7), ParamValueType::String);
+        assert_eq!(ParamValueType::from(8), ParamValueType::StringList);
+    }
+
+    #[test]
+    fn param_value_type_from_unknown_returns_invalid() {
+        assert_eq!(ParamValueType::from(100), ParamValueType::Invalid);
+    }
+
+    #[test]
+    fn param_value_type_repr_values() {
+        assert_eq!(ParamValueType::Invalid as i32, 0);
+        assert_eq!(ParamValueType::StringList as i32, 8);
+    }
+
+    #[test]
+    fn unlock_system_type_default_unlocked_contains_core_systems() {
+        let defaults = UnlockSystemType::default_unlocked();
+        assert!(defaults.contains(&(UnlockSystemType::Map as i32)));
+        assert!(defaults.contains(&(UnlockSystemType::Inventory as i32)));
+        assert!(defaults.contains(&(UnlockSystemType::Mail as i32)));
+        assert!(defaults.contains(&(UnlockSystemType::Weapon as i32)));
+        assert!(defaults.contains(&(UnlockSystemType::NormalAttack as i32)));
+    }
+
+    #[test]
+    fn unlock_system_type_default_unlocked_excludes_factory_systems() {
+        let defaults = UnlockSystemType::default_unlocked();
+        assert!(!defaults.contains(&(UnlockSystemType::FacBuildingPin as i32)));
+        assert!(!defaults.contains(&(UnlockSystemType::FacMode as i32)));
+        assert!(!defaults.contains(&(UnlockSystemType::FacConveyor as i32)));
+    }
+
+    #[test]
+    fn unlock_system_type_all_includes_everything() {
+        let all = UnlockSystemType::all();
+        let defaults = UnlockSystemType::default_unlocked();
+        // all() should be a superset of default_unlocked()
+        for id in &defaults {
+            assert!(all.contains(id));
+        }
+        // all() should include factory systems that defaults don't
+        assert!(all.contains(&(UnlockSystemType::FacBuildingPin as i32)));
+        assert!(all.contains(&(UnlockSystemType::Gacha as i32)));
+        // None should not be in default_unlocked or all
+        assert!(!defaults.contains(&(UnlockSystemType::None as i32)));
+        assert!(!all.contains(&(UnlockSystemType::None as i32)));
+    }
+
+    #[test]
+    fn system_type_repr_values() {
+        assert_eq!(SystemType::Depot as i32, 0);
+        assert_eq!(SystemType::Equip as i32, 7);
+        assert_eq!(SystemType::FacBus as i32, 101);
+        assert_eq!(SystemType::WorldBuildOnPoleBase as i32, 1000);
+    }
+
+    #[test]
+    fn attribute_type_repr_values() {
+        assert_eq!(AttributeType::Level as i32, 0);
+        assert_eq!(AttributeType::Hp as i32, 1);
+        assert_eq!(AttributeType::Atk as i32, 2);
+        assert_eq!(AttributeType::Def as i32, 3);
+    }
+}

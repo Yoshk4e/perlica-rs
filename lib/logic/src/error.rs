@@ -68,3 +68,138 @@ pub enum LogicError {
 }
 
 pub type Result<T> = std::result::Result<T, LogicError>;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn not_found_display() {
+        let err = LogicError::NotFound("test item".to_string());
+        assert_eq!(err.to_string(), "test item");
+    }
+
+    #[test]
+    fn invalid_operation_display() {
+        let err = LogicError::InvalidOperation("bad move".to_string());
+        assert_eq!(err.to_string(), "bad move");
+    }
+
+    #[test]
+    fn insufficient_display() {
+        let err = LogicError::Insufficient {
+            item_id: "gold".to_string(),
+            have: 10,
+            need: 50,
+        };
+        let msg = err.to_string();
+        assert!(msg.contains("gold"));
+        assert!(msg.contains("10"));
+        assert!(msg.contains("50"));
+    }
+
+    #[test]
+    fn weapon_not_found_display() {
+        let err = LogicError::WeaponNotFound(WeaponInstId::new(42));
+        let msg = err.to_string();
+        assert!(msg.contains("42"));
+    }
+
+    #[test]
+    fn weapon_equipped_display() {
+        let err = LogicError::WeaponEquipped(WeaponInstId::new(5));
+        let msg = err.to_string();
+        assert!(msg.contains("5"));
+        assert!(msg.contains("equipped"));
+    }
+
+    #[test]
+    fn weapon_already_equipped_display() {
+        let err = LogicError::WeaponAlreadyEquipped(WeaponInstId::new(7), 100);
+        let msg = err.to_string();
+        assert!(msg.contains("7"));
+        assert!(msg.contains("100"));
+    }
+
+    #[test]
+    fn weapon_locked_display() {
+        let err = LogicError::WeaponLocked(WeaponInstId::new(3));
+        let msg = err.to_string();
+        assert!(msg.contains("3"));
+        assert!(msg.contains("locked"));
+    }
+
+    #[test]
+    fn weapon_fodder_self_display() {
+        let err = LogicError::WeaponFodderSelf(WeaponInstId::new(1));
+        let msg = err.to_string();
+        assert!(msg.contains("own fodder"));
+    }
+
+    #[test]
+    fn weapon_max_breakthrough_display() {
+        let err = LogicError::WeaponMaxBreakthrough(WeaponInstId::new(10));
+        let msg = err.to_string();
+        assert!(msg.contains("max breakthrough"));
+    }
+
+    #[test]
+    fn weapon_breakthrough_level_too_low_display() {
+        let err = LogicError::WeaponBreakthroughLevelTooLow {
+            id: WeaponInstId::new(10),
+            current: 20,
+            required: 40,
+        };
+        let msg = err.to_string();
+        assert!(msg.contains("20"));
+        assert!(msg.contains("40"));
+    }
+
+    #[test]
+    fn gem_not_found_display() {
+        let err = LogicError::GemNotFound(GemInstId::new(99));
+        let msg = err.to_string();
+        assert!(msg.contains("99"));
+    }
+
+    #[test]
+    fn gem_socketed_display() {
+        let err = LogicError::GemSocketed(GemInstId::new(5));
+        let msg = err.to_string();
+        assert!(msg.contains("socketed"));
+    }
+
+    #[test]
+    fn equip_not_found_display() {
+        let err = LogicError::EquipNotFound(EquipInstId::new(33));
+        let msg = err.to_string();
+        assert!(msg.contains("33"));
+    }
+
+    #[test]
+    fn equip_equipped_display() {
+        let err = LogicError::EquipEquipped(EquipInstId::new(2));
+        let msg = err.to_string();
+        assert!(msg.contains("2"));
+        assert!(msg.contains("equipped"));
+    }
+
+    #[test]
+    fn weapon_refine_type_mismatch_display() {
+        let err = LogicError::WeaponRefineTypeMismatch;
+        let msg = err.to_string();
+        assert!(msg.contains("template"));
+    }
+
+    #[test]
+    fn result_ok() {
+        let r: Result<i32> = Ok(42);
+        assert_eq!(r.unwrap(), 42);
+    }
+
+    #[test]
+    fn result_err() {
+        let r: Result<i32> = Err(LogicError::NotFound("oops".to_string()));
+        assert!(r.is_err());
+    }
+}

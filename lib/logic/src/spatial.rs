@@ -94,3 +94,80 @@ fn cell_key(x: f32, z: f32, cell_size: f32) -> (i32, i32) {
         (z / cell_size).floor() as i32,
     )
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn empty_grid() {
+        let grid = SpatialGrid::build(std::iter::empty(), 20.0);
+        assert!(grid.is_empty());
+        assert_eq!(grid.len(), 0);
+        assert!(grid.query_radius_indices(0.0, 0.0, 100.0).is_empty());
+    }
+
+    #[test]
+    fn single_entry() {
+        let positions = vec![(50.0, 50.0)];
+        let grid = SpatialGrid::build(positions.into_iter(), 20.0);
+        assert_eq!(grid.len(), 1);
+        assert!(!grid.is_empty());
+    }
+
+    #[test]
+    fn query_finds_nearby() {
+        let positions = vec![(0.0, 0.0), (500.0, 500.0)];
+        let grid = SpatialGrid::build(positions.into_iter(), 20.0);
+        let hits = grid.query_radius_indices(0.0, 0.0, 80.0);
+        assert!(hits.contains(&0));
+        assert!(!hits.contains(&1));
+    }
+
+    #[test]
+    fn query_excludes_far() {
+        let positions = vec![(0.0, 0.0), (1000.0, 1000.0)];
+        let grid = SpatialGrid::build(positions.into_iter(), 50.0);
+        let hits = grid.query_radius_indices(0.0, 0.0, 100.0);
+        assert!(hits.contains(&0));
+        assert!(!hits.contains(&1));
+    }
+
+    #[test]
+    fn query_radius_zero_finds_same_cell() {
+        let positions = vec![(10.0, 10.0), (30.0, 30.0)];
+        let grid = SpatialGrid::build(positions.into_iter(), 50.0);
+        // Both in cell (0,0) with cell_size 50
+        let hits = grid.query_radius_indices(10.0, 10.0, 0.0);
+        // Radius 0 still returns same-cell entries (conservative approximation)
+        assert!(hits.contains(&0));
+    }
+
+    #[test]
+    fn multiple_entries_same_cell() {
+        let positions = vec![(1.0, 1.0), (2.0, 2.0), (3.0, 3.0)];
+        let grid = SpatialGrid::build(positions.into_iter(), 50.0);
+        assert_eq!(grid.len(), 3);
+        let hits = grid.query_radius_indices(2.0, 2.0, 10.0);
+        assert!(hits.contains(&0));
+        assert!(hits.contains(&1));
+        assert!(hits.contains(&2));
+    }
+
+    #[test]
+    fn large_radius_finds_all() {
+        let positions = vec![(0.0, 0.0), (100.0, 100.0), (500.0, 500.0)];
+        let grid = SpatialGrid::build(positions.into_iter(), 20.0);
+        let hits = grid.query_radius_indices(0.0, 0.0, 10000.0);
+        assert!(hits.contains(&0));
+        assert!(hits.contains(&1));
+        assert!(hits.contains(&2));
+    }
+
+    #[test]
+    fn cell_key_basic() {
+        assert_eq!(cell_key(25.0, 25.0, 50.0), (0, 0));
+        assert_eq!(cell_key(75.0, 25.0, 50.0), (1, 0));
+        assert_eq!(cell_key(-25.0, -25.0, 50.0), (-1, -1));
+    }
+}

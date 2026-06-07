@@ -16,7 +16,7 @@ pub enum MissionKind {
 }
 
 impl MissionKind {
-    fn from_mission_id(mission_id: &str) -> Self {
+    pub fn from_mission_id(mission_id: &str) -> Self {
         match mission_id.split('_').nth(1) {
             Some("mai") => Self::Main,
             Some("blc") => Self::Bloc,
@@ -50,6 +50,15 @@ pub struct MissionDefinition {
 #[derive(Debug, Clone, Default)]
 pub struct MissionAssets {
     missions: HashMap<String, MissionDefinition>,
+}
+
+impl MissionAssets {
+    /// Construct a `MissionAssets` from a pre-built map.  Primarily
+    /// intended for unit tests that need specific mission definitions
+    /// without loading from disk.
+    pub fn from_missions(missions: HashMap<String, MissionDefinition>) -> Self {
+        Self { missions }
+    }
 }
 
 impl MissionAssets {

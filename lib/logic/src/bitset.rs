@@ -142,3 +142,129 @@ impl BitsetManager {
         MapFilter        => mark_map_filter / has_map_filter;
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn from_i32_known_values() {
+        assert_eq!(BitsetType::from_i32(0), Some(BitsetType::None));
+        assert_eq!(BitsetType::from_i32(1), Some(BitsetType::FoundItem));
+        assert_eq!(BitsetType::from_i32(5), Some(BitsetType::GotItem));
+        assert_eq!(BitsetType::from_i32(19), Some(BitsetType::MapFilter));
+    }
+
+    #[test]
+    fn from_i32_unknown_returns_none() {
+        assert_eq!(BitsetType::from_i32(100), None);
+        assert_eq!(BitsetType::from_i32(-1), None);
+    }
+
+    #[test]
+    fn from_i32_enum_max_is_unknown() {
+        // EnumMax = 20 is not a valid variant for from_i32
+        assert_eq!(BitsetType::from_i32(20), None);
+    }
+
+    #[test]
+    fn new_manager_is_empty() {
+        let mgr = BitsetManager::new();
+        assert!(!mgr.has(BitsetType::FoundItem, 1));
+        assert!(!mgr.has(BitsetType::Wiki, 42));
+        assert_eq!(mgr.count(BitsetType::FoundItem), 0);
+        assert_eq!(mgr.get_bits(BitsetType::FoundItem), Vec::<u32>::new());
+    }
+
+    #[test]
+    fn set_and_has() {
+        let mut mgr = BitsetManager::new();
+        mgr.set(BitsetType::FoundItem, 10);
+        assert!(mgr.has(BitsetType::FoundItem, 10));
+        assert!(!mgr.has(BitsetType::FoundItem, 11));
+        assert!(!mgr.has(BitsetType::Wiki, 10));
+    }
+
+    #[test]
+    fn unset_removes_bit() {
+        let mut mgr = BitsetManager::new();
+        mgr.set(BitsetType::FoundItem, 10);
+        assert!(mgr.has(BitsetType::FoundItem, 10));
+        mgr.unset(BitsetType::FoundItem, 10);
+        assert!(!mgr.has(BitsetType::FoundItem, 10));
+    }
+
+    #[test]
+    fn unset_many_removes_multiple() {
+        let mut mgr = BitsetManager::new();
+        mgr.set(BitsetType::Wiki, 1);
+        mgr.set(BitsetType::Wiki, 2);
+        mgr.set(BitsetType::Wiki, 3);
+        mgr.unset_many(BitsetType::Wiki, &[1, 3]);
+        assert!(!mgr.has(BitsetType::Wiki, 1));
+        assert!(mgr.has(BitsetType::Wiki, 2));
+        assert!(!mgr.has(BitsetType::Wiki, 3));
+    }
+
+    #[test]
+    fn unset_nonexistent_is_noop() {
+        let mut mgr = BitsetManager::new();
+        // Should not panic
+        mgr.unset(BitsetType::None, 999);
+    }
+
+    #[test]
+    fn count_tracks_entries() {
+        let mut mgr = BitsetManager::new();
+        assert_eq!(mgr.count(BitsetType::GotItem), 0);
+        mgr.set(BitsetType::GotItem, 1);
+        mgr.set(BitsetType::GotItem, 2);
+        mgr.set(BitsetType::GotItem, 5);
+        assert_eq!(mgr.count(BitsetType::GotItem), 3);
+    }
+
+    #[test]
+    fn get_bits_returns_sorted() {
+        let mut mgr = BitsetManager::new();
+        mgr.set(BitsetType::Prts, 5);
+        mgr.set(BitsetType::Prts, 1);
+        mgr.set(BitsetType::Prts, 3);
+        let bits = mgr.get_bits(BitsetType::Prts);
+        assert_eq!(bits, vec![1, 3, 5]);
+    }
+
+    #[test]
+    fn set_same_id_idempotent() {
+        let mut mgr = BitsetManager::new();
+        mgr.set(BitsetType::NewChar, 7);
+        mgr.set(BitsetType::NewChar, 7);
+        assert_eq!(mgr.count(BitsetType::NewChar), 1);
+    }
+
+    #[test]
+    fn macro_helpers_work() {
+        let mut mgr = BitsetManager::new();
+        mgr.mark_item_found(42);
+        assert!(mgr.has_item_found(42));
+        mgr.mark_wiki(100);
+        assert!(mgr.has_wiki(100));
+        mgr.mark_fmv_watched(5);
+        assert!(mgr.has_fmv_watched(5));
+        // Cross-type: FMV watched should not show up as found item
+        assert!(!mgr.has_item_found(5));
+    }
+
+    #[test]
+    fn serialization_roundtrip() {
+        let mut mgr = BitsetManager::new();
+        mgr.set(BitsetType::FoundItem, 1);
+        mgr.set(BitsetType::FoundItem, 2);
+        mgr.set(BitsetType::Wiki, 10);
+        let json = serde_json::to_string(&mgr).unwrap();
+        let decoded: BitsetManager = serde_json::from_str(&json).unwrap();
+        assert!(decoded.has(BitsetType::FoundItem, 1));
+        assert!(decoded.has(BitsetType::FoundItem, 2));
+        assert!(decoded.has(BitsetType::Wiki, 10));
+        assert!(!decoded.has(BitsetType::Wiki, 11));
+    }
+}
