@@ -382,6 +382,16 @@ impl StreamBucket {
             Self::Npc => NPC_MAX_ZONE,
         }
     }
+
+    /// Returns the `EntityKind` that corresponds to this streaming bucket.
+    #[inline]
+    pub fn entity_kind(self) -> crate::entity::EntityKind {
+        match self {
+            Self::Enemy => crate::entity::EntityKind::Enemy,
+            Self::Interactive => crate::entity::EntityKind::Interactive,
+            Self::Npc => crate::entity::EntityKind::Npc,
+        }
+    }
 }
 
 /// Per-entity interest state kept inside `InterestManager`.

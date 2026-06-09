@@ -2,6 +2,23 @@ use std::collections::HashMap;
 
 use crate::traits::Classified;
 
+/// Wire values for `SceneObjectCommonInfo.type` and `LeaveObjectInfo.obj_type`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[repr(i32)]
+pub enum ObjectType {
+    Invalid = 1,
+    Character = 8,
+    Enemy = 16,
+    Interactive = 32,
+    Projectile = 64,
+    FactoryRegion = 128,
+    Npc = 256,
+    AbilityEntity = 512,
+    CinematicEntity = 1024,
+    RemoteFactoryEntity = 2048,
+    Creature = 4096,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum EntityKind {
     Character,
@@ -10,6 +27,19 @@ pub enum EntityKind {
     Npc,
     Projectile,
     Creature,
+}
+
+impl EntityKind {
+    pub fn object_type(self) -> i32 {
+        match self {
+            EntityKind::Character => ObjectType::Character as i32,
+            EntityKind::Enemy => ObjectType::Enemy as i32,
+            EntityKind::Interactive => ObjectType::Interactive as i32,
+            EntityKind::Npc => ObjectType::Npc as i32,
+            EntityKind::Projectile => ObjectType::Projectile as i32,
+            EntityKind::Creature => ObjectType::Creature as i32,
+        }
+    }
 }
 
 // Cleared on every scene transition.

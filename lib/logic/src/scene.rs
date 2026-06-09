@@ -161,7 +161,7 @@ pub struct SceneManager {
     /// Indices returned by the spatial-grid query.
     candidates_buf: Vec<usize>,
     // Entity IDs scheduled for ghost-out this tick.
-    leave_ids_buf: Vec<u64>,
+    leave_ids_buf: Vec<(u64, EntityKind)>,
 }
 
 impl Default for SceneManager {
@@ -638,12 +638,11 @@ impl SceneManager {
         }
     }
 
-    //TODO: pass correct objecr type
-    pub fn object_leave_view(&self, entity_ids: Vec<u64>) -> ScObjectLeaveView {
+    pub fn object_leave_view(&self, entity_ids: Vec<(u64, EntityKind)>) -> ScObjectLeaveView {
         let obj_list = entity_ids
             .into_iter()
-            .map(|id| LeaveObjectInfo {
-                obj_type: 0,
+            .map(|(id, kind)| LeaveObjectInfo {
+                obj_type: kind.object_type(),
                 obj_id: id,
             })
             .collect();
@@ -819,7 +818,11 @@ impl SceneManager {
         let leave_view = if leaving.is_empty() {
             None
         } else {
-            Some(self.object_leave_view(leaving))
+            let tagged: Vec<(u64, EntityKind)> = leaving
+                .into_iter()
+                .map(|id| (id, EntityKind::Character))
+                .collect();
+            Some(self.object_leave_view(tagged))
         };
 
         let entering: Vec<u64> = new_team_ids
@@ -898,7 +901,7 @@ impl SceneManager {
                     }),
                     rotation: None,
                     belong_level_script_id: e.belong_level_script_id,
-                    r#type: 16,
+                    r#type: e.kind.object_type(),
                 }),
                 origin_id: e.level_logic_id,
                 // Level not re-sent on team switch; client already has it from
@@ -937,7 +940,7 @@ impl SceneManager {
                             position: Some(spawn_pos),
                             rotation: Some(spawn_rot),
                             belong_level_script_id: 0,
-                            r#type: 8,
+                            r#type: EntityKind::Character.object_type(),
                         }),
                         level: char_data.level,
                         name: "Player".to_string(),
@@ -1066,7 +1069,7 @@ impl SceneManager {
                         position: Some(spawn_pos),
                         rotation: Some(spawn_rot),
                         belong_level_script_id: 0,
-                        r#type: 8,
+                        r#type: EntityKind::Character.object_type(),
                     }),
                     level: char_data.level,
                     name: "Player".to_string(),
@@ -1260,7 +1263,9 @@ impl SceneManager {
             let Some(e) = entities.get(id) else {
                 // Interest map / entity manager out of sync, schedule the
                 // orphan id for cleanup so the counters re-sync.
-                self.leave_ids_buf.push(id);
+                // Derive the kind from the interest entry's bucket so the
+                // client receives the correct obj_type in LeaveObjectInfo.
+                self.leave_ids_buf.push((id, entry.bucket.entity_kind()));
                 continue;
             };
             let dx = e.pos_x - pos.0;
@@ -1273,7 +1278,7 @@ impl SceneManager {
             if self.interest.should_retain(entry, dist_sq, now, in_battle) {
                 continue;
             }
-            self.leave_ids_buf.push(id);
+            self.leave_ids_buf.push((id, e.kind));
         }
 
         // Edge case: orphan sweep when Zone 3 is due.  Anything in
@@ -1294,12 +1299,12 @@ impl SceneManager {
                 let dy = e.pos_y - pos.1;
                 let dz = e.pos_z - pos.2;
                 if dx * dx + dy * dy + dz * dz > MAX_INTEREST_RADIUS_SQ {
-                    self.leave_ids_buf.push(e.id);
+                    self.leave_ids_buf.push((e.id, e.kind));
                 }
             }
         }
 
-        for &id in &self.leave_ids_buf {
+        for &(id, _kind) in &self.leave_ids_buf {
             entities.remove(id);
             self.interest.ghost_out(id);
             tracing::trace!(id, "entity ghosted out");
@@ -1719,7 +1724,7 @@ impl SceneManager {
                 }),
                 rotation: None,
                 belong_level_script_id: 0,
-                r#type: 16,
+                r#type: entity.kind.object_type(),
             }),
             origin_id,
             level,
@@ -1742,7 +1747,7 @@ impl SceneManager {
                 position: Some(position),
                 rotation: Some(rotation),
                 belong_level_script_id: 0,
-                r#type: 8,
+                r#type: EntityKind::Character.object_type(),
             }),
             level,
             name: "Player".to_string(),
@@ -1886,7 +1891,7 @@ mod tests {
                 position: None,
                 rotation: None,
                 belong_level_script_id: 0,
-                r#type: 8,
+                r#type: EntityKind::Character.object_type(),
             }),
             level: 1,
             name: "Test".to_string(),
@@ -2101,14 +2106,23 @@ mod tests {
     #[test]
     fn object_leave_view_maps_ids() {
         let mgr = SceneManager::default();
-        let result = mgr.object_leave_view(vec![10, 20, 30]);
+        let result = mgr.object_leave_view(vec![
+            (10, EntityKind::Enemy),
+            (20, EntityKind::Npc),
+            (30, EntityKind::Interactive),
+        ]);
         assert_eq!(result.scene_name, "map01_lv001");
         assert_eq!(result.obj_list.len(), 3);
         assert_eq!(result.obj_list[0].obj_id, 10);
         assert_eq!(result.obj_list[1].obj_id, 20);
         assert_eq!(result.obj_list[2].obj_id, 30);
-        // obj_type is always 0 in the current implementation
-        assert_eq!(result.obj_list[0].obj_type, 0);
+        // obj_type now reflects the actual ObjectType wire value
+        assert_eq!(result.obj_list[0].obj_type, EntityKind::Enemy.object_type());
+        assert_eq!(result.obj_list[1].obj_type, EntityKind::Npc.object_type());
+        assert_eq!(
+            result.obj_list[2].obj_type,
+            EntityKind::Interactive.object_type()
+        );
     }
 
     #[test]
