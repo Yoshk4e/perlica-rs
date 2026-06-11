@@ -1,10 +1,16 @@
 pub mod character;
+pub mod contract_table;
 pub mod equip;
 pub mod factory_const;
+pub mod factory_manufact_const;
 pub mod factory_map;
+pub mod factory_processor_const;
 pub mod factory_recycler_const;
 pub mod factory_skill_const;
+pub mod factory_sttree;
+pub mod factory_table;
 pub mod item;
 pub mod level_data;
+pub mod repair_table;
 pub mod skill_patch;
 pub mod weapon;

@@ -304,6 +304,165 @@ impl From<i32> for ParamValueType {
     }
 }
 
+/// `Beyond.GEnums.FCDirection`
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[repr(i32)]
+pub enum FCDirection {
+    Up = 0,
+    Right = 1,
+    Down = 2,
+    Left = 3,
+    Max = 4,
+}
+
+/// `Beyond.GEnums.FCMeshType`
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[repr(i32)]
+pub enum FCMeshType {
+    Rect = 0,
+    Line = 1,
+}
+
+/// `Beyond.GEnums.FCNodeType`
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[repr(i32)]
+pub enum FCNodeType {
+    Invalid = 0,
+    Inventory = 1,
+    Bus = 2,
+    Hub = 3,
+    Collector = 4,
+    Producer = 5,
+    BoxConveyor = 6,
+    BoxRouterM1 = 7,
+    BusUnloader = 8,
+    BusLoader = 9,
+    BurnPower = 10,
+    PowerPole = 11,
+    PowerSave = 12,
+    DepositBox = 13,
+    HealTower = 14,
+    TravelPole = 15,
+    BoxBridge = 16,
+    Special = 17,
+    PowerTerminal = 18,
+    PowerPort = 19,
+    PowerGate = 20,
+}
+
+/// `Beyond.GEnums.FCComponentType`
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[repr(i32)]
+pub enum FCComponentType {
+    Invalid = 0,
+    Transform = 2,
+    Bus = 3,
+    Inventory = 4,
+    Cache = 5,
+    Selector = 6,
+    Collector = 7,
+    Producer = 8,
+    FormulaMan = 9,
+    BoxConveyor = 10,
+    BoxRouterM1 = 11,
+    BusUnloader = 13,
+    BusLoader = 14,
+    Hub = 15,
+    BurnPower = 16,
+    PowerPole = 17,
+    PowerSave = 18,
+    GridBox = 19,
+    HealTower = 20,
+    CacheTransport = 21,
+    StablePower = 22,
+    TravelPole = 23,
+    BoxBridge = 24,
+    SpecialDesc = 25,
+}
+
+/// `Beyond.GEnums.FCComponentPos`, keys for the `component_pos` map on a node.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[repr(i32)]
+pub enum FCComponentPos {
+    Invalid = 0,
+    Transform = 2,
+    SpecialDesc = 10,
+    Inventory = 11,
+    Bus = 12,
+    Cache = 14,
+    Selector = 15,
+    Collector = 16,
+    Producer = 17,
+    FormulaMan = 18,
+    BoxConveyor = 19,
+    BoxRouter = 20,
+    BurnPower = 21,
+    PowerPole = 22,
+    PowerSave = 23,
+    HealTower = 25,
+    CacheTransport = 26,
+    StablePower = 27,
+    TravelPole = 28,
+    Hub = 30,
+    BusUnloader = 31,
+    BusLoader = 32,
+    CacheIn1 = 41,
+    CacheIn2 = 42,
+    CacheIn3 = 43,
+    CacheIn4 = 44,
+    CacheOut1 = 51,
+    CacheOut2 = 52,
+    CacheOut3 = 53,
+    CacheOut4 = 54,
+    Selector1 = 61,
+    Selector2 = 62,
+    Selector3 = 63,
+    Selector4 = 64,
+    Selector5 = 65,
+    Selector6 = 66,
+    Selector7 = 67,
+    Selector8 = 68,
+    Selector9 = 69,
+    BoxBridge1 = 71,
+    BoxBridge2 = 72,
+    BoxBridge3 = 73,
+    BoxBridge4 = 74,
+    BoxBridge5 = 75,
+    GridBox1 = 81,
+    GridBox2 = 82,
+    GridBox3 = 83,
+    GridBox4 = 84,
+}
+
+/// `Beyond.GEnums.FCPropertyKey`, keys for the `dynamic_property.values` map on a node.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[repr(i32)]
+pub enum FCPropertyKey {
+    None = 0,
+    UnRepair = 1,
+    /// Instance key: used by the client to look up baked scene-placement data.
+    InstKey = 2,
+    LogicTarget = 3,
+    Max = 4,
+}
+
+/// `Beyond.GEnums.FCConnectionPortType`
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[repr(i32)]
+pub enum FCConnectionPortType {
+    Hub = 0,
+    PowerPole = 1,
+    Logic = 2,
+}
+
+/// `Beyond.GEnums.FCConnectionType`
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[repr(i32)]
+pub enum FCConnectionType {
+    Power = 0,
+    Travel = 1,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
