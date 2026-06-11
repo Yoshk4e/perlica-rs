@@ -1,0 +1,323 @@
+{
+  "contract_worker_1_1": {
+    "contractId": "contract_worker_1_1",
+    "icon": "contract_bloc01_medicine_a",
+    "frontIcon": "contract_bloc01_front_medicine_a",
+    "contractName": {
+      "text": "",
+      "id": "036C6D75664C994F"
+    },
+    "desc": {
+      "text": "",
+      "id": "E15906F5F5B7CE67"
+    },
+    "traderLevel": 1,
+    "type": 0,
+    "orderIdGroup": [
+      "order_worker_1_1_1",
+      "order_worker_1_1_2",
+      "order_worker_1_1_3"
+    ],
+    "orderWeight": [
+      2,
+      4,
+      6
+    ],
+    "itemValueGroup": [
+      {
+        "itemId": "item_glass_bottle",
+        "value": 1
+      },
+      {
+        "itemId": "item_bottled_rec_hp_1",
+        "value": 10
+      },
+      {
+        "itemId": "item_bottled_food_1",
+        "value": 20
+      }
+    ],
+    "neededItems": [
+      "item_glass_bottle",
+      "item_bottled_rec_hp_1",
+      "item_bottled_food_1"
+    ],
+    "rewardItems": [
+      "item_bloc_tundra_gold",
+      "item_gold",
+      "item_bloc_endfield_exp"
+    ],
+    "minValue": 1200,
+    "maxValue": 1800
+  },
+  "contract_worker_1_2": {
+    "contractId": "contract_worker_1_2",
+    "icon": "contract_bloc01_medicine_b",
+    "frontIcon": "contract_bloc01_front_medicine_b",
+    "contractName": {
+      "text": "",
+      "id": "09761CE52C5F26DA"
+    },
+    "desc": {
+      "text": "",
+      "id": "C5C52C3CD3A29BCF"
+    },
+    "traderLevel": 2,
+    "type": 0,
+    "orderIdGroup": [
+      "order_worker_1_2_1",
+      "order_worker_1_2_2",
+      "order_worker_1_2_3"
+    ],
+    "orderWeight": [
+      2,
+      4,
+      6
+    ],
+    "itemValueGroup": [
+      {
+        "itemId": "item_bottled_rec_hp_1",
+        "value": 1
+      },
+      {
+        "itemId": "item_bottled_food_1",
+        "value": 1
+      },
+      {
+        "itemId": "item_bottled_rec_hp_2",
+        "value": 5
+      },
+      {
+        "itemId": "item_bottled_food_2",
+        "value": 10
+      }
+    ],
+    "neededItems": [
+      "item_bottled_rec_hp_1",
+      "item_bottled_food_1",
+      "item_bottled_rec_hp_2",
+      "item_bottled_food_2"
+    ],
+    "rewardItems": [
+      "item_bloc_tundra_gold",
+      "item_gold",
+      "item_bloc_endfield_exp"
+    ],
+    "minValue": 1200,
+    "maxValue": 1800
+  },
+  "contract_worker_1_3": {
+    "contractId": "contract_worker_1_3",
+    "icon": "contract_bloc01_medicine_c",
+    "frontIcon": "contract_bloc01_front_medicine_c",
+    "contractName": {
+      "text": "",
+      "id": "6C26A7DADC9A80B7"
+    },
+    "desc": {
+      "text": "",
+      "id": "B7D4C50A6DDE9AE5"
+    },
+    "traderLevel": 3,
+    "type": 0,
+    "orderIdGroup": [
+      "order_worker_1_3_1",
+      "order_worker_1_3_2",
+      "order_worker_1_3_3"
+    ],
+    "orderWeight": [
+      2,
+      4,
+      6
+    ],
+    "itemValueGroup": [
+      {
+        "itemId": "item_bottled_rec_hp_2",
+        "value": 1
+      },
+      {
+        "itemId": "item_bottled_food_2",
+        "value": 1
+      },
+      {
+        "itemId": "item_bottled_rec_hp_3",
+        "value": 5
+      },
+      {
+        "itemId": "item_bottled_food_3",
+        "value": 10
+      }
+    ],
+    "neededItems": [
+      "item_bottled_rec_hp_2",
+      "item_bottled_food_2",
+      "item_bottled_rec_hp_3",
+      "item_bottled_food_3"
+    ],
+    "rewardItems": [
+      "item_bloc_tundra_gold",
+      "item_gold",
+      "item_bloc_endfield_exp"
+    ],
+    "minValue": 1200,
+    "maxValue": 1800
+  },
+  "contract_worker_2_1": {
+    "contractId": "contract_worker_2_1",
+    "icon": "contract_bloc01_tool_a",
+    "frontIcon": "contract_bloc01_front_tool_a",
+    "contractName": {
+      "text": "",
+      "id": "55A3CA1D81E25989"
+    },
+    "desc": {
+      "text": "",
+      "id": "F7376364B85A573D"
+    },
+    "traderLevel": 1,
+    "type": 1,
+    "orderIdGroup": [
+      "order_worker_2_1_1",
+      "order_worker_2_1_2",
+      "order_worker_2_1_3"
+    ],
+    "orderWeight": [
+      2,
+      4,
+      6
+    ],
+    "itemValueGroup": [
+      {
+        "itemId": "item_originium_powder",
+        "value": 1
+      },
+      {
+        "itemId": "item_glass_cmpt",
+        "value": 1
+      },
+      {
+        "itemId": "item_proc_battery_1",
+        "value": 20
+      }
+    ],
+    "neededItems": [
+      "item_originium_powder",
+      "item_glass_cmpt",
+      "item_proc_battery_1"
+    ],
+    "rewardItems": [
+      "item_bloc_tundra_gold",
+      "item_gold",
+      "item_bloc_ursus_exp"
+    ],
+    "minValue": 1200,
+    "maxValue": 1800
+  },
+  "contract_worker_2_2": {
+    "contractId": "contract_worker_2_2",
+    "icon": "contract_bloc01_tool_b",
+    "frontIcon": "contract_bloc01_front_tool_b",
+    "contractName": {
+      "text": "",
+      "id": "C158FD16177420B8"
+    },
+    "desc": {
+      "text": "",
+      "id": "A4DBF5964B1FE743"
+    },
+    "traderLevel": 2,
+    "type": 1,
+    "orderIdGroup": [
+      "order_worker_2_2_1",
+      "order_worker_2_2_2",
+      "order_worker_2_2_3"
+    ],
+    "orderWeight": [
+      2,
+      4,
+      6
+    ],
+    "itemValueGroup": [
+      {
+        "itemId": "item_crystal_enr",
+        "value": 1
+      },
+      {
+        "itemId": "item_iron_cmpt",
+        "value": 1
+      },
+      {
+        "itemId": "item_proc_battery_1",
+        "value": 5
+      },
+      {
+        "itemId": "item_proc_battery_2",
+        "value": 10
+      }
+    ],
+    "neededItems": [
+      "item_crystal_enr",
+      "item_iron_cmpt",
+      "item_proc_battery_1",
+      "item_proc_battery_2"
+    ],
+    "rewardItems": [
+      "item_bloc_tundra_gold",
+      "item_gold",
+      "item_bloc_ursus_exp"
+    ],
+    "minValue": 1200,
+    "maxValue": 1800
+  },
+  "contract_worker_2_3": {
+    "contractId": "contract_worker_2_3",
+    "icon": "contract_bloc01_tool_c",
+    "frontIcon": "contract_bloc01_front_tool_c",
+    "contractName": {
+      "text": "",
+      "id": "5AB2FD14DBCE4D52"
+    },
+    "desc": {
+      "text": "",
+      "id": "E103ACC10CC9B350"
+    },
+    "traderLevel": 3,
+    "type": 1,
+    "orderIdGroup": [
+      "order_worker_2_3_1",
+      "order_worker_2_3_2",
+      "order_worker_2_3_3"
+    ],
+    "orderWeight": [
+      2,
+      4,
+      6
+    ],
+    "itemValueGroup": [
+      {
+        "itemId": "item_iron_enr_cmpt",
+        "value": 1
+      },
+      {
+        "itemId": "item_proc_battery_2",
+        "value": 5
+      },
+      {
+        "itemId": "item_proc_battery_3",
+        "value": 10
+      }
+    ],
+    "neededItems": [
+      "item_iron_enr_cmpt",
+      "item_proc_battery_2",
+      "item_proc_battery_3"
+    ],
+    "rewardItems": [
+      "item_bloc_tundra_gold",
+      "item_gold",
+      "item_bloc_ursus_exp"
+    ],
+    "minValue": 1200,
+    "maxValue": 1800
+  }
+}

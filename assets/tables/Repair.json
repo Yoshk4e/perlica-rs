@@ -1,0 +1,81 @@
+{
+  "RepairBuildingTable": {
+    "repair_power_pole_2_1": {
+      "id": "repair_power_pole_2_1",
+      "levelId": "map01_lv005",
+      "buildingId": "power_pole_2",
+      "costItems": [
+        {
+          "id": "item_crystal_powder",
+          "count": 5
+        }
+      ]
+    },
+    "repair_power_pole_2_2": {
+      "id": "repair_power_pole_2_2",
+      "levelId": "map01_lv005",
+      "buildingId": "power_pole_2",
+      "costItems": [
+        {
+          "id": "item_crystal_powder",
+          "count": 5
+        }
+      ]
+    },
+    "repair_power_pole_2_3": {
+      "id": "repair_power_pole_2_3",
+      "levelId": "map01_lv005",
+      "buildingId": "power_pole_2",
+      "costItems": [
+        {
+          "id": "item_crystal_powder",
+          "count": 5
+        }
+      ]
+    },
+    "repair_power_pole_2_4": {
+      "id": "repair_power_pole_2_4",
+      "levelId": "map01_lv005",
+      "buildingId": "power_pole_2",
+      "costItems": [
+        {
+          "id": "item_crystal_powder",
+          "count": 5
+        }
+      ]
+    },
+    "repair_power_pole_2_5": {
+      "id": "repair_power_pole_2_5",
+      "levelId": "map01_lv005",
+      "buildingId": "power_pole_2",
+      "costItems": [
+        {
+          "id": "item_crystal_powder",
+          "count": 5
+        }
+      ]
+    },
+    "repair_sp_hub_1_1": {
+      "id": "repair_sp_hub_1_1",
+      "levelId": "map01_lv001",
+      "buildingId": "sp_hub_1",
+      "costItems": [
+        {
+          "id": "item_hub_key",
+          "count": 1
+        }
+      ]
+    },
+    "repair_sp_proc_sta_1_1": {
+      "id": "repair_sp_proc_sta_1_1",
+      "levelId": "map01_lv001",
+      "buildingId": "sp_proc_sta_1",
+      "costItems": [
+        {
+          "id": "item_crystal_powder",
+          "count": 5
+        }
+      ]
+    }
+  }
+}
