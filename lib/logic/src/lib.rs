@@ -3,6 +3,7 @@ pub mod character;
 pub mod entity;
 pub mod enums;
 pub mod error;
+pub mod factory;
 pub mod interest;
 pub mod item;
 pub mod level_script;
