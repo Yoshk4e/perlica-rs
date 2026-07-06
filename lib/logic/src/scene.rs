@@ -6,7 +6,7 @@ use crate::interest::{InterestManager, ReplicationZone, StreamBucket, ZONE_NAMES
 use crate::level_script::LevelScriptManager;
 use crate::movement::MovementManager;
 use crate::spatial::SpatialGrid;
-use crate::traits::{Positioned3D, PositionedExt, Rotated3D};
+use crate::traits::{Positioned3D, PositionedExt};
 use config::BeyondAssets;
 use config::tables::level_data::LvProperty;
 use perlica_proto::{
@@ -190,7 +190,7 @@ fn lv_property_to_dynamic_param(prop: &LvProperty) -> DynamicParameter {
     let value = &prop.value;
     let real_type_int = value
         .get("type")
-        .and_then(|entry| entry.as_i64())
+        .and_then(serde_json::Value::as_i64)
         .unwrap_or(0) as i32;
     let real_type = ParamRealType::from(real_type_int);
 
@@ -203,10 +203,10 @@ fn lv_property_to_dynamic_param(prop: &LvProperty) -> DynamicParameter {
     let as_i64 = |entry: &serde_json::Value| {
         entry
             .get("valueBit64")
-            .and_then(|value| value.as_i64())
+            .and_then(serde_json::Value::as_i64)
             .unwrap_or(0)
     };
-    let as_u32 = |entry: &serde_json::Value| as_i64(entry) as u32;
+    let to_u32 = |entry: &serde_json::Value| as_i64(entry) as u32;
     let as_string = |entry: &serde_json::Value| {
         entry
             .get("valueString")
@@ -287,7 +287,7 @@ fn lv_property_to_dynamic_param(prop: &LvProperty) -> DynamicParameter {
                     real_type: real_type_int,
                     value_float_list: value_array
                         .iter()
-                        .map(|entry| f32::from_bits(as_u32(entry)))
+                        .map(|entry| f32::from_bits(to_u32(entry)))
                         .collect(),
                     ..Default::default()
                 }
@@ -299,7 +299,7 @@ fn lv_property_to_dynamic_param(prop: &LvProperty) -> DynamicParameter {
                 real_type: real_type_int,
                 value_float_list: value_array
                     .iter()
-                    .map(|entry| f32::from_bits(as_u32(entry)))
+                    .map(|entry| f32::from_bits(to_u32(entry)))
                     .collect(),
                 ..Default::default()
             }
@@ -554,7 +554,7 @@ impl SceneManager {
         // close to each TP.  The list is small (typically a handful per
         // scene) so the cost is negligible.
         let char_list = self.pack_scene_chars(char_bag, movement);
-        let monster_list = self.pack_scene_monsters(assets, entities);
+        let monster_list: Vec<SceneMonster> = Vec::new();
         let interactive_list = pack_resident_interactives(&self.current_scene, assets);
         let npc_list: Vec<SceneNpc> = Vec::new();
 
@@ -716,7 +716,7 @@ impl SceneManager {
         char_bag: &mut CharBag,
         movement: &MovementManager,
         assets: &BeyondAssets,
-        entities: &mut EntityManager,
+        _entities: &mut EntityManager,
         revival_mode: Option<RevivalMode>,
     ) -> (ScObjectEnterView, ScSelfSceneInfo, ScSceneRevival) {
         if let Some(mode) = revival_mode {
@@ -726,9 +726,9 @@ impl SceneManager {
         let revive_chars: Vec<u64> = team
             .char_team
             .iter()
-            .filter_map(|slot| slot.char_index())
+            .filter_map(super::character::char_bag::TeamSlot::char_index)
             .filter(|&idx| char_bag.chars[idx.as_usize()].is_dead)
-            .map(|idx| idx.object_id())
+            .map(super::character::char_bag::CharIndex::object_id)
             .collect();
 
         for &objid in &revive_chars {
@@ -738,8 +738,7 @@ impl SceneManager {
                 char.hp = assets
                     .characters
                     .get_stats(&char.template_id, char.level, char.break_stage)
-                    .map(|a| a.hp / 2.0)
-                    .unwrap_or(50.0);
+                    .map_or(50.0, |a| a.hp / 2.0);
             }
         }
 
@@ -748,7 +747,7 @@ impl SceneManager {
         // protobuf list so the client gets a fresh copy after the revival
         // notify churn, but we don't double-install them server-side.
         let char_list = self.pack_scene_chars(char_bag, movement);
-        let monster_list = self.pack_scene_monsters(assets, entities);
+        let monster_list: Vec<SceneMonster> = Vec::new();
         let interactive_list = pack_resident_interactives(&self.current_scene, assets);
         let npc_list: Vec<SceneNpc> = Vec::new();
 
@@ -810,8 +809,7 @@ impl SceneManager {
                 char_bag
                     .chars
                     .get(idx.as_usize())
-                    .map(|c| !c.is_dead)
-                    .unwrap_or(false)
+                    .is_some_and(|c| !c.is_dead)
             })
             .copied()
             .collect();
@@ -832,8 +830,7 @@ impl SceneManager {
                 char_bag
                     .chars
                     .get(idx.as_usize())
-                    .map(|c| !c.is_dead)
-                    .unwrap_or(false)
+                    .is_some_and(|c| !c.is_dead)
             })
             .copied()
             .collect();
@@ -850,8 +847,7 @@ impl SceneManager {
                 char_bag
                     .chars
                     .get(idx.as_usize())
-                    .map(|c| !c.is_dead)
-                    .unwrap_or(false)
+                    .is_some_and(|c| !c.is_dead)
             })
             .copied()
             .collect();
@@ -985,8 +981,7 @@ impl SceneManager {
                 char_bag
                     .chars
                     .get(idx.as_usize())
-                    .map(|c| !c.is_dead)
-                    .unwrap_or(false)
+                    .is_some_and(|c| !c.is_dead)
             })
             .copied()
             .collect();
@@ -1045,7 +1040,7 @@ impl SceneManager {
         let mut chars: Vec<SceneCharacter> = team
             .char_team
             .iter()
-            .filter_map(|slot| slot.char_index())
+            .filter_map(super::character::char_bag::TeamSlot::char_index)
             .map(|idx| {
                 let char_data = &char_bag.chars[idx.as_usize()];
                 let spawn_pos = Vector {
@@ -1222,16 +1217,16 @@ impl SceneManager {
         let mut enter_interactives: Vec<SceneInteractive> = Vec::new();
         let mut enter_npcs: Vec<SceneNpc> = Vec::new();
 
-        self.stream_enemies(pos, now, &zones_due, assets, entities, &mut enter_monsters);
+        self.stream_enemies(pos, now, zones_due, assets, entities, &mut enter_monsters);
         self.stream_interactives(
             pos,
             now,
-            &zones_due,
+            zones_due,
             assets,
             entities,
             &mut enter_interactives,
         );
-        self.stream_npcs(pos, now, &zones_due, assets, entities, &mut enter_npcs);
+        self.stream_npcs(pos, now, zones_due, assets, entities, &mut enter_npcs);
 
         // Iterate the interest map exactly once, regardless of bucket.  We
         // honour each entry's *own* leave-radius (set when it was ghosted in
@@ -1326,10 +1321,10 @@ impl SceneManager {
             None
         };
 
-        let leave_view = if !self.leave_ids_buf.is_empty() {
-            Some(self.object_leave_view(self.leave_ids_buf.clone()))
-        } else {
+        let leave_view = if self.leave_ids_buf.is_empty() {
             None
+        } else {
+            Some(self.object_leave_view(self.leave_ids_buf.clone()))
         };
 
         (enter_view, leave_view)
@@ -1357,7 +1352,7 @@ impl SceneManager {
         &mut self,
         pos: (f32, f32, f32),
         now: u64,
-        zones_due: &[bool; 4],
+        zones_due: [bool; 4],
         assets: &BeyondAssets,
         entities: &mut EntityManager,
         out: &mut Vec<SceneMonster>,
@@ -1480,7 +1475,7 @@ impl SceneManager {
         &mut self,
         pos: (f32, f32, f32),
         now: u64,
-        zones_due: &[bool; 4],
+        zones_due: [bool; 4],
         assets: &BeyondAssets,
         entities: &mut EntityManager,
         out: &mut Vec<SceneInteractive>,
@@ -1514,14 +1509,12 @@ impl SceneManager {
 
             let is_resident = self
                 .scene_cache
-                .as_ref()
-                .map(|c| c.resident_ids.contains(&interactive.base.level_logic_id))
-                .unwrap_or_else(|| {
+                .as_ref().map_or_else(|| {
                     is_always_resident_interactive(
                         &interactive.base.template_id,
                         interactive.base.entity_type,
                     )
-                });
+                }, |c| c.resident_ids.contains(&interactive.base.level_logic_id));
             if is_resident {
                 continue;
             }
@@ -1604,7 +1597,7 @@ impl SceneManager {
         &mut self,
         pos: (f32, f32, f32),
         now: u64,
-        zones_due: &[bool; 4],
+        zones_due: [bool; 4],
         assets: &BeyondAssets,
         entities: &mut EntityManager,
         out: &mut Vec<SceneNpc>,
@@ -1788,7 +1781,7 @@ impl SceneManager {
     }
 
     pub fn update_from_world(&mut self, world: &crate::player::WorldState, assets: &BeyondAssets) {
-        self.current_scene = world.last_scene.clone();
+        self.current_scene.clone_from(&world.last_scene);
         self.scene_id = assets
             .str_id_num
             .get_scene_id(&world.last_scene)
@@ -1882,7 +1875,7 @@ mod tests {
         SceneCharacter {
             common_info: Some(SceneObjectCommonInfo {
                 id,
-                templateid: format!("char_{}", id),
+                templateid: format!("char_{id}"),
                 position: None,
                 rotation: None,
                 belong_level_script_id: 0,
@@ -2176,7 +2169,7 @@ mod tests {
                 y: 0.0,
                 z: 0.0,
             },
-            Some(rot.clone()),
+            Some(rot),
             0,
             0,
             None,
@@ -2439,7 +2432,8 @@ mod tests {
 
     #[test]
     fn lv_property_float_type_positive() {
-        let bits = 3.14f32.to_bits() as i64;
+        let pi = std::f32::consts::PI;
+        let bits = pi.to_bits() as i64;
         let prop = LvProperty {
             key: "test".to_string(),
             value: serde_json::json!({
@@ -2449,7 +2443,7 @@ mod tests {
         };
         let result = lv_property_to_dynamic_param(&prop);
         assert_eq!(result.value_type, ParamValueType::Float as i32);
-        assert!((result.value_float_list[0] - 3.14f32).abs() < 0.01);
+        assert!((result.value_float_list[0] - pi).abs() < 0.01);
     }
 
     #[test]

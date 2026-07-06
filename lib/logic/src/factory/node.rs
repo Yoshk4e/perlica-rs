@@ -139,7 +139,7 @@ mod tests {
         };
 
         assert!(matches!(node.component(2), Some(FactoryComponent::Hub)));
-        assert!(matches!(node.component(99), None));
+        assert!(node.component(99).is_none());
         assert!(matches!(
             node.component_at(FCComponentPos::Hub),
             Some(FactoryComponent::Hub)

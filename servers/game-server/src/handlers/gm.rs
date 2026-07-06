@@ -47,8 +47,7 @@ pub async fn execute(ctx: &mut NetContext<'_>, raw: &str) -> Result<GmOutcome, S
         "give" => give_command(ctx, &parts[1..]).await,
         "kick" => kick_command(&parts[1..]),
         other => Err(format!(
-            "unknown GM command `{}`. Try `help` for supported syntax.",
-            other
+            "unknown GM command `{other}`. Try `help` for supported syntax."
         )),
     }
 }
@@ -70,8 +69,7 @@ fn help_text() -> String {
 async fn heal_command(ctx: &mut NetContext<'_>, args: &[&str]) -> Result<GmOutcome, String> {
     let heal_all = args
         .first()
-        .map(|v| !v.eq_ignore_ascii_case("team"))
-        .unwrap_or(true);
+        .is_none_or(|v| !v.eq_ignore_ascii_case("team"));
 
     let mut targets = HashSet::new();
     if heal_all {
@@ -81,7 +79,7 @@ async fn heal_command(ctx: &mut NetContext<'_>, args: &[&str]) -> Result<GmOutco
     } else {
         let team_idx = ctx.player.char_bag.meta.curr_team_index as usize;
         if let Some(team) = ctx.player.char_bag.teams.get(team_idx) {
-            for objid in team.char_team.iter().filter_map(|slot| slot.object_id()) {
+            for objid in team.char_team.iter().filter_map(perlica_logic::character::char_bag::TeamSlot::object_id) {
                 targets.insert(objid);
             }
         }
@@ -104,8 +102,7 @@ async fn heal_command(ctx: &mut NetContext<'_>, args: &[&str]) -> Result<GmOutco
                 char_data.level,
                 char_data.break_stage,
             )
-            .map(|attrs| attrs.hp)
-            .unwrap_or(char_data.hp.max(1.0));
+            .map_or(char_data.hp.max(1.0), |attrs| attrs.hp);
         char_data.hp = max_hp;
         char_data.ultimate_sp = 0.0;
         char_data.is_dead = false;
@@ -192,7 +189,7 @@ async fn teleport_command(ctx: &mut NetContext<'_>, args: &[&str]) -> Result<GmO
     ctx.player.movement.write_back_into(&mut ctx.player.world);
 
     if is_scene_change {
-        ctx.player.world.last_scene = scene_name.clone();
+        ctx.player.world.last_scene.clone_from(&scene_name);
         let (enter_notify, leave_notify) = ctx.player.scene.begin_scene_transition(
             &scene_name,
             Vector { x, y, z },
@@ -208,13 +205,12 @@ async fn teleport_command(ctx: &mut NetContext<'_>, args: &[&str]) -> Result<GmO
             .map_err(|e| format!("failed to send enter-scene packet: {e}"))?;
 
         return GmOutcome::ok(format!(
-            "started scene transition to {} ({x:.2}, {y:.2}, {z:.2})",
-            scene_name
+            "started scene transition to {scene_name} ({x:.2}, {y:.2}, {z:.2})"
         ));
     }
 
-    ctx.player.world.last_scene = scene_name.clone();
-    ctx.player.scene.current_scene = scene_name.clone();
+    ctx.player.world.last_scene.clone_from(&scene_name);
+    ctx.player.scene.current_scene.clone_from(&scene_name);
     ctx.player
         .scene
         .level_scripts
@@ -235,7 +231,7 @@ async fn teleport_command(ctx: &mut NetContext<'_>, args: &[&str]) -> Result<GmO
         .map(|team| {
             team.char_team
                 .iter()
-                .filter_map(|slot| slot.object_id())
+                .filter_map(perlica_logic::character::char_bag::TeamSlot::object_id)
                 .collect::<Vec<u64>>()
         })
         .unwrap_or_default();
@@ -265,8 +261,7 @@ async fn teleport_command(ctx: &mut NetContext<'_>, args: &[&str]) -> Result<GmO
     }
 
     GmOutcome::ok(format!(
-        "teleported player to {} ({x:.2}, {y:.2}, {z:.2})",
-        scene_name
+        "teleported player to {scene_name} ({x:.2}, {y:.2}, {z:.2})"
     ))
 }
 
@@ -373,8 +368,7 @@ async fn give_command(ctx: &mut NetContext<'_>, args: &[&str]) -> Result<GmOutco
             }
 
             GmOutcome::ok(format!(
-                "granted live weapon `{}` and synced the item bag",
-                template_id
+                "granted live weapon `{template_id}` and synced the item bag"
             ))
         }
         _ => Err("only `give weapon <weapon_template>` is implemented right now".to_string()),

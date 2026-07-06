@@ -19,16 +19,13 @@ pub async fn handle_enable(
     region_name: String,
     req: CsdFactoryOpCacheTransportEnable,
 ) -> ScFactoryOpRet {
-    let region = match ctx.player.factory.region_mut(&region_name) {
-        Some(r) => r,
-        None => {
+    let Some(region) = ctx.player.factory.region_mut(&region_name) else {
             return response::fail(
                 index,
                 FactoryOpType::CacheTransportEnable,
                 FactoryOpRetCode::Fail,
-                format!("region {} not found", region_name),
+                format!("region {region_name} not found"),
             );
-        }
     };
 
     for node in region.nodes.values_mut() {
@@ -65,16 +62,13 @@ pub async fn handle_transfer(
     // For now we just verify the component exists and is enabled, then
     // return success with `success: false` to indicate "no items moved
     // this tick".
-    let region = match ctx.player.factory.region(&region_name) {
-        Some(r) => r,
-        None => {
+    let Some(region) = ctx.player.factory.region(&region_name) else {
             return response::fail(
                 index,
                 FactoryOpType::CacheTransportTransfer,
                 FactoryOpRetCode::Fail,
-                format!("region {} not found", region_name),
+                format!("region {region_name} not found"),
             );
-        }
     };
 
     let mut found_state: Option<CacheTransportState> = None;
@@ -93,16 +87,13 @@ pub async fn handle_transfer(
         }
     }
 
-    let state = match found_state {
-        Some(s) => s,
-        None => {
+    let Some(state) = found_state else {
             return response::fail(
                 index,
                 FactoryOpType::CacheTransportTransfer,
                 FactoryOpRetCode::Fail,
                 format!("component {} not found", req.component_id),
             );
-        }
     };
 
     if !state.enabled {

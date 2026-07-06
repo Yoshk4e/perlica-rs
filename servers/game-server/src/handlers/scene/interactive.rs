@@ -33,7 +33,7 @@ fn bool_param_true() -> DynamicParameter {
 }
 
 fn read_string_param(p: &DynamicParameter) -> Option<&str> {
-    p.value_string_list.first().map(|s| s.as_str())
+    p.value_string_list.first().map(std::string::String::as_str)
 }
 
 fn filter_writable_properties(
@@ -76,7 +76,7 @@ pub async fn on_cs_scene_interactive_event_trigger(
         .player
         .entities
         .get(req.id)
-        .map(|e| {
+        .map_or(InteractiveKind::Other, |e| {
             if is_chest(e) {
                 InteractiveKind::Chest
             } else if is_campfire(e) {
@@ -84,8 +84,7 @@ pub async fn on_cs_scene_interactive_event_trigger(
             } else {
                 InteractiveKind::Other
             }
-        })
-        .unwrap_or(InteractiveKind::Other);
+        });
 
     match (kind, req.event_name.as_str()) {
         (InteractiveKind::Chest, _) => handle_chest_open(ctx, &req).await,
@@ -100,8 +99,8 @@ pub async fn on_cs_scene_interactive_event_trigger(
     }
 
     // If a campfire was activated, the checkpoint/revival mode changed — persist it.
-    if kind == InteractiveKind::Campfire || kind == InteractiveKind::Other {
-        if let Err(e) = (SceneSaveState {
+    if (kind == InteractiveKind::Campfire || kind == InteractiveKind::Other)
+        && let Err(e) = (SceneSaveState {
             checkpoint: ctx.player.scene.get_checkpoint(),
             revival_mode: ctx.player.scene.current_revival_mode,
         })
@@ -113,7 +112,6 @@ pub async fn on_cs_scene_interactive_event_trigger(
                 ctx.player.uid, e
             );
         }
-    };
 
     ScSceneInteractiveEventTrigger {}
 }
@@ -134,8 +132,7 @@ async fn handle_activate(ctx: &mut NetContext<'_>, req: &CsSceneInteractiveEvent
         .player
         .entities
         .get(entity_id)
-        .map(is_campfire)
-        .unwrap_or(false);
+        .is_some_and(is_campfire);
 
     if !is_camp {
         warn!(
@@ -166,8 +163,8 @@ async fn handle_activate(ctx: &mut NetContext<'_>, req: &CsSceneInteractiveEvent
 
     let _ = ctx.notify(prop_update).await;
 
-    if is_camp {
-        if let Some(entity) = ctx.player.entities.get(entity_id) {
+    if is_camp
+        && let Some(entity) = ctx.player.entities.get(entity_id) {
             ctx.player
                 .scene
                 .set_checkpoint(perlica_logic::scene::CheckpointInfo {
@@ -185,7 +182,6 @@ async fn handle_activate(ctx: &mut NetContext<'_>, req: &CsSceneInteractiveEvent
                 entity_id, entity.pos_x, entity.pos_y, entity.pos_z, scene_name
             );
         }
-    }
 
     info!(
         "Interactive 'activate' processed for id={} in '{}'",
@@ -200,15 +196,12 @@ async fn handle_chest_open(ctx: &mut NetContext<'_>, req: &CsSceneInteractiveEve
     let scene_name = req.scene_name.clone();
 
     let (template_id, reward_id_from_lv) = {
-        let entity = match ctx.player.entities.get(entity_id) {
-            Some(e) => e,
-            None => {
-                warn!(
-                    "Chest open for unknown entity id={} in '{}'",
-                    entity_id, scene_name
-                );
-                return;
-            }
+        let Some(entity) = ctx.player.entities.get(entity_id) else {
+            warn!(
+                "Chest open for unknown entity id={} in '{}'",
+                entity_id, scene_name
+            );
+            return;
         };
         let template = entity.template_id.clone();
         let props = ctx.player.scene.get_interactive_properties(entity_id);
@@ -236,19 +229,16 @@ async fn handle_chest_open(ctx: &mut NetContext<'_>, req: &CsSceneInteractiveEve
         return;
     };
 
-    let bundles: Vec<(String, i64)> = match ctx.assets.rewards.get(&reward_id) {
-        Some(entry) => entry
-            .item_bundles
-            .iter()
-            .map(|b| (b.id.clone(), b.count))
-            .collect(),
-        None => {
-            warn!(
-                "Chest id={} ({}) references unknown rewardId `{}` - opening with empty drop",
-                entity_id, template_id, reward_id
-            );
-            Vec::new()
-        }
+    let bundles: Vec<(String, i64)> = if let Some(entry) = ctx.assets.rewards.get(&reward_id) { entry
+    .item_bundles
+    .iter()
+    .map(|b| (b.id.clone(), b.count))
+    .collect() } else {
+        warn!(
+            "Chest id={} ({}) references unknown rewardId `{}` - opening with empty drop",
+            entity_id, template_id, reward_id
+        );
+        Vec::new()
     };
 
     info!(

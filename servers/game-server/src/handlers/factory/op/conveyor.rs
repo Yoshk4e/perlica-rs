@@ -38,44 +38,35 @@ pub async fn handle_place(
         );
     }
 
-    let building = match ctx.assets.factory_table.get_building(&req.template_id) {
-        Some(b) => b,
-        None => {
+    let Some(building) = ctx.assets.factory_table.get_building(&req.template_id) else {
             return response::fail(
                 index,
                 FactoryOpType::PlaceBoxConveyor,
                 FactoryOpRetCode::NoBuildingItem,
                 format!("no buildingData for {}", req.template_id),
             );
-        }
     };
 
     // Each belt tile is a 1x1 node. Pre-validate every point.
-    let points: Vec<GridPos> = req.points.iter().map(grid_pos).collect();
+    let points: Vec<GridPos> = req.points.iter().map(|p| grid_pos(*p)).collect();
 
     {
-        let region = match ctx.player.factory.region_mut(&region_name) {
-            Some(r) => r,
-            None => {
+        let Some(region) = ctx.player.factory.region_mut(&region_name) else {
                 return response::fail(
                     index,
                     FactoryOpType::PlaceBoxConveyor,
                     FactoryOpRetCode::Fail,
-                    format!("region {} not found", region_name),
+                    format!("region {region_name} not found"),
                 );
-            }
         };
 
-        let map = match ctx.assets.factory_map.get(&region.scene_name, region.level) {
-            Some(m) => m,
-            None => {
+        let Some(map) = ctx.assets.factory_map.get(&region.scene_name, region.level) else {
                 return response::fail(
                     index,
                     FactoryOpType::PlaceBoxConveyor,
                     FactoryOpRetCode::MustInMain,
                     "no factory map for scene at this level",
                 );
-            }
         };
         let main_mesh = GridRange {
             x: map.pos_x,
@@ -198,7 +189,7 @@ pub async fn handle_dismantle(
     // segment to remove. We walk every belt node in the region and drop
     // the ones whose position falls inside that AABB.
     let (from, to) = match (req.from.as_ref(), req.to.as_ref()) {
-        (Some(f), Some(t)) => (grid_pos(f), grid_pos(t)),
+        (Some(f), Some(t)) => (grid_pos(*f), grid_pos(*t)),
         _ => {
             return response::fail(
                 index,
@@ -209,23 +200,20 @@ pub async fn handle_dismantle(
         }
     };
 
-    let region = match ctx.player.factory.region_mut(&region_name) {
-        Some(r) => r,
-        None => {
+    let Some(region) = ctx.player.factory.region_mut(&region_name) else {
             return response::fail(
                 index,
                 FactoryOpType::DismantleBoxConveyor,
                 FactoryOpRetCode::Fail,
-                format!("region {} not found", region_name),
+                format!("region {region_name} not found"),
             );
-        }
     };
 
     let bbox = GridRange {
         x: from.x.min(to.x),
         y: from.y.min(to.y),
-        w: (from.x - to.x).unsigned_abs() as u32 + 1,
-        h: (from.y - to.y).unsigned_abs() as u32 + 1,
+        w: (from.x - to.x).unsigned_abs() + 1,
+        h: (from.y - to.y).unsigned_abs() + 1,
     };
 
     let to_remove: Vec<u32> = region
@@ -235,10 +223,9 @@ pub async fn handle_dismantle(
         .filter(|n| {
             n.transform
                 .position
-                .map(|p| {
+                .is_some_and(|p| {
                     perlica_logic::factory::grid::is_in_bounds(p, bbox)
                 })
-                .unwrap_or(false)
         })
         .map(|n| n.node_id)
         .collect();
@@ -254,6 +241,6 @@ pub async fn handle_dismantle(
     response::ok(index, FactoryOpType::DismantleBoxConveyor)
 }
 
-fn grid_pos(p: &ScdFactoryVector2Int) -> GridPos {
+fn grid_pos(p: ScdFactoryVector2Int) -> GridPos {
     GridPos { x: p.x, y: p.y }
 }

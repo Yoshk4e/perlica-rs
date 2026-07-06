@@ -286,7 +286,7 @@ impl ItemAssets {
 
     #[inline]
     pub fn ids_by_depot(&self, depot: ItemDepotType) -> &[String] {
-        self.by_depot.get(&depot).map(Vec::as_slice).unwrap_or(&[])
+        self.by_depot.get(&depot).map_or(&[], Vec::as_slice)
     }
 
     pub fn iter_by_depot(&self, depot: ItemDepotType) -> impl Iterator<Item = &ItemConfig> {
@@ -307,7 +307,7 @@ impl ItemAssets {
 
     #[inline]
     pub fn count_by_depot(&self, depot: ItemDepotType) -> usize {
-        self.by_depot.get(&depot).map(Vec::len).unwrap_or(0)
+        self.by_depot.get(&depot).map_or(0, Vec::len)
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &ItemConfig> {

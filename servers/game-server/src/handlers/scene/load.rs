@@ -35,7 +35,7 @@ pub async fn on_scene_load_finish(
 ) -> ScSelfSceneInfo {
     info!("Scene load finished: {}", req.scene_name);
 
-    ctx.player.world.last_scene = req.scene_name.clone();
+    ctx.player.world.last_scene.clone_from(&req.scene_name);
 
     let (enter_view, self_info) = ctx.player.scene.finish_scene_load(
         &ctx.player.char_bag,

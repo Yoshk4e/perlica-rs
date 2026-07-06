@@ -51,7 +51,7 @@ pub async fn on_cs_scene_teleport(
             .map(|team| {
                 team.char_team
                     .iter()
-                    .filter_map(|slot| slot.object_id())
+                    .filter_map(perlica_logic::character::char_bag::TeamSlot::object_id)
                     .collect::<Vec<u64>>()
             })
             .unwrap_or_default();
@@ -70,8 +70,8 @@ pub async fn on_cs_scene_teleport(
     // scene name) must preserve all existing script runtime.
     let is_scene_change = ctx.player.scene.current_scene != req.scene_name;
 
-    ctx.player.world.last_scene = req.scene_name.clone();
-    ctx.player.scene.current_scene = req.scene_name.clone();
+    ctx.player.world.last_scene.clone_from(&req.scene_name);
+    ctx.player.scene.current_scene.clone_from(&req.scene_name);
     if is_scene_change {
         ctx.player.entities.clear();
         ctx.player.scene.dead_entities.clear();
@@ -120,7 +120,7 @@ pub async fn on_cs_scene_teleport(
         .map(|team| {
             team.char_team
                 .iter()
-                .filter_map(|slot| slot.object_id())
+                .filter_map(perlica_logic::character::char_bag::TeamSlot::object_id)
                 .collect::<Vec<u64>>()
         })
         .unwrap_or_default();

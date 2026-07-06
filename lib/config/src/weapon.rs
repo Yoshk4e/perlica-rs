@@ -107,8 +107,7 @@ impl WeaponAssets {
         template
             .list
             .get(breakthrough_count as usize)
-            .map(|e| e.breakthrough_lv as u64)
-            .unwrap_or(weapon.max_lv as u64)
+            .map_or(weapon.max_lv as u64, |e| e.breakthrough_lv as u64)
     }
 
     pub fn contains(&self, weapon_id: &str) -> bool {

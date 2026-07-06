@@ -72,14 +72,11 @@ pub struct BurnPowerComputed {
 // TODO(Clause 4): once `PowerStationEntry` is accessible via `perlica-logic`,
 // change the type to `&PowerStationEntry` to prevent outdated constant passing
 pub fn compute_fuel_state(burn: &BurnPowerState, burn_speed: u64) -> BurnPowerComputed {
-    let start = match burn.fuel_start_tick {
-        Some(s) => s,
-        None => {
+    let Some(start) = burn.fuel_start_tick else {
             return BurnPowerComputed {
                 has_fuel: false,
                 remaining_ticks: 0,
             };
-        }
     };
     let speed = burn_speed.max(1) as i64;
     let elapsed = elapsed_since(start) as i64;

@@ -28,12 +28,11 @@ pub async fn on_cs_char_set_battle_info(ctx: &mut NetContext<'_>, req: CsCharSet
         .char_bag
         .teams
         .get(team_idx)
-        .map(|team| {
+        .is_some_and(|team| {
             team.char_team
                 .iter()
                 .any(|slot| slot.object_id() == Some(req.objid))
-        })
-        .unwrap_or(false);
+        });
 
     if !in_active_team {
         warn!(
@@ -71,6 +70,10 @@ pub async fn on_cs_char_set_battle_info(ctx: &mut NetContext<'_>, req: CsCharSet
         .unwrap_or(f64::MAX); // If we can't resolve stats, don't clamp.
 
     let clamped_hp = bi.hp.clamp(0.0, max_hp);
+    // Strict != is fine -- we want to know if the clamp changed the value.
+    #[allow(clippy::float_cmp)]
+    // Strict != is fine -- we want to know if the clamp changed the value.
+    #[allow(clippy::float_cmp)]
     if clamped_hp != bi.hp {
         warn!(
             "HP clamped for objid={}: raw={}, clamped={}, max_hp={}",
@@ -78,17 +81,19 @@ pub async fn on_cs_char_set_battle_info(ctx: &mut NetContext<'_>, req: CsCharSet
         );
     }
 
-    let clamped_sp = bi.ultimatesp.clamp(0.0, MAX_ULTIMATE_SP);
-    if clamped_sp != bi.ultimatesp {
+    let clamped_ult = bi.ultimatesp.clamp(0.0, MAX_ULTIMATE_SP);
+    // Strict != is fine -- we want to know if the clamp changed the value.
+    #[allow(clippy::float_cmp)]
+    if clamped_ult != bi.ultimatesp {
         warn!(
             "SP clamped for objid={}: raw={}, clamped={}, max_sp={}",
-            req.objid, bi.ultimatesp, clamped_sp, MAX_ULTIMATE_SP
+            req.objid, bi.ultimatesp, clamped_ult, MAX_ULTIMATE_SP
         );
     }
 
     ctx.player
         .char_bag
-        .update_battle_info(req.objid, clamped_hp, clamped_sp);
+        .update_battle_info(req.objid, clamped_hp, clamped_ult);
 
     // no `.persist()` here - the dirty flag is enough.
 }

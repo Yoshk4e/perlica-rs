@@ -200,7 +200,7 @@ impl PlayerDb {
         }))
     }
 
-    pub async fn save<'a>(&self, uid: &str, record: PlayerRecordRef<'a>) -> Result<()> {
+    pub async fn save(&self, uid: &str, record: PlayerRecordRef<'_>) -> Result<()> {
         let mut tx = self.pool.begin().await?;
 
         Self::ensure_player_row(&mut tx, uid).await?;
@@ -379,7 +379,7 @@ pub struct SceneSaveState<'a> {
     pub revival_mode: RevivalMode,
 }
 
-impl<'a> Persistable for SceneSaveState<'a> {
+impl Persistable for SceneSaveState<'_> {
     async fn persist(&self, uid: &str, db: &PlayerDb) -> Result<()> {
         let mut tx = db.pool.begin().await?;
         PlayerDb::ensure_player_row(&mut tx, uid).await?;

@@ -36,14 +36,12 @@ pub async fn handle_inner_move(
     region_name: String,
     req: CsdFactoryOpGridBoxInnerMove,
 ) -> ScFactoryOpRet {
-    let region = match ctx.player.factory.region_mut(&region_name) {
-        Some(r) => r,
-        None => return missing_region(index, FactoryOpType::GridBoxInnerMove, &region_name),
+    let Some(region) = ctx.player.factory.region_mut(&region_name) else {
+        return missing_region(index, FactoryOpType::GridBoxInnerMove, &region_name);
     };
 
-    let state = match find_gridbox(region, req.component_id) {
-        Some(s) => s,
-        None => return missing_component(index, FactoryOpType::GridBoxInnerMove, req.component_id),
+    let Some(state) = find_gridbox(region, req.component_id) else {
+        return missing_component(index, FactoryOpType::GridBoxInnerMove, req.component_id);
     };
 
     if req.from_index < 0 || req.to_index < 0 {
@@ -62,7 +60,7 @@ pub async fn handle_inner_move(
             index,
             FactoryOpType::GridBoxInnerMove,
             FactoryOpRetCode::Fail,
-            format!("from_index {} out of range", from),
+            format!("from_index {from} out of range"),
         );
     }
 
@@ -104,14 +102,12 @@ pub async fn handle_inner_split(
     region_name: String,
     req: CsdFactoryOpGridBoxInnerSplit,
 ) -> ScFactoryOpRet {
-    let region = match ctx.player.factory.region_mut(&region_name) {
-        Some(r) => r,
-        None => return missing_region(index, FactoryOpType::GridBoxInnerSplit, &region_name),
+    let Some(region) = ctx.player.factory.region_mut(&region_name) else {
+        return missing_region(index, FactoryOpType::GridBoxInnerSplit, &region_name);
     };
 
-    let state = match find_gridbox(region, req.component_id) {
-        Some(s) => s,
-        None => return missing_component(index, FactoryOpType::GridBoxInnerSplit, req.component_id),
+    let Some(state) = find_gridbox(region, req.component_id) else {
+        return missing_component(index, FactoryOpType::GridBoxInnerSplit, req.component_id);
     };
 
     if req.from_index < 0 || req.to_index < 0 || req.count < 0 {
@@ -154,8 +150,12 @@ pub async fn handle_inner_split(
     }
 
     state.items[from].count -= count;
-    state.items[to].item_id = state.items[from].item_id.clone();
-    state.items[to].inst_id = state.items[from].inst_id;
+    let (src_item_id, src_inst_id) = (
+        state.items[from].item_id.clone(),
+        state.items[from].inst_id,
+    );
+    state.items[to].item_id = src_item_id;
+    state.items[to].inst_id = src_inst_id;
     state.items[to].count += count;
 
     if state.items[from].count == 0 {
@@ -178,9 +178,8 @@ pub async fn handle_move_bag_to_gridbox(
     // the bag-integration TODO. The validation borrow is scoped so we
     // don't hold `&mut factory` while touching `ctx` for the noop.
     let found = {
-        let region = match ctx.player.factory.region_mut(&region_name) {
-            Some(r) => r,
-            None => return missing_region(index, FactoryOpType::MoveItemBagToGridBox, &region_name),
+        let Some(region) = ctx.player.factory.region_mut(&region_name) else {
+            return missing_region(index, FactoryOpType::MoveItemBagToGridBox, &region_name);
         };
         find_gridbox(region, req.component_id).is_some()
     };
@@ -202,9 +201,8 @@ pub async fn handle_move_gridbox_to_bag(
     req: CsdFactoryOpMoveItemGridBoxToBag,
 ) -> ScFactoryOpRet {
     let found = {
-        let region = match ctx.player.factory.region_mut(&region_name) {
-            Some(r) => r,
-            None => return missing_region(index, FactoryOpType::MoveItemGridBoxToBag, &region_name),
+        let Some(region) = ctx.player.factory.region_mut(&region_name) else {
+            return missing_region(index, FactoryOpType::MoveItemGridBoxToBag, &region_name);
         };
         find_gridbox(region, req.component_id).is_some()
     };
@@ -227,9 +225,8 @@ pub async fn handle_move_depot_to_gridbox(
     req: CsdFactoryOpMoveItemDepotToGridBox,
 ) -> ScFactoryOpRet {
     let found = {
-        let region = match ctx.player.factory.region_mut(&region_name) {
-            Some(r) => r,
-            None => return missing_region(index, FactoryOpType::MoveItemDepotToGridBox, &region_name),
+        let Some(region) = ctx.player.factory.region_mut(&region_name) else {
+            return missing_region(index, FactoryOpType::MoveItemDepotToGridBox, &region_name);
         };
         find_gridbox(region, req.component_id).is_some()
     };
@@ -250,13 +247,11 @@ pub async fn handle_move_gridbox_to_depot(
     region_name: String,
     req: CsdFactoryOpMoveItemGridBoxToDepot,
 ) -> ScFactoryOpRet {
-    let region = match ctx.player.factory.region_mut(&region_name) {
-        Some(r) => r,
-        None => return missing_region(index, FactoryOpType::MoveItemGridBoxToDepot, &region_name),
+    let Some(region) = ctx.player.factory.region_mut(&region_name) else {
+        return missing_region(index, FactoryOpType::MoveItemGridBoxToDepot, &region_name);
     };
-    let state = match find_gridbox(region, req.component_id) {
-        Some(s) => s,
-        None => return missing_component(index, FactoryOpType::MoveItemGridBoxToDepot, req.component_id),
+    let Some(state) = find_gridbox(region, req.component_id) else {
+        return missing_component(index, FactoryOpType::MoveItemGridBoxToDepot, req.component_id);
     };
 
     if req.grid_box_index < 0 || req.grid_box_index as usize >= state.items.len() {
@@ -282,36 +277,30 @@ pub async fn handle_move_cache_to_cache(
     region_name: String,
     req: CsdFactoryOpMoveItemCacheToCache,
 ) -> ScFactoryOpRet {
-    let region = match ctx.player.factory.region_mut(&region_name) {
-        Some(r) => r,
-        None => return missing_region(index, FactoryOpType::MoveItemCacheToCache, &region_name),
+    let Some(region) = ctx.player.factory.region_mut(&region_name) else {
+        return missing_region(index, FactoryOpType::MoveItemCacheToCache, &region_name);
     };
 
     // Both component IDs must exist and be Cache components.
     let mut from_state: Option<Vec<ItemSlot>> = None;
     for node in region.nodes.values_mut() {
-        if let Some(slot) = node.component_mut(req.from_component_id) {
-            if let FactoryComponent::Cache(state) = slot {
+        if let Some(slot) = node.component_mut(req.from_component_id)
+            && let FactoryComponent::Cache(state) = slot {
                 from_state = Some(std::mem::take(&mut state.items));
                 break;
             }
-        }
     }
-    let from_items = match from_state {
-        Some(v) => v,
-        None => {
+    let Some(from_items) = from_state else {
             return missing_component(index, FactoryOpType::MoveItemCacheToCache, req.from_component_id);
-        }
     };
 
     for node in region.nodes.values_mut() {
-        if let Some(slot) = node.component_mut(req.to_component_id) {
-            if let FactoryComponent::Cache(state) = slot {
+        if let Some(slot) = node.component_mut(req.to_component_id)
+            && let FactoryComponent::Cache(state) = slot {
                 move_item_into(&mut state.items, &req.item_id, from_items);
                 let _ = ctx;
                 return response::ok(index, FactoryOpType::MoveItemCacheToCache);
             }
-        }
     }
 
     missing_component(index, FactoryOpType::MoveItemCacheToCache, req.to_component_id)
@@ -323,19 +312,17 @@ pub async fn handle_move_bag_to_cache(
     region_name: String,
     req: CsdFactoryOpMoveItemBagToCache,
 ) -> ScFactoryOpRet {
-    let region = match ctx.player.factory.region_mut(&region_name) {
-        Some(r) => r,
-        None => return missing_region(index, FactoryOpType::MoveItemBagToCache, &region_name),
+    let Some(region) = ctx.player.factory.region_mut(&region_name) else {
+        return missing_region(index, FactoryOpType::MoveItemBagToCache, &region_name);
     };
 
     let mut found = false;
     for node in region.nodes.values_mut() {
-        if let Some(slot) = node.component_mut(req.component_id) {
-            if let FactoryComponent::Cache(_) = slot {
+        if let Some(slot) = node.component_mut(req.component_id)
+            && let FactoryComponent::Cache(_) = slot {
                 found = true;
                 break;
             }
-        }
     }
     if !found {
         return missing_component(index, FactoryOpType::MoveItemBagToCache, req.component_id);
@@ -353,22 +340,21 @@ pub async fn handle_move_cache_to_bag(
     region_name: String,
     req: CsdFactoryOpMoveItemCacheToBag,
 ) -> ScFactoryOpRet {
-    let region = match ctx.player.factory.region_mut(&region_name) {
-        Some(r) => r,
-        None => return missing_region(index, FactoryOpType::MoveItemCacheToBag, &region_name),
+    let Some(region) = ctx.player.factory.region_mut(&region_name) else {
+        return missing_region(index, FactoryOpType::MoveItemCacheToBag, &region_name);
     };
 
     let mut found_item = false;
     for node in region.nodes.values_mut() {
-        if let Some(slot) = node.component_mut(req.component_id) {
-            if let FactoryComponent::Cache(state) = slot {
+        if let Some(slot) = node.component_mut(req.component_id)
+            && let FactoryComponent::Cache(state) = slot {
                 // Pull the requested item out of the cache if we have it.
                 let was_present = state
                     .items
                     .iter()
                     .any(|s| s.item_id == req.item_id && s.count > 0);
-                if was_present {
-                    if let Some(slot) = state
+                if was_present
+                    && let Some(slot) = state
                         .items
                         .iter_mut()
                         .find(|s| s.item_id == req.item_id && s.count > 0)
@@ -376,10 +362,8 @@ pub async fn handle_move_cache_to_bag(
                         slot.count = slot.count.saturating_sub(1);
                         found_item = true;
                     }
-                }
                 break;
             }
-        }
     }
 
     if !found_item {
@@ -399,15 +383,14 @@ pub async fn handle_move_depot_to_cache(
     region_name: String,
     req: CsdFactoryOpMoveItemDepotToCache,
 ) -> ScFactoryOpRet {
-    let region = match ctx.player.factory.region_mut(&region_name) {
-        Some(r) => r,
-        None => return missing_region(index, FactoryOpType::MoveItemDepotToCache, &region_name),
+    let Some(region) = ctx.player.factory.region_mut(&region_name) else {
+        return missing_region(index, FactoryOpType::MoveItemDepotToCache, &region_name);
     };
 
     let mut found = false;
     for node in region.nodes.values_mut() {
-        if let Some(slot) = node.component_mut(req.component_id) {
-            if let FactoryComponent::Cache(state) = slot {
+        if let Some(slot) = node.component_mut(req.component_id)
+            && let FactoryComponent::Cache(state) = slot {
                 state.items.push(ItemSlot {
                     item_id: req.item_id.clone(),
                     count: 1,
@@ -416,7 +399,6 @@ pub async fn handle_move_depot_to_cache(
                 found = true;
                 break;
             }
-        }
     }
     if !found {
         return missing_component(index, FactoryOpType::MoveItemDepotToCache, req.component_id);
@@ -435,15 +417,14 @@ pub async fn handle_move_cache_to_depot(
     region_name: String,
     req: CsdFactoryOpMoveItemCacheToDepot,
 ) -> ScFactoryOpRet {
-    let region = match ctx.player.factory.region_mut(&region_name) {
-        Some(r) => r,
-        None => return missing_region(index, FactoryOpType::MoveItemCacheToDepot, &region_name),
+    let Some(region) = ctx.player.factory.region_mut(&region_name) else {
+        return missing_region(index, FactoryOpType::MoveItemCacheToDepot, &region_name);
     };
 
     let mut moved = false;
     for node in region.nodes.values_mut() {
-        if let Some(slot) = node.component_mut(req.component_id) {
-            if let FactoryComponent::Cache(state) = slot {
+        if let Some(slot) = node.component_mut(req.component_id)
+            && let FactoryComponent::Cache(state) = slot {
                 if let Some(s) = state
                     .items
                     .iter_mut()
@@ -454,7 +435,6 @@ pub async fn handle_move_cache_to_depot(
                 }
                 break;
             }
-        }
     }
 
     if !moved {
@@ -474,15 +454,14 @@ pub async fn handle_move_conveyor_to_bag(
     region_name: String,
     req: CsdFactoryOpMoveItemConveyorToBag,
 ) -> ScFactoryOpRet {
-    let region = match ctx.player.factory.region_mut(&region_name) {
-        Some(r) => r,
-        None => return missing_region(index, FactoryOpType::MoveItemConveyorToBag, &region_name),
+    let Some(region) = ctx.player.factory.region_mut(&region_name) else {
+        return missing_region(index, FactoryOpType::MoveItemConveyorToBag, &region_name);
     };
 
     let mut found = false;
     for node in region.nodes.values_mut() {
-        if let Some(slot) = node.component_mut(req.component_id) {
-            if let FactoryComponent::BoxConveyor(state) = slot {
+        if let Some(slot) = node.component_mut(req.component_id)
+            && let FactoryComponent::BoxConveyor(state) = slot {
                 if req.all {
                     state.items.clear();
                 } else if req.index >= 0 && (req.index as usize) < state.items.len() {
@@ -491,7 +470,6 @@ pub async fn handle_move_conveyor_to_bag(
                 found = true;
                 break;
             }
-        }
     }
     if !found {
         return missing_component(index, FactoryOpType::MoveItemConveyorToBag, req.component_id);
@@ -504,10 +482,10 @@ pub async fn handle_move_conveyor_to_bag(
 
 // ---- helpers ----
 
-fn find_gridbox<'a>(
-    region: &'a mut perlica_logic::factory::FactoryRegion,
+fn find_gridbox(
+    region: &mut perlica_logic::factory::FactoryRegion,
     component_id: u32,
-) -> Option<&'a mut GridBoxState> {
+) -> Option<&mut GridBoxState> {
     for node in region.nodes.values_mut() {
         if let Some(slot) = node.component_mut(component_id) {
             if let FactoryComponent::GridBox(state) = slot {
@@ -542,7 +520,7 @@ fn missing_region(index: String, op_type: FactoryOpType, region: &str) -> ScFact
         index,
         op_type,
         FactoryOpRetCode::Fail,
-        format!("region {} not found", region),
+        format!("region {region} not found"),
     )
 }
 
@@ -551,6 +529,6 @@ fn missing_component(index: String, op_type: FactoryOpType, cid: u32) -> ScFacto
         index,
         op_type,
         FactoryOpRetCode::Fail,
-        format!("component {} not found", cid),
+        format!("component {cid} not found"),
     )
 }

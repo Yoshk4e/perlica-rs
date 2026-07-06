@@ -75,8 +75,8 @@ async fn sync_partition(
         return Ok(());
     }
 
-    const CHUNK: usize = 500;
-    for chunk in ids.chunks(CHUNK) {
+    let chunk_size: usize = 500;
+    for chunk in ids.chunks(chunk_size) {
         let placeholders = (0..chunk.len()).map(|_| "?").collect::<Vec<_>>().join(", ");
         let sql = format!(
             "DELETE FROM beyond_guide_completions

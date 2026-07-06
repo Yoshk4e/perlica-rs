@@ -149,7 +149,7 @@ async fn status_handler(State(state): State<AppState>) -> impl IntoResponse {
             Json(StatusPayload {
                 online: status.online,
                 player_count: status.online,
-                max_players: 99999999,
+                max_players: 99_999_999,
                 players: vec![],
                 status: "online",
             }),

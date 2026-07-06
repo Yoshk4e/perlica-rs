@@ -45,8 +45,7 @@ impl SkillAssets {
     pub fn get_max_level(&self, skill_id: &str) -> u32 {
         self.data
             .get(skill_id)
-            .map(|b| b.entries.iter().map(|e| e.level).max().unwrap_or(1))
-            .unwrap_or(1)
+            .map_or(1, |b| b.entries.iter().map(|e| e.level).max().unwrap_or(1))
     }
 
     pub fn contains(&self, skill_id: &str) -> bool {

@@ -17,28 +17,22 @@ pub async fn handle(
     region_name: String,
     req: CsdFactoryOpEnableNode,
 ) -> ScFactoryOpRet {
-    let region = match ctx.player.factory.region_mut(&region_name) {
-        Some(r) => r,
-        None => {
+    let Some(region) = ctx.player.factory.region_mut(&region_name) else {
             return response::fail(
                 index,
                 FactoryOpType::EnableNode,
                 perlica_proto::FactoryOpRetCode::Fail,
-                format!("region {} not found", region_name),
+                format!("region {region_name} not found"),
             );
-        }
     };
 
-    let node = match region.node_mut(req.node_id) {
-        Some(n) => n,
-        None => {
+    let Some(node) = region.node_mut(req.node_id) else {
             return response::fail(
                 index,
                 FactoryOpType::EnableNode,
                 perlica_proto::FactoryOpRetCode::Fail,
                 format!("node {} not found", req.node_id),
             );
-        }
     };
 
     node.is_deactive = !req.enable;
@@ -48,14 +42,13 @@ pub async fn handle(
     // so the timer doesn't keep running while disabled. Reverse on
     // re-enable. Lives in the component layer once that lands.
     for (_, comp) in &mut node.components {
-        if let FactoryComponent::Producer(state) = comp {
-            if !req.enable && state.start_tick.is_some() {
+        if let FactoryComponent::Producer(state) = comp
+            && !req.enable && state.start_tick.is_some() {
                 let _ = state.start_tick.take();
             }
             // re-enable resume is handled by the completion checker when
             // it next ticks -- don't restart `start_tick` here, that
             // would need the recipe speed lookup which we don't have yet.
-        }
     }
 
     response::ok(index, FactoryOpType::EnableNode)

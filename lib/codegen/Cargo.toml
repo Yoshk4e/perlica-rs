@@ -2,3 +2,6 @@
 name = "perlica-codegen"
 edition.workspace = true
 version.workspace = true
+
+[lints]
+workspace = true

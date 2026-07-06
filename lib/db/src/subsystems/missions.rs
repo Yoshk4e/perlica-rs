@@ -162,8 +162,8 @@ async fn prune_objectives_for_quest(
         return Ok(());
     }
 
-    const CHUNK: usize = 500;
-    for chunk in keep.chunks(CHUNK) {
+    let chunk_size: usize = 500;
+    for chunk in keep.chunks(chunk_size) {
         let placeholders = (0..chunk.len()).map(|_| "?").collect::<Vec<_>>().join(", ");
         let sql = format!(
             "DELETE FROM beyond_quest_objectives

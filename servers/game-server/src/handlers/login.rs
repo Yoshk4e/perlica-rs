@@ -29,7 +29,7 @@ pub async fn on_login(ctx: &mut NetContext<'_>, req: CsLogin) -> ScLogin {
             let cfg = sconfig::Config::load();
             debug!("Creating new player profile: uid={}", ctx.player.uid);
             ctx.player.char_bag =
-                CharBag::new(ctx.assets, &cfg.as_ref().unwrap().default_team.members())
+                CharBag::new(ctx.assets, cfg.as_ref().unwrap().default_team.members())
                     .unwrap_or_default();
             ctx.player.world = cfg.as_ref().unwrap().world_state.clone();
             true

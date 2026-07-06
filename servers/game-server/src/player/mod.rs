@@ -36,6 +36,8 @@ pub struct Player {
     pub mail: MailManager,
     pub wallet: WalletState,
     pub factory: FactoryManager,
+    // Field name mirrors the wire field.
+    #[allow(clippy::struct_field_names)]
     pub is_new_player: bool,
 }
 impl Player {

@@ -23,8 +23,7 @@ pub type Tick = u64;
 pub fn current_tick() -> Tick {
     std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
-        .map(|d| d.as_secs())
-        .unwrap_or(0) // 0 is our "clock is wonky" sentinel
+        .map_or(0, |d| d.as_secs()) // 0 is our "clock is wonky" sentinel
 }
 
 /// Ticks elapsed since `start`, bottoming out at zero.

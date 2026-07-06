@@ -1,5 +1,6 @@
 use std::fs;
 use std::path::Path;
+use std::fmt::Write;
 
 fn main() {
     println!("cargo::rustc-check-cfg=cfg(rust_analyzer)");
@@ -15,7 +16,7 @@ fn main() {
                 ".",
                 "#[derive(serde::Serialize, serde::Deserialize)]\n#[serde(rename_all = \"camelCase\")]",
             )
-            .message_attribute(".", r#"#[serde(default)]"#)
+            .message_attribute(".", r"#[serde(default)]")
             .field_attribute("*.type", "#[serde(rename = \"type\")]")
             .out_dir("out/")
             .compile_protos(&proto_files, &["."])
@@ -55,15 +56,13 @@ fn generate_net_message_impls() {
             continue;
         }
 
-        if let Some((name, id)) = parse_enum_line(line) {
-            // Only generate impl if the struct actually exists
-            if struct_names.contains(&name) {
-                output.push_str(&format!(
-                    "impl NetMessage for {} {{\n    const CMD_ID: i32 = {};\n}}\n\n",
-                    name, id
-                ));
+        if let Some((name, id)) = parse_enum_line(line)
+            && struct_names.contains(&name) {
+                let _ = write!(
+                    output,
+                    "impl NetMessage for {name} {{\n    const CMD_ID: i32 = {id};\n}}\n\n"
+                );
             }
-        }
     }
 
     fs::write("out/net_message_impls.rs", output).expect("Failed to write net_message_impls.rs");

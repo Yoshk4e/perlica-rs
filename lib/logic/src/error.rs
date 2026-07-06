@@ -109,7 +109,7 @@ mod tests {
     fn weapon_equipped_display() {
         let err = LogicError::WeaponEquipped(WeaponInstId::new(5));
         let msg = err.to_string();
-        assert!(msg.contains("5"));
+        assert!(msg.contains('5'));
         assert!(msg.contains("equipped"));
     }
 
@@ -117,7 +117,7 @@ mod tests {
     fn weapon_already_equipped_display() {
         let err = LogicError::WeaponAlreadyEquipped(WeaponInstId::new(7), 100);
         let msg = err.to_string();
-        assert!(msg.contains("7"));
+        assert!(msg.contains('7'));
         assert!(msg.contains("100"));
     }
 
@@ -125,7 +125,7 @@ mod tests {
     fn weapon_locked_display() {
         let err = LogicError::WeaponLocked(WeaponInstId::new(3));
         let msg = err.to_string();
-        assert!(msg.contains("3"));
+        assert!(msg.contains('3'));
         assert!(msg.contains("locked"));
     }
 
@@ -180,7 +180,7 @@ mod tests {
     fn equip_equipped_display() {
         let err = LogicError::EquipEquipped(EquipInstId::new(2));
         let msg = err.to_string();
-        assert!(msg.contains("2"));
+        assert!(msg.contains('2'));
         assert!(msg.contains("equipped"));
     }
 
@@ -194,7 +194,9 @@ mod tests {
     #[test]
     fn result_ok() {
         let r: Result<i32> = Ok(42);
-        assert_eq!(r.unwrap(), 42);
+        #[allow(clippy::unnecessary_literal_unwrap)]
+        let v = r.unwrap();
+        assert_eq!(v, 42);
     }
 
     #[test]

@@ -51,7 +51,7 @@ impl TeamSlot {
     }
 
     pub fn object_id(&self) -> Option<u64> {
-        self.char_index().map(|idx| idx.object_id())
+        self.char_index().map(CharIndex::object_id)
     }
 }
 
@@ -147,12 +147,9 @@ impl CharBag {
                 debug!("Skipping placeholder char: {}", template_id);
                 continue;
             }
-            let attrs = match assets.characters.get_stats(template_id, 1, 0) {
-                Some(a) => a,
-                None => {
-                    debug!("No level 1 stats for char: {}", template_id);
-                    continue;
-                }
+            let Some(attrs) = assets.characters.get_stats(template_id, 1, 0) else {
+                debug!("No level 1 stats for char: {}", template_id);
+                continue;
             };
             let skill_levels: HashMap<String, u32> = assets
                 .char_skills
@@ -179,9 +176,8 @@ impl CharBag {
         debug!("Populated {} characters in CharBag", index_map.len());
         for (template_id, char_idx) in &index_map {
             let char_obj_id = char_idx.object_id();
-            let char_data = match assets.characters.get(template_id) {
-                Some(data) => data,
-                None => continue,
+            let Some(char_data) = assets.characters.get(template_id) else {
+                continue;
             };
             let weapon = assets
                 .weapons
@@ -427,7 +423,7 @@ impl CharBag {
             .item_manager
             .weapons
             .equip_weapon(weapon_inst_id, char_id)?
-            .map(|id| id.as_u64());
+            .map(super::super::item::WeaponInstId::as_u64);
 
         info!(
             "Equipped weapon {} to char {} (prev equipped: {:?}, prev owner: {:?})",
@@ -454,7 +450,7 @@ impl CharBag {
     }
 
     fn get_weapon_data_for_char(&self, char_id: u64) -> Option<WeaponData> {
-        self.get_equipped_weapon(char_id).map(|w| w.into())
+        self.get_equipped_weapon(char_id).map(std::convert::Into::into)
     }
 
     pub fn char_bag_info(&self, assets: &BeyondAssets) -> Result<ScSyncCharBagInfo> {
@@ -486,7 +482,7 @@ impl CharBag {
             .into_iter()
             .map(|c| {
                 let weapon_data = self.get_weapon_data_for_char(c.objid);
-                let weapon_id = weapon_data.as_ref().map(|w| w.inst_id).unwrap_or(0);
+                let weapon_id = weapon_data.as_ref().map_or(0, |w| w.inst_id);
 
                 CharInfo {
                     objid: c.objid,
@@ -494,8 +490,8 @@ impl CharBag {
                     level: c.level,
                     exp: c.exp,
                     finish_break_stage: c.break_stage as i32,
-                    equip_col: Default::default(),
-                    equip_suit: Default::default(),
+                    equip_col: HashMap::default(),
+                    equip_suit: HashMap::default(),
                     normal_skill: c.normal_skill.clone(),
                     is_dead: c.is_dead,
                     weapon_id,
@@ -573,13 +569,13 @@ impl CharBag {
                 let char_ids: Vec<u64> = team
                     .char_team
                     .iter()
-                    .filter_map(|slot| slot.object_id())
+                    .filter_map(TeamSlot::object_id)
                     .collect();
 
                 let member_skills: HashMap<u64, String> = team
                     .char_team
                     .iter()
-                    .filter_map(|slot| slot.char_index())
+                    .filter_map(TeamSlot::char_index)
                     .map(|idx| {
                         let char_data = &self.chars[idx.as_usize()];
                         let skill = Self::get_normal_skill(&char_data.template_id, assets);
@@ -632,8 +628,7 @@ impl CharBag {
                     .item_manager
                     .weapons
                     .get_equipped_weapon_id(objid)
-                    .map(|id| id.as_u64())
-                    .unwrap_or(0);
+                    .map_or(0, super::super::item::WeaponInstId::as_u64);
 
                 Ok(CharSyncState {
                     objid,
@@ -750,13 +745,16 @@ pub struct WeaponAddExpResult {
 }
 
 // TODO: Actually grant exp from consumed fodders
-pub fn handle_weapon_add_exp(
+pub fn handle_weapon_add_exp<S>(
     char_bag: &mut CharBag,
     weapon_id: u64,
-    cost_items: &HashMap<String, u64>,
+    cost_items: &HashMap<String, u64, S>,
     cost_weapon_ids: &[u64],
     assets: &BeyondAssets,
-) -> Result<WeaponAddExpResult> {
+) -> Result<WeaponAddExpResult>
+where
+    S: std::hash::BuildHasher,
+{
     let target_id = WeaponInstId::new(weapon_id);
 
     // weapon must exist.
@@ -770,21 +768,18 @@ pub fn handle_weapon_add_exp(
     let current_breakthrough = weapon_data.breakthrough_lv;
 
     // weapon template must exist.
-    let weapon_template = match assets.weapons.get(&template_id) {
-        Some(t) => t,
-        None => {
-            let weapon = char_bag
-                .item_manager
-                .weapons
-                .get(target_id)
-                .ok_or(LogicError::WeaponNotFound(target_id))?;
-            return Ok(WeaponAddExpResult {
-                response: weapon.into(),
-                consumed: ConsumedItems::new(),
-                removed_fodder: vec![],
-                exp_gained: 0,
-            });
-        }
+    let Some(weapon_template) = assets.weapons.get(&template_id) else {
+        let weapon = char_bag
+            .item_manager
+            .weapons
+            .get(target_id)
+            .ok_or(LogicError::WeaponNotFound(target_id))?;
+        return Ok(WeaponAddExpResult {
+            response: weapon.into(),
+            consumed: ConsumedItems::new(),
+            removed_fodder: vec![],
+            exp_gained: 0,
+        });
     };
 
     let max_level = assets
@@ -858,8 +853,7 @@ pub fn handle_weapon_add_exp(
                 .item_manager
                 .weapons
                 .get(id)
-                .map(|f| !f.is_lock && !f.is_equipped())
-                .unwrap_or(false)
+                .is_some_and(|f| !f.is_lock && !f.is_equipped())
         })
         .collect();
 
@@ -987,7 +981,7 @@ pub fn handle_weapon_attach_gem(
     Ok(WeaponAttachGemArgs(
         weapon,
         prev_gem_id,
-        detached_from_weapon.map(|id| id.as_u64()),
+        detached_from_weapon.map(super::super::item::WeaponInstId::as_u64),
     )
     .into())
 }

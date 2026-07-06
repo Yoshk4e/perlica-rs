@@ -278,16 +278,14 @@ impl LevelScriptManager {
             let Some(data_map) = am.get("dataMap") else {
                 continue;
             };
-            let headers = data_map
+            let headers: &[serde_json::Value] = data_map
                 .get("headerList")
                 .and_then(|v| v.as_array())
-                .map(Vec::as_slice)
-                .unwrap_or(&[]);
-            let getters = data_map
+                .map_or(&[], Vec::as_slice);
+            let getters: &[serde_json::Value] = data_map
                 .get("getterList")
                 .and_then(|v| v.as_array())
-                .map(Vec::as_slice)
-                .unwrap_or(&[]);
+                .map_or(&[], Vec::as_slice);
 
             if !has_root_on_script_start(headers) {
                 continue;
@@ -345,17 +343,16 @@ impl LevelScriptManager {
             let Some(data_map) = am.get("dataMap") else {
                 continue;
             };
-            let headers = data_map
+            let headers: &[serde_json::Value] = data_map
                 .get("headerList")
                 .and_then(|v| v.as_array())
-                .map(Vec::as_slice)
-                .unwrap_or(&[]);
+                .map_or(&[], Vec::as_slice);
 
             // Must have OnScriptActive at root (_ID = 0).
             let has_on_active = headers.iter().any(|h| {
                 short_trigger_name(h.get("$type").and_then(|v| v.as_str()).unwrap_or_default())
                     == "OnScriptActive"
-                    && h.get("_ID").and_then(|v| v.as_i64()) == Some(0)
+                    && h.get("_ID").and_then(serde_json::Value::as_i64) == Some(0)
             });
             if !has_on_active {
                 continue;
@@ -367,13 +364,11 @@ impl LevelScriptManager {
                 .get(scene_name)
                 .and_then(|s| s.get(&script_id))
                 .map(|r| &r.properties);
-            if let Some(props) = stored_props {
-                if let Some(is_over) = props.get("isOver") {
-                    if is_over.value_bool_list.first().copied().unwrap_or(false) {
+            if let Some(props) = stored_props
+                && let Some(is_over) = props.get("isOver")
+                    && is_over.value_bool_list.first().copied().unwrap_or(false) {
                         continue;
                     }
-                }
-            }
 
             if self
                 .set_state(scene_name, script_id, LevelScriptState::Active)
@@ -560,9 +555,8 @@ fn build_trigger_set(script: &LvLevelScript) -> ScriptTriggerSet {
                     // Though, they still do get activated so we're not using this for the time being
                     let is_root = header
                         .get("_ID")
-                        .and_then(|v| v.as_i64())
-                        .map(|id| id == 0)
-                        .unwrap_or(false);
+                        .and_then(serde_json::Value::as_i64)
+                        .is_some_and(|id| id == 0);
                     if is_root {
                         initial_state = LevelScriptState::Active;
                     }
@@ -595,7 +589,7 @@ fn build_trigger_set(script: &LvLevelScript) -> ScriptTriggerSet {
                     new_state: header
                         .get("_filtedNewState")
                         .and_then(|v| v.get("constValue"))
-                        .and_then(|v| v.as_i64())
+                        .and_then(serde_json::Value::as_i64)
                         .and_then(|v| QuestState::try_from(v as i32).ok()),
                 }),
                 "OnMissionStateChanged" => triggers.push(TriggerKind::MissionStateChanged {
@@ -607,7 +601,7 @@ fn build_trigger_set(script: &LvLevelScript) -> ScriptTriggerSet {
                     new_state: header
                         .get("_filtedNewState")
                         .and_then(|v| v.get("constValue"))
-                        .and_then(|v| v.as_i64())
+                        .and_then(serde_json::Value::as_i64)
                         .and_then(|v| MissionState::try_from(v as i32).ok()),
                 }),
                 _ => {}
@@ -660,7 +654,7 @@ fn on_script_start_validate_passes(
     let Some(header) = headers.iter().find(|h| {
         short_trigger_name(h.get("$type").and_then(|v| v.as_str()).unwrap_or_default())
             == "OnScriptStart"
-            && h.get("_ID").and_then(|v| v.as_i64()) == Some(0)
+            && h.get("_ID").and_then(serde_json::Value::as_i64) == Some(0)
     }) else {
         return true;
     };
@@ -668,7 +662,7 @@ fn on_script_start_validate_passes(
     let Some(validate) = header.get("_validate") else {
         return true;
     };
-    let Some(id_ref) = validate.get("idRef").and_then(|v| v.as_i64()) else {
+    let Some(id_ref) = validate.get("idRef").and_then(serde_json::Value::as_i64) else {
         return true;
     };
 
@@ -681,7 +675,7 @@ fn has_root_on_script_start(headers: &[serde_json::Value]) -> bool {
     headers.iter().any(|h| {
         short_trigger_name(h.get("$type").and_then(|v| v.as_str()).unwrap_or_default())
             == "OnScriptStart"
-            && h.get("_ID").and_then(|v| v.as_i64()) == Some(0)
+            && h.get("_ID").and_then(serde_json::Value::as_i64) == Some(0)
     })
 }
 
@@ -703,7 +697,7 @@ fn eval_getter(
 ) -> bool {
     let Some(getter) = getters
         .iter()
-        .find(|g| g.get("_ID").and_then(|v| v.as_i64()) == Some(id as i64))
+        .find(|g| g.get("_ID").and_then(serde_json::Value::as_i64) == Some(id as i64))
     else {
         return true;
     };
@@ -737,7 +731,7 @@ fn eval_getter(
             let inner_id = getter
                 .get("_value")
                 .and_then(|v| v.get("idRef"))
-                .and_then(|v| v.as_i64())
+                .and_then(serde_json::Value::as_i64)
                 .unwrap_or(id as i64 - 1);
             !eval_getter(inner_id as i32, getters, props)
         }

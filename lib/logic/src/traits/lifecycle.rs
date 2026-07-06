@@ -56,7 +56,7 @@ mod tests {
     #[test]
     fn expirable_far_future_not_expired() {
         // Set expire_time far in the future (year ~2100)
-        let mail = make_mail_with_expiry(4102444800);
+        let mail = make_mail_with_expiry(4_102_444_800);
         assert!(!mail.is_expired());
     }
 

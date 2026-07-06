@@ -171,7 +171,7 @@ impl MailManager {
         let mut success = Vec::new();
         let mut failed = Vec::new();
 
-        for m in self.mails.iter_mut() {
+        for m in &mut self.mails {
             if !types.is_empty() && !types.contains(&m.mail_type) {
                 continue;
             }

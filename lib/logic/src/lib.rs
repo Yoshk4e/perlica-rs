@@ -1,3 +1,6 @@
+#![cfg_attr(test, allow(clippy::float_cmp))]
+#![cfg_attr(test, allow(clippy::unnecessary_cast))]
+
 pub mod bitset;
 pub mod character;
 pub mod entity;

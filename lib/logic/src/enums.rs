@@ -65,7 +65,7 @@ pub enum UnlockSystemType {
     NormalAttack = 301,
     NormalSkill = 302,
     UltimateSkill = 303,
-    None = 10000000,
+    None = 10_000_000,
 }
 
 impl UnlockSystemType {

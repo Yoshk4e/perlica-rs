@@ -31,9 +31,9 @@ impl<'a> NetContext<'a> {
         Self {
             player,
             db,
+            client_seq_id,
             assets,
             outbound,
-            client_seq_id,
             server_seq_id,
         }
     }

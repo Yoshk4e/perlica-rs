@@ -2,7 +2,7 @@
 
 use super::{Positioned3D, Positioned3DMut, Rotated3D, Rotated3DMut};
 use crate::entity::SceneEntity;
-use crate::movement::{MovementManager, Pos};
+use crate::movement::MovementManager;
 use crate::player::WorldState;
 use crate::scene::CheckpointInfo;
 use config::tables::level_data::{LvEntityBase, Vector3f};
@@ -211,6 +211,7 @@ impl Positioned3DMut for CheckpointInfo {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::movement::Pos;
     use crate::traits::world::PositionedExt;
 
     #[test]

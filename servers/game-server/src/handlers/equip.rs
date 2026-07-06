@@ -37,8 +37,8 @@ pub async fn on_cs_equip_puton(ctx: &mut NetContext<'_>, req: CsEquipPuton) -> S
         };
     };
 
-    if let Ok(requested_slot) = CraftShowingType::try_from(req.slotid) {
-        if requested_slot != equip_slot {
+    if let Ok(requested_slot) = CraftShowingType::try_from(req.slotid)
+        && requested_slot != equip_slot {
             warn!(
                 "EquipPuton rejected: slot mismatch, uid={}, requested={:?}, actual={:?}, equip={}",
                 ctx.player.uid, requested_slot, equip_slot, req.equipid
@@ -52,7 +52,6 @@ pub async fn on_cs_equip_puton(ctx: &mut NetContext<'_>, req: CsEquipPuton) -> S
                 old_owner_suitinfo: HashMap::new(),
             };
         }
-    }
 
     // If already equipped to this char, treat as no-op and return current state
     let already_equipped = ctx
@@ -61,8 +60,7 @@ pub async fn on_cs_equip_puton(ctx: &mut NetContext<'_>, req: CsEquipPuton) -> S
         .item_manager
         .equips
         .get(inst_id)
-        .map(|p| p.equip_char_id == req.charid)
-        .unwrap_or(false);
+        .is_some_and(|p| p.equip_char_id == req.charid);
 
     if already_equipped {
         debug!(

@@ -133,8 +133,8 @@ async fn logic_loop(
             }
 
             _ = persist_timer.tick() => {
-                if registered && player.char_bag.has_pending_changes() {
-                    if let Err(e) = ctx
+                if registered && player.char_bag.has_pending_changes()
+                    && let Err(e) = ctx
                         .db
                         .persist_char_bag_incremental(&player.uid, &mut player.char_bag)
                         .await
@@ -144,7 +144,6 @@ async fn logic_loop(
                             player.uid
                         );
                     }
-                }
             }
         }
     };

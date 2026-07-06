@@ -41,7 +41,7 @@ pub async fn handle_add(
                 index,
                 FactoryOpType::AddConnection,
                 FactoryOpRetCode::Fail,
-                format!("invalid connection type {}", other),
+                format!("invalid connection type {other}"),
             );
         }
     };
@@ -60,28 +60,22 @@ pub async fn handle_add(
     // handler needs the client to also send the node IDs separately.
     let (node_a, node_b, port_type) = parse_ports(&req.ports, conn_type);
 
-    let (node_id_a, node_id_b) = match (node_a, node_b) {
-        (Some(a), Some(b)) => (a, b),
-        _ => {
-            return response::fail(
-                index,
-                FactoryOpType::AddConnection,
-                FactoryOpRetCode::Fail,
-                "could not extract node IDs from ports payload",
-            );
-        }
+    let (Some(node_id_a), Some(node_id_b)) = (node_a, node_b) else {
+        return response::fail(
+            index,
+            FactoryOpType::AddConnection,
+            FactoryOpRetCode::Fail,
+            "could not extract node IDs from ports payload",
+        );
     };
 
-    let region = match ctx.player.factory.region_mut(&region_name) {
-        Some(r) => r,
-        None => {
+    let Some(region) = ctx.player.factory.region_mut(&region_name) else {
             return response::fail(
                 index,
                 FactoryOpType::AddConnection,
                 FactoryOpRetCode::Fail,
-                format!("region {} not found", region_name),
+                format!("region {region_name} not found"),
             );
-        }
     };
 
     // Both endpoints must exist.
@@ -90,7 +84,7 @@ pub async fn handle_add(
             index,
             FactoryOpType::AddConnection,
             FactoryOpRetCode::Fail,
-            format!("one or both endpoints missing: {} / {}", node_id_a, node_id_b),
+            format!("one or both endpoints missing: {node_id_a} / {node_id_b}"),
         );
     }
 
@@ -112,16 +106,13 @@ pub async fn handle_del(
     region_name: String,
     req: CsdFactoryOpDelConnection,
 ) -> ScFactoryOpRet {
-    let region = match ctx.player.factory.region_mut(&region_name) {
-        Some(r) => r,
-        None => {
+    let Some(region) = ctx.player.factory.region_mut(&region_name) else {
             return response::fail(
                 index,
                 FactoryOpType::DelConnection,
                 FactoryOpRetCode::Fail,
-                format!("region {} not found", region_name),
+                format!("region {region_name} not found"),
             );
-        }
     };
 
     let before = region.connections.len();

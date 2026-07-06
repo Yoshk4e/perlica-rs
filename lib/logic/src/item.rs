@@ -63,7 +63,7 @@ impl ConsumedItems {
     }
 
     pub fn is_empty(&self) -> bool {
-        self.by_depot.is_empty() || self.by_depot.values().all(|m| m.is_empty())
+        self.by_depot.is_empty() || self.by_depot.values().all(std::collections::HashMap::is_empty)
     }
 }
 
@@ -420,7 +420,6 @@ impl WeaponDepot {
     }
 
     fn get_breakthrough_required_level(
-        &self,
         template_id: &str,
         next_show_lv: u64,
         assets: &BeyondAssets,
@@ -484,8 +483,7 @@ impl WeaponDepot {
                 assets
                     .weapons
                     .get(&tmpl)
-                    .map(|w| w.level_template_id.as_str())
-                    .unwrap_or(""),
+                    .map_or("", |w| w.level_template_id.as_str()),
             ) else {
                 let t = self
                     .weapons
@@ -498,8 +496,7 @@ impl WeaponDepot {
                 .list
                 .iter()
                 .find(|e| e.weapon_lv as u64 == cur_lv)
-                .map(|e| e.lv_up_exp_sum as u64)
-                .unwrap_or(0);
+                .map_or(0, |e| e.lv_up_exp_sum as u64);
 
             let new_total = cum_at_cur + cur_exp_relative + total_exp;
             let mut new_level = cur_lv;
@@ -541,6 +538,8 @@ impl WeaponDepot {
         Ok((t.exp, t.weapon_lv))
     }
 
+    // 3-tuple: (new_breakthrough_level, current_level, consumed_cost_items).
+    #[allow(clippy::type_complexity)]
     pub fn breakthrough(
         &mut self,
         inst_id: WeaponInstId,
@@ -558,8 +557,7 @@ impl WeaponDepot {
             return Err(LogicError::WeaponMaxBreakthrough(inst_id));
         }
         let next_show_lv = cur + 1;
-        let req = self
-            .get_breakthrough_required_level(&tmpl, next_show_lv, assets)
+        let req = Self::get_breakthrough_required_level(&tmpl, next_show_lv, assets)
             .unwrap_or(1);
         if lv < req {
             return Err(LogicError::WeaponBreakthroughLevelTooLow {
@@ -582,7 +580,7 @@ impl WeaponDepot {
                     .iter()
                     .find(|e| e.breakthrough_show_lv as u64 == next_show_lv)
             })
-            .map(|entry| {
+            .map_or((0, Vec::new()), |entry| {
                 let gold = entry.breakthrough_gold;
                 let mats: Vec<(String, u32)> = entry
                     .break_item_list
@@ -590,8 +588,7 @@ impl WeaponDepot {
                     .map(|bi| (bi.id.clone(), bi.count))
                     .collect();
                 (gold, mats)
-            })
-            .unwrap_or((0, Vec::new()));
+            });
 
         let w = self
             .weapons
@@ -721,12 +718,9 @@ impl WeaponDepot {
             if self.has_equipped_weapon(*char_id) {
                 continue;
             }
-            let char_data = match assets.characters.get(char_template_id) {
-                Some(d) => d,
-                None => {
-                    warn!("Character template not found: {}", char_template_id);
-                    continue;
-                }
+            let Some(char_data) = assets.characters.get(char_template_id) else {
+                warn!("Character template not found: {}", char_template_id);
+                continue;
             };
             let weapon = assets
                 .weapons
@@ -1525,7 +1519,7 @@ impl From<&StackableDepot> for ScdItemDepot {
 
 #[derive(Clone, Copy)]
 pub struct AttrList<'a>(pub &'a AttrModifier);
-impl<'a> From<AttrList<'a>> for EquipAttr {
+impl From<AttrList<'_>> for EquipAttr {
     fn from(val: AttrList) -> Self {
         let attrs = val.0;
         EquipAttr {
@@ -1639,14 +1633,12 @@ impl ItemManager {
 
     pub fn count_of(&self, depot_type: ItemDepotType, template_id: &str) -> u32 {
         self.stackable_depot(depot_type)
-            .map(|d| d.count_of(template_id))
-            .unwrap_or(0)
+            .map_or(0, |d| d.count_of(template_id))
     }
 
     pub fn has_stackable(&self, depot_type: ItemDepotType, template_id: &str, count: u32) -> bool {
         self.stackable_depot(depot_type)
-            .map(|d| d.has(template_id, count))
-            .unwrap_or(false)
+            .is_some_and(|d| d.has(template_id, count))
     }
 
     pub fn socket_gem(
@@ -1872,7 +1864,7 @@ mod tests {
                 assert_eq!(g.template_id, "item_gem_0007_rarity4");
                 assert_eq!(g.weapon_id, 0);
             }
-            other => panic!("Expected Gem variant, got {:?}", other),
+            other => panic!("Expected Gem variant, got {other:?}"),
         }
     }
 

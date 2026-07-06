@@ -33,12 +33,9 @@ pub async fn on_cs_factory_op(
     ctx: &mut NetContext<'_>,
     req: CsFactoryOp,
 ) -> ScFactoryOpRet {
-    let op_type = match FactoryOpType::try_from(req.op_type) {
-        Ok(t) => t,
-        Err(_) => {
-            warn!(op_type = req.op_type, "CsFactoryOp with unknown op_type");
-            return response::unknown_op_type(req.index, req.op_type);
-        }
+    let Ok(op_type) = FactoryOpType::try_from(req.op_type) else {
+        warn!(op_type = req.op_type, "CsFactoryOp with unknown op_type");
+        return response::unknown_op_type(req.index, req.op_type);
     };
 
     debug!(
@@ -54,7 +51,9 @@ pub async fn on_cs_factory_op(
     // need to dispatch on `op_type` and let the handler complain.
     let payload = req.op_payload;
 
-    let resp = match (op_type, payload) {
+    
+
+    match (op_type, payload) {
         (FactoryOpType::Place, Some(CsOp::Place(p))) => place::handle(ctx, req.index, req.name, p).await,
         (FactoryOpType::Place, _) => bad_payload(req.index, op_type),
 
@@ -187,9 +186,7 @@ pub async fn on_cs_factory_op(
             warn!(index = %req.index, "CsFactoryOp with NoneAd3b op_type, ignoring");
             response::unknown_op_type(req.index, req.op_type)
         }
-    };
-
-    resp
+    }
 }
 
 fn bad_payload(index: String, op_type: FactoryOpType) -> ScFactoryOpRet {

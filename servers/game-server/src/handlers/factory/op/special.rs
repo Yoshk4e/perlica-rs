@@ -19,16 +19,13 @@ pub async fn handle_use_heal_tower(
     region_name: String,
     req: CsdFactoryOpUseHealTowerPoint,
 ) -> ScFactoryOpRet {
-    let region = match ctx.player.factory.region_mut(&region_name) {
-        Some(r) => r,
-        None => {
+    let Some(region) = ctx.player.factory.region_mut(&region_name) else {
             return response::fail(
                 index,
                 FactoryOpType::UseHealTowerPoint,
                 FactoryOpRetCode::Fail,
-                format!("region {} not found", region_name),
+                format!("region {region_name} not found"),
             );
-        }
     };
 
     for node in region.nodes.values_mut() {
@@ -69,7 +66,7 @@ fn apply_heal_use(
     // TODO: apply the actual heal to the player's characters here. The
     // tower just deducts points; the heal target is implicit (the
     // active team's HP pool). Needs the character-bag integration.
-    let _ = ctx_noop();
+    let () = ctx_noop();
 
     response::ok_with_use_heal_tower(index, granted as u32)
 }
@@ -80,16 +77,13 @@ pub async fn handle_set_travel_pole_next(
     region_name: String,
     req: CsdFactoryOpSetTravelPoleDefaultNext,
 ) -> ScFactoryOpRet {
-    let region = match ctx.player.factory.region_mut(&region_name) {
-        Some(r) => r,
-        None => {
+    let Some(region) = ctx.player.factory.region_mut(&region_name) else {
             return response::fail(
                 index,
                 FactoryOpType::SetTravelPoleDefaultNext,
                 FactoryOpRetCode::Fail,
-                format!("region {} not found", region_name),
+                format!("region {region_name} not found"),
             );
-        }
     };
 
     // Verify the target node exists before wiring the link -- otherwise

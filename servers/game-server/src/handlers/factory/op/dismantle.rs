@@ -17,16 +17,13 @@ pub async fn handle(
     region_name: String,
     req: CsdFactoryOpDismantle,
 ) -> ScFactoryOpRet {
-    let region = match ctx.player.factory.region_mut(&region_name) {
-        Some(r) => r,
-        None => {
+    let Some(region) = ctx.player.factory.region_mut(&region_name) else {
             return response::fail(
                 index,
                 FactoryOpType::Dismantle,
                 FactoryOpRetCode::Fail,
-                format!("region {} not found", region_name),
+                format!("region {region_name} not found"),
             );
-        }
     };
 
     // Verify the node exists and isn't the protected inventory/hub.

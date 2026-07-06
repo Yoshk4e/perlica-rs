@@ -274,7 +274,7 @@ mod tests {
 
     #[test]
     fn power_role_helpers() {
-        assert!(FactoryComponent::Hub.is_power_source() == false);
+        assert!(!FactoryComponent::Hub.is_power_source());
         assert!(
             FactoryComponent::StablePower(StablePowerState {
                 in_power: true,

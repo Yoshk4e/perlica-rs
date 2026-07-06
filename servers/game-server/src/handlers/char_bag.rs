@@ -40,7 +40,7 @@ pub async fn push_char_attrs(ctx: &mut NetContext<'_>) -> bool {
     );
 
     for msg in msgs {
-        if !ctx.notify(msg).await.is_ok() {
+        if ctx.notify(msg).await.is_err() {
             return false;
         }
     }
@@ -58,7 +58,7 @@ pub async fn push_char_status(ctx: &mut NetContext<'_>) -> bool {
     );
 
     for msg in msgs {
-        if !ctx.notify(msg).await.is_ok() {
+        if ctx.notify(msg).await.is_err() {
             return false;
         }
     }
@@ -94,7 +94,7 @@ pub async fn push_char_status_for_ids(ctx: &mut NetContext<'_>, obj_ids: &[u64])
     );
 
     for msg in updates {
-        if !ctx.notify(msg).await.is_ok() {
+        if ctx.notify(msg).await.is_err() {
             return false;
         }
     }

@@ -19,7 +19,7 @@ pub async fn handle(
     req: CsdFactoryOpMoveNode,
 ) -> ScFactoryOpRet {
     let new_pos = match req.position {
-        Some(p) => grid_pos(&p),
+        Some(p) => grid_pos(p),
         None => {
             return response::fail(
                 index,
@@ -41,28 +41,22 @@ pub async fn handle(
     };
 
     let (template_id, footprint, building_w, building_h) = {
-        let region = match ctx.player.factory.region(&region_name) {
-            Some(r) => r,
-            None => {
+        let Some(region) = ctx.player.factory.region(&region_name) else {
                 return response::fail(
                     index,
                     FactoryOpType::MoveNode,
                     FactoryOpRetCode::Fail,
-                    format!("region {} not found", region_name),
+                    format!("region {region_name} not found"),
                 );
-            }
         };
 
-        let node = match region.node(req.node_id) {
-            Some(n) => n,
-            None => {
+        let Some(node) = region.node(req.node_id) else {
                 return response::fail(
                     index,
                     FactoryOpType::MoveNode,
                     FactoryOpRetCode::Fail,
                     format!("node {} not found", req.node_id),
                 );
-            }
         };
 
         // We need the building's range to compute the new footprint.
@@ -77,16 +71,13 @@ pub async fn handle(
             );
         }
 
-        let building = match ctx.assets.factory_table.get_building(&node.template_id) {
-            Some(b) => b,
-            None => {
+        let Some(building) = ctx.assets.factory_table.get_building(&node.template_id) else {
                 return response::fail(
                     index,
                     FactoryOpType::MoveNode,
                     FactoryOpRetCode::Fail,
                     format!("no buildingData for template {}", node.template_id),
                 );
-            }
         };
 
         let footprint = GridRange {
@@ -103,28 +94,22 @@ pub async fn handle(
     // for the overlap test so it can move to a position that overlaps
     // its own previous footprint.
     {
-        let region = match ctx.player.factory.region_mut(&region_name) {
-            Some(r) => r,
-            None => {
+        let Some(region) = ctx.player.factory.region_mut(&region_name) else {
                 return response::fail(
                     index,
                     FactoryOpType::MoveNode,
                     FactoryOpRetCode::Fail,
-                    format!("region {} not found", region_name),
+                    format!("region {region_name} not found"),
                 );
-            }
         };
 
-        let map = match ctx.assets.factory_map.get(&region.scene_name, region.level) {
-            Some(m) => m,
-            None => {
+        let Some(map) = ctx.assets.factory_map.get(&region.scene_name, region.level) else {
                 return response::fail(
                     index,
                     FactoryOpType::MoveNode,
                     FactoryOpRetCode::MustInMain,
                     "no factory map for scene at this level",
                 );
-            }
         };
 
         let main_mesh = GridRange {
@@ -192,6 +177,6 @@ pub async fn handle(
     response::ok(index, FactoryOpType::MoveNode)
 }
 
-fn grid_pos(p: &ScdFactoryVector2Int) -> GridPos {
+fn grid_pos(p: ScdFactoryVector2Int) -> GridPos {
     GridPos { x: p.x, y: p.y }
 }

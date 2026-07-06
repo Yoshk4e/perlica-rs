@@ -132,7 +132,7 @@ mod tests {
     fn make_entity(id: u64, kind: EntityKind) -> SceneEntity {
         SceneEntity {
             id,
-            template_id: format!("tmpl_{}", id),
+            template_id: format!("tmpl_{id}"),
             kind,
             pos_x: 0.0,
             pos_y: 0.0,
@@ -241,7 +241,7 @@ mod tests {
         mgr.insert(make_entity(5, EntityKind::Npc));
         mgr.insert(make_entity(10, EntityKind::Enemy));
         let mut ids = mgr.ids();
-        ids.sort();
+        ids.sort_unstable();
         assert_eq!(ids, vec![5, 10]);
     }
 
@@ -253,7 +253,7 @@ mod tests {
         mgr.insert(make_entity(3, EntityKind::Enemy));
         mgr.insert(make_entity(4, EntityKind::Npc));
         let mut enemy_ids = mgr.ids_by_kind(EntityKind::Enemy);
-        enemy_ids.sort();
+        enemy_ids.sort_unstable();
         assert_eq!(enemy_ids, vec![2, 3]);
         assert!(mgr.ids_by_kind(EntityKind::Interactive).is_empty());
     }

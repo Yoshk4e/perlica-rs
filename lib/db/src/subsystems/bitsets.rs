@@ -62,8 +62,8 @@ async fn prune_for_type(
     }
 
     let keep_i64: Vec<i64> = keep.iter().map(|v| *v as i64).collect();
-    const CHUNK: usize = 500;
-    for chunk in keep_i64.chunks(CHUNK) {
+    let chunk_size: usize = 500;
+    for chunk in keep_i64.chunks(chunk_size) {
         let placeholders = (0..chunk.len()).map(|_| "?").collect::<Vec<_>>().join(", ");
         let sql = format!(
             "DELETE FROM beyond_bitsets

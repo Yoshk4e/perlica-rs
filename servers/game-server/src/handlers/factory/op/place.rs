@@ -29,28 +29,22 @@ pub async fn handle(
     region_name: String,
     req: CsdFactoryOpPlace,
 ) -> ScFactoryOpRet {
-    let position = match req.position.as_ref().map(grid_pos) {
-        Some(p) => p,
-        None => {
+    let Some(position) = req.position.as_ref().map(|p| grid_pos(*p)) else {
             return response::fail(
                 index,
                 FactoryOpType::Place,
                 FactoryOpRetCode::Fail,
                 "Place requires a position",
             );
-        }
     };
 
-    let building = match ctx.assets.factory_table.get_building(&req.template_id) {
-        Some(b) => b,
-        None => {
+    let Some(building) = ctx.assets.factory_table.get_building(&req.template_id) else {
             return response::fail(
                 index,
                 FactoryOpType::Place,
                 FactoryOpRetCode::NoBuildingItem,
                 format!("no buildingData for template {}", req.template_id),
             );
-        }
     };
 
     // FCNodeType is the wire discriminator. If the JSON has a stale value
@@ -105,28 +99,22 @@ pub async fn handle(
     // Scope the borrow so we can hand `&mut ctx.player.factory` to the
     // mutator without holding `&ctx.assets` at the same time.
     let scene_name = {
-        let region = match ctx.player.factory.region_mut(&region_name) {
-            Some(r) => r,
-            None => {
+        let Some(region) = ctx.player.factory.region_mut(&region_name) else {
                 return response::fail(
                     index,
                     FactoryOpType::Place,
                     FactoryOpRetCode::Fail,
-                    format!("region {} not found", region_name),
+                    format!("region {region_name} not found"),
                 );
-            }
         };
 
-        let map = match ctx.assets.factory_map.get(&region.scene_name, region.level) {
-            Some(m) => m,
-            None => {
+        let Some(map) = ctx.assets.factory_map.get(&region.scene_name, region.level) else {
                 return response::fail(
                     index,
                     FactoryOpType::Place,
                     FactoryOpRetCode::MustInMain,
                     "no factory map for scene at this level",
                 );
-            }
         };
 
         let main_mesh = GridRange {
@@ -248,6 +236,6 @@ pub async fn handle(
     response::ok_with_place(index, node_id)
 }
 
-fn grid_pos(p: &ScdFactoryVector2Int) -> GridPos {
+fn grid_pos(p: ScdFactoryVector2Int) -> GridPos {
     GridPos { x: p.x, y: p.y }
 }

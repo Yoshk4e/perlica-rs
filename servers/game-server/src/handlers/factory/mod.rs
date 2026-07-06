@@ -42,36 +42,27 @@ pub async fn push_factory(ctx: &mut NetContext<'_>) -> bool {
     let region_name = "test01".to_string();
     let scene_name = ctx.player.world.last_scene.clone();
 
-    let building = match ctx.assets.factory_table.get_building(HUB_TEMPLATE) {
-        Some(b) => b,
-        None => {
-            warn!(
-                template = HUB_TEMPLATE,
-                "no buildingData entry, skipping factory push"
-            );
-            return false;
-        }
+    let Some(building) = ctx.assets.factory_table.get_building(HUB_TEMPLATE) else {
+        warn!(
+            template = HUB_TEMPLATE,
+            "no buildingData entry, skipping factory push"
+        );
+        return false;
     };
-    let hub_data = match ctx.assets.factory_table.get_hub(HUB_TEMPLATE) {
-        Some(h) => h,
-        None => {
-            warn!(
-                template = HUB_TEMPLATE,
-                "no hubData entry, skipping factory push"
-            );
-            return false;
-        }
+    let Some(hub_data) = ctx.assets.factory_table.get_hub(HUB_TEMPLATE) else {
+        warn!(
+            template = HUB_TEMPLATE,
+            "no hubData entry, skipping factory push"
+        );
+        return false;
     };
 
-    let map = match ctx.assets.factory_map.get(&scene_name, 1) {
-        Some(m) => m,
-        None => {
-            warn!(
-                scene = %scene_name,
-                "no FactoryMapTable entry at level 1, skipping factory push"
-            );
-            return false;
-        }
+    let Some(map) = ctx.assets.factory_map.get(&scene_name, 1) else {
+        warn!(
+            scene = %scene_name,
+            "no FactoryMapTable entry at level 1, skipping factory push"
+        );
+        return false;
     };
 
     // Compute hub grid position
@@ -92,15 +83,12 @@ pub async fn push_factory(ctx: &mut NetContext<'_>) -> bool {
     let top_left_x = center_x - hub_w / 2;
     let top_left_y = center_y - hub_h / 2;
 
-    let region_id = match FactoryManager::derive_region_id(&ctx.assets.factory_table, &scene_name) {
-        Some(id) => id,
-        None => {
-            warn!(
-                scene = %scene_name,
-                "no levelRegionData entry for scene, skipping factory push"
-            );
-            return false;
-        }
+    let Some(region_id) = FactoryManager::derive_region_id(&ctx.assets.factory_table, &scene_name) else {
+        warn!(
+            scene = %scene_name,
+            "no levelRegionData entry for scene, skipping factory push"
+        );
+        return false;
     };
 
     // This generates the inventory node (node ID = 1) and hub node
@@ -127,7 +115,15 @@ pub async fn push_factory(ctx: &mut NetContext<'_>) -> bool {
     };
     let power_gen = hub_data.power_generate;
     let power_save_max = hub_data.power_storage_capacity;
-    if !ctx.player.factory.regions.contains_key(&region_name) {
+    if ctx.player.factory.regions.contains_key(&region_name) {
+        debug!(
+            uid = %ctx.player.uid,
+            scene = %scene_name,
+            region = %region_name,
+            region_id = %region_id,
+            "factory region already present in internal model, skipping bootstrap"
+        );
+    } else {
         let region = FactoryManager::bootstrap_region(
             region_name.clone(),
             region_id.clone(),
@@ -148,14 +144,6 @@ pub async fn push_factory(ctx: &mut NetContext<'_>) -> bool {
             region = %region_name,
             region_id = %region_id,
             "factory region bootstrapped in internal model"
-        );
-    } else {
-        debug!(
-            uid = %ctx.player.uid,
-            scene = %scene_name,
-            region = %region_name,
-            region_id = %region_id,
-            "factory region already present in internal model, skipping bootstrap"
         );
     }
 

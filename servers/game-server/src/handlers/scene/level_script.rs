@@ -30,21 +30,16 @@ fn is_progression_flag(scene: &str, script_id: i32, key: &str) -> bool {
     matches!(
         (scene, script_id, key),
         // map01_dg003 prologue tutorial controller (script 5)
-        ("map01_dg003", 5, "isFMVOver")
-        | ("map01_dg003", 5, "isTimelineOver")
-        | ("map01_dg003", 5, "isWalkLimitFinish")
-        | ("map01_dg003", 5, "isRunLimitFinish")
-        // map01_dg003 vista / interaction sub-steps
-        | ("map01_dg003", 10, "isPreBattleOver")
-        | ("map01_dg003", 14, "is_spot_interacted")
-        | ("map01_dg003", 15, "isBombVistaOver")
-        | ("map01_dg003", 17, "isTreasureVistaOver")
-        | ("map01_dg003", 17, "is_G_Jump_Over")
-        | ("map01_dg003", 18, "isPatriotVistaOver")
-        | ("map01_dg003", 19, "is_barrierwal_interacted")
-        | ("map01_dg003", 19, "isFogChangeOver")
-        | ("map01_dg003", 19, "isCemeteryVistaOver")
-        | ("map01_dg003", 21, "isTowerVistaOver")
+        ("map01_dg003", 5,
+"isFMVOver" | "isTimelineOver" | "isWalkLimitFinish" | "isRunLimitFinish") |
+("map01_dg003", 10, "isPreBattleOver") |
+("map01_dg003", 14, "is_spot_interacted") |
+("map01_dg003", 15, "isBombVistaOver") |
+("map01_dg003", 17, "isTreasureVistaOver" | "is_G_Jump_Over") |
+("map01_dg003", 18, "isPatriotVistaOver") |
+("map01_dg003", 19,
+"is_barrierwal_interacted" | "isFogChangeOver" | "isCemeteryVistaOver") |
+("map01_dg003", 21, "isTowerVistaOver")
     )
 }
 
@@ -75,14 +70,15 @@ fn build_role_base_info(ctx: &NetContext<'_>) -> RoleBaseInfo {
 ///   1. is in the `is_progression_flag` allowlist,
 ///   2. is being flipped to `true`, AND
 ///   3. has NOT already been consumed this session (idempotency guard),
+///
 /// push one objective step to the tracked quest.
 ///
 /// Notification order: state_updates BEFORE notify_objective_updates.
 /// The client HUD resolves quest tracking data by quest-ID the moment an
 /// objective-update packet arrives.  Sending state first ensures the client
 /// already knows the quest is Qsprocessing, so trackQuestData is not nil.
-async fn maybe_drive_quest_progression<'a>(
-    ctx: &mut NetContext<'a>,
+async fn maybe_drive_quest_progression(
+    ctx: &mut NetContext<'_>,
     scene: &str,
     script_id: i32,
     properties: &std::collections::HashMap<String, DynamicParameter>,
@@ -187,14 +183,13 @@ async fn maybe_drive_quest_progression<'a>(
         }
     }
 
-    if did_advance {
-        if let Err(e) = ctx.player.missions.persist(&ctx.player.uid, ctx.db).await {
+    if did_advance
+        && let Err(e) = ctx.player.missions.persist(&ctx.player.uid, ctx.db).await {
             debug!(
                 "Failed to persist missions after quest progression: uid={}, error={}",
                 ctx.player.uid, e
             );
         }
-    }
 }
 
 /// Helper: check that `req_scene` matches the player's current scene.

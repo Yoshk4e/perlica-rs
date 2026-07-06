@@ -19,13 +19,7 @@ pub async fn on_cs_scene_kill_monster(ctx: &mut NetContext<'_>, req: CsSceneKill
 
     // If the entity exists but isn't an enemy (e.g. it's an interactive or NPC),
     // silently ignore the request to prevent abuse.
-    if let Some(entity) = ctx.player.entities.get(req.id).and_then(|entity| {
-        if !entity.is_enemy() {
-            Some(entity)
-        } else {
-            None
-        }
-    }) {
+    if let Some(entity) = ctx.player.entities.get(req.id).filter(|&entity| !entity.is_enemy()) {
         warn!(
             "Rejected monster kill: id={} is not an enemy (kind={:?})",
             req.id, entity.kind
@@ -33,7 +27,7 @@ pub async fn on_cs_scene_kill_monster(ctx: &mut NetContext<'_>, req: CsSceneKill
         return;
     }
 
-    if let Some(entity) = ctx.player.entities.remove(req.id).filter(|e| e.is_enemy()) {
+    if let Some(entity) = ctx.player.entities.remove(req.id).filter(perlica_logic::traits::Classified::is_enemy) {
         ctx.player.scene.on_entity_killed(entity.level_logic_id);
     }
 
@@ -55,12 +49,11 @@ pub async fn on_cs_scene_kill_char(ctx: &mut NetContext<'_>, req: CsSceneKillCha
         .char_bag
         .teams
         .get(team_idx)
-        .map(|team| {
+        .is_some_and(|team| {
             team.char_team
                 .iter()
                 .any(|slot| slot.object_id() == Some(req.id))
-        })
-        .unwrap_or(false);
+        });
 
     if !in_active_team {
         warn!(
@@ -143,8 +136,7 @@ async fn send_revival_status_updates(ctx: &mut NetContext<'_>) {
             !c.is_dead
                 && team.char_team.iter().any(|slot| {
                     slot.char_index()
-                        .map(|idx| idx.as_usize() == *i)
-                        .unwrap_or(false)
+                        .is_some_and(|idx| idx.as_usize() == *i)
                 })
         })
         .map(|(i, c)| (CharIndex::from_usize(i).object_id(), c.hp, c.ultimate_sp))

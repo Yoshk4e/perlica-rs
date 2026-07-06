@@ -1,4 +1,5 @@
 use crate::net::NetContext;
+use std::collections::HashMap;
 use perlica_db::Persistable;
 use perlica_logic::mail::StoredMail;
 use perlica_proto::{
@@ -158,35 +159,32 @@ pub async fn on_cs_get_mail_attachment(
         ctx.player.uid, req.mail_id
     );
 
-    match ctx.player.mail.claim_attachment(req.mail_id) {
-        Some(items) => {
-            debug!(
-                "CsGetMailAttachment: claimed {} items from mail {}: uid={}",
-                items.len(),
-                req.mail_id,
-                ctx.player.uid
-            );
-            // TODO: actually grant items to player inventory here.
-            if let Err(e) = ctx.player.mail.persist(&ctx.player.uid, ctx.db).await {
-                warn!(
-                    "Failed to persist mail after claim attachment: uid={}, error={}",
-                    ctx.player.uid, e
-                );
-            }
-            ScGetMailAttachment {
-                success_mail_id_list: vec![req.mail_id],
-                failed_mail_id_list: vec![],
-            }
-        }
-        None => {
+    if let Some(items) = ctx.player.mail.claim_attachment(req.mail_id) {
+        debug!(
+            "CsGetMailAttachment: claimed {} items from mail {}: uid={}",
+            items.len(),
+            req.mail_id,
+            ctx.player.uid
+        );
+        // TODO: actually grant items to player inventory here.
+        if let Err(e) = ctx.player.mail.persist(&ctx.player.uid, ctx.db).await {
             warn!(
-                "CsGetMailAttachment: mail not found or already claimed: uid={}, mail_id={}",
-                ctx.player.uid, req.mail_id
+                "Failed to persist mail after claim attachment: uid={}, error={}",
+                ctx.player.uid, e
             );
-            ScGetMailAttachment {
-                success_mail_id_list: vec![],
-                failed_mail_id_list: vec![req.mail_id],
-            }
+        }
+        ScGetMailAttachment {
+            success_mail_id_list: vec![req.mail_id],
+            failed_mail_id_list: vec![],
+        }
+    } else {
+        warn!(
+            "CsGetMailAttachment: mail not found or already claimed: uid={}, mail_id={}",
+            ctx.player.uid, req.mail_id
+        );
+        ScGetMailAttachment {
+            success_mail_id_list: vec![],
+            failed_mail_id_list: vec![req.mail_id],
         }
     }
 }
@@ -210,14 +208,13 @@ pub async fn on_cs_get_all_mail_attachment(
     );
 
     // TODO: grant items for each success ID.
-    if !success.is_empty() {
-        if let Err(e) = ctx.player.mail.persist(&ctx.player.uid, ctx.db).await {
+    if !success.is_empty()
+        && let Err(e) = ctx.player.mail.persist(&ctx.player.uid, ctx.db).await {
             warn!(
                 "Failed to persist mail after claim all attachments: uid={}, error={}",
                 ctx.player.uid, e
             );
         }
-    }
 
     ScGetMailAttachment {
         success_mail_id_list: success,
@@ -251,7 +248,7 @@ fn build_cs_mail_def(m: &perlica_logic::mail::StoredMail) -> CsMailDef {
             content: m.content.clone(),
             sender_name: m.sender_name.clone(),
             sender_icon: m.sender_icon.clone(),
-            params: Default::default(),
+            params: HashMap::default(),
         }),
         item_list,
     }

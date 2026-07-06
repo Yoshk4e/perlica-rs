@@ -21,16 +21,13 @@ pub async fn handle_select(
     region_name: String,
     req: CsdFactoryOpSetSelectTarget,
 ) -> ScFactoryOpRet {
-    let region = match ctx.player.factory.region_mut(&region_name) {
-        Some(r) => r,
-        None => {
+    let Some(region) = ctx.player.factory.region_mut(&region_name) else {
             return response::fail(
                 index,
                 FactoryOpType::SetSelectTarget,
                 FactoryOpRetCode::Fail,
-                format!("region {} not found", region_name),
+                format!("region {region_name} not found"),
             );
-        }
     };
 
     // The component_id sent by the client corresponds to a `Selector`
@@ -76,16 +73,13 @@ pub async fn handle_collect(
     region_name: String,
     req: CsdFactoryOpSetCollectTarget,
 ) -> ScFactoryOpRet {
-    let region = match ctx.player.factory.region_mut(&region_name) {
-        Some(r) => r,
-        None => {
+    let Some(region) = ctx.player.factory.region_mut(&region_name) else {
             return response::fail(
                 index,
                 FactoryOpType::SetCollectTarget,
                 FactoryOpRetCode::Fail,
-                format!("region {} not found", region_name),
+                format!("region {region_name} not found"),
             );
-        }
     };
 
     // Collector ops target a `Collector` component (miner output side).

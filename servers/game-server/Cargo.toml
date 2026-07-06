@@ -19,3 +19,6 @@ perlica-db.workspace = true
 byteorder.workspace = true
 toml.workspace = true
 perlica-muip.workspace = true
+
+[lints]
+workspace = true

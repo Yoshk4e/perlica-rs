@@ -102,8 +102,7 @@ impl BitsetManager {
     pub fn has(&self, bitset_type: BitsetType, bit: u32) -> bool {
         self.bits
             .get(&bitset_type)
-            .map(|s| s.contains(&bit))
-            .unwrap_or(false)
+            .is_some_and(|s| s.contains(&bit))
     }
 
     pub fn get_bits(&self, bitset_type: BitsetType) -> Vec<u32> {
@@ -117,7 +116,7 @@ impl BitsetManager {
     }
 
     pub fn count(&self, bitset_type: BitsetType) -> usize {
-        self.bits.get(&bitset_type).map(|s| s.len()).unwrap_or(0)
+        self.bits.get(&bitset_type).map_or(0, std::collections::HashSet::len)
     }
 
     bitset_helpers! {

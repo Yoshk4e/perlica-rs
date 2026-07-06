@@ -127,8 +127,7 @@ fn bootstrap_region_creates_inventory_and_hub_nodes() {
         assert_eq!(
             hub.component_pos.get(pos),
             Some(id),
-            "component_pos mismatch for {:?}",
-            pos
+            "component_pos mismatch for {pos:?}"
         );
     }
 
@@ -145,12 +144,11 @@ fn bootstrap_region_creates_inventory_and_hub_nodes() {
     for (id, want) in expected_types {
         let comp = hub
             .component(*id)
-            .unwrap_or_else(|| panic!("hub node missing component id {}", id));
+            .unwrap_or_else(|| panic!("hub node missing component id {id}"));
         assert_eq!(
             comp.discriminant(),
             *want as i32,
-            "component id {} has wrong type",
-            id
+            "component id {id} has wrong type"
         );
     }
 
@@ -212,7 +210,7 @@ fn bootstrap_region_power_components_start_in_power() {
     if let FactoryComponent::PowerPole(s) = pole {
         assert!(s.in_power, "hub power pole starts powered");
     } else {
-        panic!("component 4 should be PowerPole, got {:?}", pole);
+        panic!("component 4 should be PowerPole, got {pole:?}");
     }
 
     let save = hub.component(5).unwrap();
@@ -220,7 +218,7 @@ fn bootstrap_region_power_components_start_in_power() {
         assert!(s.in_power);
         assert_eq!(s.power_save, 100_000);
     } else {
-        panic!("component 5 should be PowerSave, got {:?}", save);
+        panic!("component 5 should be PowerSave, got {save:?}");
     }
 
     let stable = hub.component(6).unwrap();
@@ -228,7 +226,7 @@ fn bootstrap_region_power_components_start_in_power() {
         assert!(s.in_power);
         assert_eq!(s.power_gen_per_sec, 100);
     } else {
-        panic!("component 6 should be StablePower, got {:?}", stable);
+        panic!("component 6 should be StablePower, got {stable:?}");
     }
 }
 

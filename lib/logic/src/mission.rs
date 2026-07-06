@@ -1,4 +1,4 @@
-use config::mission::{MissionAssets, MissionDefinition, MissionKind, QuestDefinition};
+use config::mission::{MissionAssets, QuestDefinition};
 use perlica_proto::{
     GuideGroupInfo, Mission, MissionState, ObjectiveValueOp, Quest, QuestObjective, QuestState,
     RoleBaseInfo, ScMissionStateUpdate, ScQuestObjectivesUpdate, ScQuestStateUpdate,
@@ -125,7 +125,7 @@ impl MissionManager {
             })
             .unwrap_or_else(|| format!("{mission_id}_q#1"));
 
-        self.track_mission_id = mission_id.clone();
+        self.track_mission_id.clone_from(&mission_id);
         self.missions.insert(
             mission_id.clone(),
             MissionProgress {
@@ -486,13 +486,14 @@ fn empty_objective(condition_id: &str) -> QuestObjective {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use config::mission::{MissionDefinition, MissionKind};
 
     fn make_quest_def(quest_id: &str, objective_keys: &[&str]) -> QuestDefinition {
         QuestDefinition {
             quest_id: quest_id.to_string(),
             ordinal_key: quest_id.split("_q#").last().unwrap_or("1").to_string(),
             numeric_ordinal: quest_id.split("_q#").last().and_then(|s| s.parse().ok()),
-            objective_keys: objective_keys.iter().map(|s| s.to_string()).collect(),
+            objective_keys: objective_keys.iter().map(std::string::ToString::to_string).collect(),
         }
     }
 
@@ -789,8 +790,8 @@ mod tests {
         assert!(mgr.has_mission(PROLOGUE_MISSION_ID));
         assert_eq!(mgr.track_mission_id(), PROLOGUE_MISSION_ID);
         // The prologue quest should be bootstrapped
-        let quests = mgr.snapshot_quests();
-        assert!(!quests.is_empty());
+        let active_quests = mgr.snapshot_quests();
+        assert!(!active_quests.is_empty());
     }
 
     #[test]
@@ -804,8 +805,8 @@ mod tests {
         // Since PROLOGUE_FIRST_QUEST_ID = "mission_mai_e0m1_q#2",
         // bootstrap should pick quest2 (or quest1 if it comes first
         // with successfully_inserted logic)
-        let quests = mgr.snapshot_quests();
-        assert!(!quests.is_empty());
+        let active_quests = mgr.snapshot_quests();
+        assert!(!active_quests.is_empty());
     }
 
     #[test]
@@ -830,10 +831,10 @@ mod tests {
         mgr.ensure_bootstrap(&assets);
         // Should still bootstrap a valid quest despite the empty one
         assert!(mgr.has_mission(PROLOGUE_MISSION_ID));
-        let quests = mgr.snapshot_quests();
-        assert!(!quests.is_empty());
+        let active_quests = mgr.snapshot_quests();
+        assert!(!active_quests.is_empty());
         // The quest should be q#2 (the valid one), not q#1
-        assert_eq!(quests[0].0, "mission_mai_e0m1_q#2");
+        assert_eq!(active_quests[0].0, "mission_mai_e0m1_q#2");
     }
 
     #[test]
@@ -1019,9 +1020,9 @@ mod tests {
         assert_eq!(mission_id, "mission_mai_e0m1");
         assert_eq!(next_quest_id, "mission_mai_e0m1_q#2");
         // Old quest should be removed, new one inserted
-        let quests = mgr.snapshot_quests();
-        assert_eq!(quests.len(), 1);
-        assert_eq!(quests[0].0, "mission_mai_e0m1_q#2");
+        let active_quests = mgr.snapshot_quests();
+        assert_eq!(active_quests.len(), 1);
+        assert_eq!(active_quests[0].0, "mission_mai_e0m1_q#2");
     }
 
     #[test]

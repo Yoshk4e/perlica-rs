@@ -19,28 +19,72 @@ use perlica_proto::{
 /// Empty payload works for the ops whose Ret variant is just `{}`. We
 /// pick the right `OpPayload` arm based on the `op_type` discriminator.
 fn empty_payload(op_type: FactoryOpType) -> Option<sc_factory_op_ret::OpPayload> {
-    use sc_factory_op_ret::OpPayload::*;
+    use perlica_proto::{
+        ScdFactoryOpRetCacheTransportEnable, ScdFactoryOpRetDelConnection,
+        ScdFactoryOpRetDismantle, ScdFactoryOpRetDismantleBoxConveyor, ScdFactoryOpRetEnableNode,
+        ScdFactoryOpRetGridBoxInnerMove, ScdFactoryOpRetGridBoxInnerSplit,
+        ScdFactoryOpRetMoveItemBagToCache, ScdFactoryOpRetMoveItemBagToGridBox,
+        ScdFactoryOpRetMoveItemCacheToBag, ScdFactoryOpRetMoveItemCacheToCache,
+        ScdFactoryOpRetMoveItemCacheToDepot, ScdFactoryOpRetMoveItemConveyorToBag,
+        ScdFactoryOpRetMoveItemDepotToCache, ScdFactoryOpRetMoveItemDepotToGridBox,
+        ScdFactoryOpRetMoveItemGridBoxToBag, ScdFactoryOpRetMoveNode,
+        ScdFactoryOpRetSetCollectTarget, ScdFactoryOpRetSetSelectTarget,
+        ScdFactoryOpRetSetTravelPoleDefaultNext,
+    };
+    use sc_factory_op_ret::OpPayload::{Dismantle, DismantleBoxConveyor, EnableNode, MoveNode, SetCollectTarget, SetSelectTarget, SetTravelPoleDefaultNext, DelConnection, GridBoxInnerMove, GridBoxInnerSplit, MoveItemBagToCache, MoveItemBagToGridBox, MoveItemCacheToBag, MoveItemCacheToCache, MoveItemCacheToDepot, MoveItemConveyorToBag, MoveItemDepotToCache, MoveItemDepotToGridBox, MoveItemGridBoxToBag, CacheTransportEnable};
     Some(match op_type {
-        FactoryOpType::Dismantle => Dismantle(Default::default()),
-        FactoryOpType::DismantleBoxConveyor => DismantleBoxConveyor(Default::default()),
-        FactoryOpType::EnableNode => EnableNode(Default::default()),
-        FactoryOpType::MoveNode => MoveNode(Default::default()),
-        FactoryOpType::SetCollectTarget => SetCollectTarget(Default::default()),
-        FactoryOpType::SetSelectTarget => SetSelectTarget(Default::default()),
-        FactoryOpType::SetTravelPoleDefaultNext => SetTravelPoleDefaultNext(Default::default()),
-        FactoryOpType::DelConnection => DelConnection(Default::default()),
-        FactoryOpType::GridBoxInnerMove => GridBoxInnerMove(Default::default()),
-        FactoryOpType::GridBoxInnerSplit => GridBoxInnerSplit(Default::default()),
-        FactoryOpType::MoveItemBagToCache => MoveItemBagToCache(Default::default()),
-        FactoryOpType::MoveItemBagToGridBox => MoveItemBagToGridBox(Default::default()),
-        FactoryOpType::MoveItemCacheToBag => MoveItemCacheToBag(Default::default()),
-        FactoryOpType::MoveItemCacheToCache => MoveItemCacheToCache(Default::default()),
-        FactoryOpType::MoveItemCacheToDepot => MoveItemCacheToDepot(Default::default()),
-        FactoryOpType::MoveItemConveyorToBag => MoveItemConveyorToBag(Default::default()),
-        FactoryOpType::MoveItemDepotToCache => MoveItemDepotToCache(Default::default()),
-        FactoryOpType::MoveItemDepotToGridBox => MoveItemDepotToGridBox(Default::default()),
-        FactoryOpType::MoveItemGridBoxToBag => MoveItemGridBoxToBag(Default::default()),
-        FactoryOpType::CacheTransportEnable => CacheTransportEnable(Default::default()),
+        FactoryOpType::Dismantle => Dismantle(ScdFactoryOpRetDismantle::default()),
+        FactoryOpType::DismantleBoxConveyor => {
+            DismantleBoxConveyor(ScdFactoryOpRetDismantleBoxConveyor::default())
+        }
+        FactoryOpType::EnableNode => EnableNode(ScdFactoryOpRetEnableNode::default()),
+        FactoryOpType::MoveNode => MoveNode(ScdFactoryOpRetMoveNode::default()),
+        FactoryOpType::SetCollectTarget => {
+            SetCollectTarget(ScdFactoryOpRetSetCollectTarget::default())
+        }
+        FactoryOpType::SetSelectTarget => {
+            SetSelectTarget(ScdFactoryOpRetSetSelectTarget::default())
+        }
+        FactoryOpType::SetTravelPoleDefaultNext => {
+            SetTravelPoleDefaultNext(ScdFactoryOpRetSetTravelPoleDefaultNext::default())
+        }
+        FactoryOpType::DelConnection => DelConnection(ScdFactoryOpRetDelConnection::default()),
+        FactoryOpType::GridBoxInnerMove => {
+            GridBoxInnerMove(ScdFactoryOpRetGridBoxInnerMove::default())
+        }
+        FactoryOpType::GridBoxInnerSplit => {
+            GridBoxInnerSplit(ScdFactoryOpRetGridBoxInnerSplit::default())
+        }
+        FactoryOpType::MoveItemBagToCache => {
+            MoveItemBagToCache(ScdFactoryOpRetMoveItemBagToCache::default())
+        }
+        FactoryOpType::MoveItemBagToGridBox => {
+            MoveItemBagToGridBox(ScdFactoryOpRetMoveItemBagToGridBox::default())
+        }
+        FactoryOpType::MoveItemCacheToBag => {
+            MoveItemCacheToBag(ScdFactoryOpRetMoveItemCacheToBag::default())
+        }
+        FactoryOpType::MoveItemCacheToCache => {
+            MoveItemCacheToCache(ScdFactoryOpRetMoveItemCacheToCache::default())
+        }
+        FactoryOpType::MoveItemCacheToDepot => {
+            MoveItemCacheToDepot(ScdFactoryOpRetMoveItemCacheToDepot::default())
+        }
+        FactoryOpType::MoveItemConveyorToBag => {
+            MoveItemConveyorToBag(ScdFactoryOpRetMoveItemConveyorToBag::default())
+        }
+        FactoryOpType::MoveItemDepotToCache => {
+            MoveItemDepotToCache(ScdFactoryOpRetMoveItemDepotToCache::default())
+        }
+        FactoryOpType::MoveItemDepotToGridBox => {
+            MoveItemDepotToGridBox(ScdFactoryOpRetMoveItemDepotToGridBox::default())
+        }
+        FactoryOpType::MoveItemGridBoxToBag => {
+            MoveItemGridBoxToBag(ScdFactoryOpRetMoveItemGridBoxToBag::default())
+        }
+        FactoryOpType::CacheTransportEnable => {
+            CacheTransportEnable(ScdFactoryOpRetCacheTransportEnable::default())
+        }
         _ => return None,
     })
 }
@@ -149,6 +193,6 @@ pub fn unknown_op_type(index: impl Into<String>, op_type: i32) -> ScFactoryOpRet
         index,
         op_type_enum,
         FactoryOpRetCode::UnknownOpType,
-        format!("unrecognized op_type {}", op_type),
+        format!("unrecognized op_type {op_type}"),
     )
 }

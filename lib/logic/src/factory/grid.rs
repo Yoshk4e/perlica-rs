@@ -18,37 +18,28 @@ pub fn is_in_bounds(pos: GridPos, range: GridRange) -> bool {
     x_ok && y_ok
 }
 
-/// Rejects buildings that would straddle the region boundary.
+fn corners(r: GridRange) -> (i32, i32, i32, i32) {
+    (r.x, r.y, r.x + r.w as i32, r.y + r.h as i32)
+}
+
 pub fn range_within(inner: GridRange, outer: GridRange) -> bool {
-    let inner_x2 = inner.x + inner.w as i32;
-    let inner_y2 = inner.y + inner.h as i32;
-    let outer_x2 = outer.x + outer.w as i32;
-    let outer_y2 = outer.y + outer.h as i32;
-    inner.x >= outer.x && inner.y >= outer.y && inner_x2 <= outer_x2 && inner_y2 <= outer_y2
+    let (ix, iy, ix2, iy2) = corners(inner);
+    let (ox, oy, ox2, oy2) = corners(outer);
+    ix >= ox && iy >= oy && ix2 <= ox2 && iy2 <= oy2
 }
 
-/// Rejects overlapping buildings in `place`.
 pub fn ranges_overlap(a: GridRange, b: GridRange) -> bool {
-    let a_x2 = a.x + a.w as i32;
-    let a_y2 = a.y + a.h as i32;
-    let b_x2 = b.x + b.w as i32;
-    let b_y2 = b.y + b.h as i32;
-    a.x < b_x2 && a_x2 > b.x && a.y < b_y2 && a_y2 > b.y
+    let (ax, ay, ax2, ay2) = corners(a);
+    let (bx, by, bx2, by2) = corners(b);
+    ax < bx2 && ax2 > bx && ay < by2 && ay2 > by
 }
 
-/// Conveyor / connection rule: share an edge, not just a corner.
-// TODO(Clause 2): confirm live-server rules (corner-touch allowed? edge
-// length ≥1?) and tighten the check once we know.
 pub fn ranges_edge_adjacent(a: GridRange, b: GridRange) -> bool {
     if !ranges_overlap(a, b) {
-        let a_x2 = a.x + a.w as i32;
-        let a_y2 = a.y + a.h as i32;
-        let b_x2 = b.x + b.w as i32;
-        let b_y2 = b.y + b.h as i32;
-
-        let horizontal_touch = (a_x2 == b.x || b_x2 == a.x) && a.y < b_y2 && a_y2 > b.y;
-        let vertical_touch = (a_y2 == b.y || b_y2 == a.y) && a.x < b_x2 && a_x2 > b.x;
-
+        let (ax, ay, ax2, ay2) = corners(a);
+        let (bx, _by, bx2, by2) = corners(b);
+        let horizontal_touch = (ax2 == bx || bx2 == ax) && ay < by2 && ay2 > b.y;
+        let vertical_touch = (ay2 == b.y || by2 == ay) && ax < bx2 && ax2 > b.x;
         return horizontal_touch || vertical_touch;
     }
     false

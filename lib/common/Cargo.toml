@@ -6,3 +6,6 @@ version.workspace = true
 [dependencies]
 tracing.workspace = true
 tracing-subscriber.workspace = true
+
+[lints]
+workspace = true

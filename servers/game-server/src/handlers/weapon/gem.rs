@@ -22,8 +22,8 @@ pub async fn on_cs_weapon_attach_gem(
         );
     }
 
-    if response.is_ok() {
-        if let Err(e) = ctx
+    if response.is_ok()
+        && let Err(e) = ctx
             .db
             .persist_char_bag_incremental(&ctx.player.uid, &mut ctx.player.char_bag)
             .await
@@ -33,7 +33,6 @@ pub async fn on_cs_weapon_attach_gem(
                 ctx.player.uid, e
             );
         }
-    }
 
     response.unwrap_or(ScWeaponAttachGem {
         weaponid: req.weaponid,
@@ -62,8 +61,8 @@ pub async fn on_cs_weapon_detach_gem(
         );
     }
 
-    if response.is_ok() {
-        if let Err(e) = ctx
+    if response.is_ok()
+        && let Err(e) = ctx
             .db
             .persist_char_bag_incremental(&ctx.player.uid, &mut ctx.player.char_bag)
             .await
@@ -73,7 +72,6 @@ pub async fn on_cs_weapon_detach_gem(
                 ctx.player.uid, e
             );
         }
-    }
 
     response.unwrap_or(ScWeaponDetachGem {
         weaponid: req.weaponid,

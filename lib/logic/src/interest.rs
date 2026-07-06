@@ -300,8 +300,8 @@ impl ReplicationZone {
     #[inline]
     pub fn from_dist_sq_capped(dist_sq: f32, max_zone: ReplicationZone) -> Option<Self> {
         let max_idx = max_zone.index();
-        for i in 0..=max_idx {
-            if dist_sq <= ZONE_ENTER_RADII_SQ[i] {
+        for (i, &radius_sq) in ZONE_ENTER_RADII_SQ.iter().take(max_idx + 1).enumerate() {
+            if dist_sq <= radius_sq {
                 // Safety: i is within 0..4 because max_idx is.
                 return Some(match i {
                     0 => Self::Immediate,
@@ -533,11 +533,11 @@ impl InterestManager {
         // Only integrate samples in the 1 ms to 2 s window (guards teleports
         // and the very first call when last_pos_ms == 0).
         if dt_ms > 0 && dt_ms < 2_000 && self.last_pos_ms != 0 {
-            let dt_s = dt_ms as f32 / 1_000.0;
+            let seconds = dt_ms as f32 / 1_000.0;
             let dx = pos.0 - self.last_pos.0;
             let dy = pos.1 - self.last_pos.1;
             let dz = pos.2 - self.last_pos.2;
-            let sample_sq = (dx * dx + dy * dy + dz * dz) / (dt_s * dt_s);
+            let sample_sq = (dx * dx + dy * dy + dz * dz) / (seconds * seconds);
             // alpha = 0.3 smooths packet-level jitter while tracking sustained sprints.
             self.speed_sq_ema = self.speed_sq_ema * 0.7 + sample_sq * 0.3;
         }

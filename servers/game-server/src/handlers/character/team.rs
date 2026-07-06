@@ -28,8 +28,7 @@ pub async fn on_cs_char_bag_set_team_leader(
     if let Some(team) = ctx.player.char_bag.teams.get_mut(team_idx) {
         let in_team = team.char_team.iter().any(|s| {
             s.char_index()
-                .map(|i| i.object_id() == req.leaderid)
-                .unwrap_or(false)
+                .is_some_and(|i| i.object_id() == req.leaderid)
         });
         if in_team {
             team.leader_index = CharIndex::from_object_id(req.leaderid);
@@ -78,12 +77,12 @@ pub async fn on_cs_char_bag_set_curr_team_index(
     let old_ids: Vec<u64> = ctx.player.char_bag.teams[old]
         .char_team
         .iter()
-        .filter_map(|s| s.object_id())
+        .filter_map(perlica_logic::character::char_bag::TeamSlot::object_id)
         .collect();
     let new_ids: Vec<u64> = ctx.player.char_bag.teams[new]
         .char_team
         .iter()
-        .filter_map(|s| s.object_id())
+        .filter_map(perlica_logic::character::char_bag::TeamSlot::object_id)
         .collect();
     ctx.player.char_bag.meta.curr_team_index = new as u32;
     // curr_team_index lives on the `beyond_players` scalar row.
@@ -146,7 +145,7 @@ pub async fn on_cs_char_bag_set_team(ctx: &mut NetContext<'_>, req: CsCharBagSet
             );
             ctx.send_error(
                 Code::ErrCharBagSetTeamFailed,
-                format!("objid {} is not owned by player", objid),
+                format!("objid {objid} is not owned by player"),
             )
             .await;
 
@@ -158,7 +157,7 @@ pub async fn on_cs_char_bag_set_team(ctx: &mut NetContext<'_>, req: CsCharBagSet
                     char_team: current_team
                         .char_team
                         .iter()
-                        .filter_map(|s| s.object_id())
+                        .filter_map(perlica_logic::character::char_bag::TeamSlot::object_id)
                         .collect(),
                 })
                 .await;
@@ -169,7 +168,7 @@ pub async fn on_cs_char_bag_set_team(ctx: &mut NetContext<'_>, req: CsCharBagSet
     let old_ids: Vec<u64> = ctx.player.char_bag.teams[team_index]
         .char_team
         .iter()
-        .filter_map(|s| s.object_id())
+        .filter_map(perlica_logic::character::char_bag::TeamSlot::object_id)
         .collect();
     let is_active = team_index == ctx.player.char_bag.meta.curr_team_index as usize;
     let mut new_slots: [TeamSlot; Team::SLOTS_COUNT] = Default::default();
@@ -187,14 +186,14 @@ pub async fn on_cs_char_bag_set_team(ctx: &mut NetContext<'_>, req: CsCharBagSet
         let leader_still_in_team = team
             .char_team
             .iter()
-            .filter_map(|s| s.char_index())
+            .filter_map(perlica_logic::character::char_bag::TeamSlot::char_index)
             .any(|idx| idx == team.leader_index);
 
         if !leader_still_in_team {
             team.leader_index = team
                 .char_team
                 .iter()
-                .find_map(|s| s.char_index())
+                .find_map(perlica_logic::character::char_bag::TeamSlot::char_index)
                 .unwrap_or_default();
         }
     }
@@ -266,7 +265,7 @@ pub async fn on_cs_char_bag_set_team_name(
     };
 
     if let Some(team) = ctx.player.char_bag.teams.get_mut(team_index) {
-        team.name = sanitized.clone();
+        team.name.clone_from(&sanitized);
     } else {
         return ScCharBagSetTeamName {
             team_index: req.team_index,

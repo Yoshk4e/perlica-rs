@@ -129,14 +129,13 @@ pub(crate) async fn load(pool: &SqlitePool, uid: &str) -> Result<CharBag> {
         let team_idx: i64 = r.try_get("team_index")?;
         let slot_idx: i64 = r.try_get("slot_index")?;
         let char_idx: Option<i64> = r.try_get("char_index")?;
-        if let Some(team) = bag.teams.get_mut(team_idx as usize) {
-            if let Some(slot) = team.char_team.get_mut(slot_idx as usize) {
+        if let Some(team) = bag.teams.get_mut(team_idx as usize)
+            && let Some(slot) = team.char_team.get_mut(slot_idx as usize) {
                 *slot = match char_idx {
                     Some(c) => TeamSlot::Occupied(CharIndex::from_usize(c as usize)),
                     None => TeamSlot::Empty,
                 };
             }
-        }
     }
 
     let weapon_rows = sqlx::query(
@@ -423,9 +422,9 @@ async fn prune_char_skills_for_char(
             .await?;
         return Ok(());
     }
-    const CHUNK: usize = 500;
+    let chunk_size: usize = 500;
     let ids: Vec<&str> = keep.keys().map(String::as_str).collect();
-    for chunk in ids.chunks(CHUNK) {
+    for chunk in ids.chunks(chunk_size) {
         let placeholders = (0..chunk.len()).map(|_| "?").collect::<Vec<_>>().join(", ");
         let sql = format!(
             "DELETE FROM beyond_char_skills
@@ -706,8 +705,8 @@ async fn prune_stackable_depot(
         .await?;
         return Ok(());
     }
-    const CHUNK: usize = 500;
-    for chunk in keep.chunks(CHUNK) {
+    let chunk_size: usize = 500;
+    for chunk in keep.chunks(chunk_size) {
         let placeholders = (0..chunk.len()).map(|_| "?").collect::<Vec<_>>().join(", ");
         let sql = format!(
             "DELETE FROM beyond_stackable_items
@@ -1112,8 +1111,8 @@ async fn delete_chunked_i64(
     if all.is_empty() {
         return Ok(());
     }
-    const CHUNK: usize = 500;
-    for chunk in all.chunks(CHUNK) {
+    let chunk_size: usize = 500;
+    for chunk in all.chunks(chunk_size) {
         let placeholders = (0..chunk.len()).map(|_| "?").collect::<Vec<_>>().join(", ");
         let sql = format!("DELETE FROM {table} WHERE uid = ?1 AND {pk_col} IN ({placeholders})");
         let mut q = sqlx::query(&sql).bind(uid);

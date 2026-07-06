@@ -20,8 +20,8 @@ pub async fn on_cs_weapon_puton(ctx: &mut NetContext<'_>, req: CsWeaponPuton) ->
         );
     }
 
-    if response.is_ok() {
-        if let Err(e) = ctx
+    if response.is_ok()
+        && let Err(e) = ctx
             .db
             .persist_char_bag_incremental(&ctx.player.uid, &mut ctx.player.char_bag)
             .await
@@ -31,7 +31,6 @@ pub async fn on_cs_weapon_puton(ctx: &mut NetContext<'_>, req: CsWeaponPuton) ->
                 ctx.player.uid, e
             );
         }
-    }
 
     response.unwrap_or(ScWeaponPuton {
         charid: req.charid,

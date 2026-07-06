@@ -29,7 +29,7 @@
 //!   Once Clause 3 `to_proto()` is implemented, use
 //!   `manager.get_or_bootstrap(...).to_proto()` for `push_factory` body.
 //! - **Clause 3.4** replace the current hub component layout in
-//!  `bootstrap_region` with `component_factory::create_components_from_template("sp_hub_1")`.
+//!   `bootstrap_region` with `component_factory::create_components_from_template("sp_hub_1")`.
 
 use std::collections::HashMap;
 
@@ -94,8 +94,8 @@ impl FactoryManager {
             .first()?
             .clone();
 
-        if let Some(region) = factory_table.get_region(&region_id) {
-            if region.level_id != scene_name {
+        if let Some(region) = factory_table.get_region(&region_id)
+            && region.level_id != scene_name {
                 tracing::warn!(
                     scene_name,
                     region_id,
@@ -103,7 +103,6 @@ impl FactoryManager {
                     "factory regionData/levelRegionData disagree on scene mapping"
                 );
             }
-        }
 
         Some(region_id)
     }

@@ -42,7 +42,7 @@ impl NumIdStrAssets {
             .get(category)?
             .dic
             .get(&id.to_string())
-            .map(|s| s.as_str())
+            .map(std::string::String::as_str)
     }
 
     pub fn get_item_str(&self, id: u32) -> Option<&str> {

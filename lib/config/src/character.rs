@@ -38,14 +38,6 @@ pub struct CharacterAssets {
 
 impl CharacterAssets {
     pub(super) fn load(tables_dir: &Path) -> Result<Self> {
-        let path = tables_dir.join("Character.json");
-        let contents = std::fs::read_to_string(&path).map_err(|e| ConfigError::ReadFile {
-            path: path.clone(),
-            source: e,
-        })?;
-
-        // Deserialise just what we need from the file without pulling in every
-        // field, serde's `deny_unknown_fields` is intentionally *not* set.
         #[derive(Deserialize)]
         struct CharacterFile {
             #[serde(rename = "characterTable")]
@@ -53,6 +45,12 @@ impl CharacterAssets {
             #[serde(rename = "characterConst")]
             character_const: RawCharacterConst,
         }
+
+        let path = tables_dir.join("Character.json");
+        let contents = std::fs::read_to_string(&path).map_err(|e| ConfigError::ReadFile {
+            path: path.clone(),
+            source: e,
+        })?;
 
         let file: CharacterFile =
             serde_json::from_str(&contents).map_err(|e| ConfigError::ParseJson {
