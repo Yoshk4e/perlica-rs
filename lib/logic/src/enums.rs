@@ -381,7 +381,7 @@ pub enum FCComponentType {
 }
 
 /// `Beyond.GEnums.FCComponentPos`, keys for the `component_pos` map on a node.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(i32)]
 pub enum FCComponentPos {
     Invalid = 0,

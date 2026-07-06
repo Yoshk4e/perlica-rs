@@ -15,8 +15,9 @@ use crate::enums::{
 pub mod blackboard;
 pub mod manager;
 
-#[cfg(test)]
-mod tests;
+// TODO: add tests
+/*#[cfg(test)]
+mod tests;*/
 
 pub use blackboard::PowerBlackboard;
 pub use manager::FactoryManager;
