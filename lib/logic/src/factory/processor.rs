@@ -13,10 +13,12 @@
 //! a thin wrapper that decodes the proto, calls these functions, and
 //! encodes the response.
 
-use config::factory_table::FTableAssets;
 use config::factory_processor_const::FProcessorConstAssets;
+use config::factory_table::FTableAssets;
 
-use crate::factory::{FactoryComponent, FactoryManager, InventoryState, ProcessorMachine, Tick, current_tick};
+use crate::factory::{
+    FactoryComponent, FactoryManager, InventoryState, ProcessorMachine, Tick, current_tick,
+};
 
 /// Result of a processor craft attempt. On success, `new_items` holds
 /// the produced items. On failure, it's empty and the caller should
@@ -146,7 +148,14 @@ pub fn recast_gem(
         return CraftResult { new_items: vec![] };
     }
 
-    make_gem(manager, assets, region_name, formula_id, count, cost_gem_inst_ids)
+    make_gem(
+        manager,
+        assets,
+        region_name,
+        formula_id,
+        count,
+        cost_gem_inst_ids,
+    )
 }
 
 /// Mark formula IDs as read across all processor states. Moves them

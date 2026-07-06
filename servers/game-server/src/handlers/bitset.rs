@@ -8,7 +8,8 @@ use tracing::{debug, info, warn};
 
 /// Sets bits in a named bitset. Unknown type IDs are silently skipped.
 pub async fn on_cs_bitset_add(ctx: &mut NetContext<'_>, req: CsBitsetAdd) -> ScBitsetAdd {
-    let type_name = BitsetType::from_i32(req.r#type).map_or_else(|| "Unknown".to_string(), |t| format!("{t:?}"));
+    let type_name = BitsetType::from_i32(req.r#type)
+        .map_or_else(|| "Unknown".to_string(), |t| format!("{t:?}"));
 
     debug!(
         "bitset add request: type={}, bits={:?}",
@@ -46,7 +47,8 @@ pub async fn on_cs_bitset_add(ctx: &mut NetContext<'_>, req: CsBitsetAdd) -> ScB
 
 /// Clears bits in a named bitset. Clearing an already-clear bit is a no-op.
 pub async fn on_cs_bitset_remove(ctx: &mut NetContext<'_>, req: CsBitsetRemove) -> ScBitsetRemove {
-    let type_name = BitsetType::from_i32(req.r#type).map_or_else(|| "Unknown".to_string(), |t| format!("{t:?}"));
+    let type_name = BitsetType::from_i32(req.r#type)
+        .map_or_else(|| "Unknown".to_string(), |t| format!("{t:?}"));
 
     debug!(
         "bitset remove request: type={}, bits={:?}",

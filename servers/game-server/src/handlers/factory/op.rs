@@ -20,19 +20,14 @@ pub mod special;
 pub mod target;
 
 use crate::net::NetContext;
-use perlica_proto::{
-    CsFactoryOp, FactoryOpType, ScFactoryOpRet, cs_factory_op::OpPayload as CsOp,
-};
+use perlica_proto::{CsFactoryOp, FactoryOpType, ScFactoryOpRet, cs_factory_op::OpPayload as CsOp};
 use tracing::{debug, warn};
 
 use super::response;
 
 /// Entry point registered in `net/router.rs`. Decodes the request,
 /// dispatches on `op_type` / `op_payload`, and returns the reply.
-pub async fn on_cs_factory_op(
-    ctx: &mut NetContext<'_>,
-    req: CsFactoryOp,
-) -> ScFactoryOpRet {
+pub async fn on_cs_factory_op(ctx: &mut NetContext<'_>, req: CsFactoryOp) -> ScFactoryOpRet {
     let Ok(op_type) = FactoryOpType::try_from(req.op_type) else {
         warn!(op_type = req.op_type, "CsFactoryOp with unknown op_type");
         return response::unknown_op_type(req.index, req.op_type);
@@ -51,10 +46,10 @@ pub async fn on_cs_factory_op(
     // need to dispatch on `op_type` and let the handler complain.
     let payload = req.op_payload;
 
-    
-
     match (op_type, payload) {
-        (FactoryOpType::Place, Some(CsOp::Place(p))) => place::handle(ctx, req.index, req.name, p).await,
+        (FactoryOpType::Place, Some(CsOp::Place(p))) => {
+            place::handle(ctx, req.index, req.name, p).await
+        }
         (FactoryOpType::Place, _) => bad_payload(req.index, op_type),
 
         (FactoryOpType::PlaceBoxConveyor, Some(CsOp::PlaceBoxConveyor(p))) => {

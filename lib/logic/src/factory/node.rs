@@ -107,20 +107,17 @@ impl FactoryNode {
         };
 
         let transform = Some(ScdFactorySyncTransform {
-            position: self.transform.position.map(|p| ScdFactoryVector2Int {
-                x: p.x,
-                y: p.y,
-            }),
+            position: self
+                .transform
+                .position
+                .map(|p| ScdFactoryVector2Int { x: p.x, y: p.y }),
             direction: self.transform.direction as i32,
             mesh: self.transform.mesh.as_ref().map(|m| ScdFactorySyncMesh {
                 mesh_type: m.mesh_type as i32,
                 points: m
                     .points
                     .iter()
-                    .map(|p| ScdFactoryVector2Int {
-                        x: p.x,
-                        y: p.y,
-                    })
+                    .map(|p| ScdFactoryVector2Int { x: p.x, y: p.y })
                     .collect(),
             }),
             scene_name: self.transform.scene_name.clone(),

@@ -197,9 +197,7 @@ pub fn create_components_from_template(
             // Miner speed lives in minerData.speed. We don't store it on
             // the Collector component itself yet -- the completion checker
             // (Clause 8) will look it up from config at tick time.
-            let _speed = assets
-                .get_miner(template_id)
-                .map_or(250, |m| m.speed);
+            let _speed = assets.get_miner(template_id).map_or(250, |m| m.speed);
 
             add(
                 FCComponentPos::Collector,

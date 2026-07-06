@@ -1,17 +1,8 @@
-//! `AddConnection` and `DelConnection` ops.
-//!
-//! Connections are the wires between power poles / travel poles / hubs.
-//! Each connection has a stable `index` (assigned by the server) so
-//! `DelConnection` can target it without ambiguity -- the same pair of
-//! nodes can carry both a Power and a Travel link, so `(a, b)` alone
-//! isn't unique.
-
 use crate::net::NetContext;
-use perlica_logic::enums::{FCConnectionPortType, FCConnectionType};
-use perlica_logic::factory::FactoryConnection;
+use perlica_logic::enums::FCConnectionType;
 use perlica_proto::{
     CsdFactoryOpAddConnection, CsdFactoryOpDelConnection, FactoryOpRetCode, FactoryOpType,
-    ScFactoryOpRet, ScdFactorySyncSceneConnectionPort,
+    ScFactoryOpRet,
 };
 
 use super::super::response;
@@ -22,8 +13,6 @@ pub async fn handle_add(
     region_name: String,
     req: CsdFactoryOpAddConnection,
 ) -> ScFactoryOpRet {
-    // The client gives us a list of ports; we expect exactly 2 (one per
-    // endpoint). Anything else is malformed.
     if req.ports.len() != 2 {
         return response::fail(
             index,
@@ -46,58 +35,16 @@ pub async fn handle_add(
         }
     };
 
-    // Each port entry carries the node_id it belongs to. The wire format
-    // uses a side-channel for the node_id but the proto only exposes
-    // `port_type` + position here -- the client also sends the node_id
-    // in the parent `CsFactoryOp.name` field as the region, and the
-    // individual node IDs come through the port payload's implicit
-    // ordering. This is genuinely awkward; the live server relies on
-    // the ports being in (a, b) order with the node_id baked into the
-    // port's serialized form.
-    //
-    // TODO: re-check the proto definition for `ScdFactorySyncSceneConnectionPort`
-    // -- it should carry a `node_id` field. If not, the connection
-    // handler needs the client to also send the node IDs separately.
-    let (node_a, node_b, port_type) = parse_ports(&req.ports, conn_type);
+    // TODO: extract node IDs from the port payload once the wire format
+    // is confirmed. For now we can't add connections without node IDs.
+    let _ = (conn_type, ctx, region_name);
 
-    let (Some(node_id_a), Some(node_id_b)) = (node_a, node_b) else {
-        return response::fail(
-            index,
-            FactoryOpType::AddConnection,
-            FactoryOpRetCode::Fail,
-            "could not extract node IDs from ports payload",
-        );
-    };
-
-    let Some(region) = ctx.player.factory.region_mut(&region_name) else {
-            return response::fail(
-                index,
-                FactoryOpType::AddConnection,
-                FactoryOpRetCode::Fail,
-                format!("region {region_name} not found"),
-            );
-    };
-
-    // Both endpoints must exist.
-    if !region.nodes.contains_key(&node_id_a) || !region.nodes.contains_key(&node_id_b) {
-        return response::fail(
-            index,
-            FactoryOpType::AddConnection,
-            FactoryOpRetCode::Fail,
-            format!("one or both endpoints missing: {node_id_a} / {node_id_b}"),
-        );
-    }
-
-    let conn_index = region.next_connection_index();
-    region.connections.push(FactoryConnection {
-        connection_type: conn_type,
-        port_type,
-        node_id_a,
-        node_id_b,
-        index: conn_index,
-    });
-
-    response::ok_with_add_connection(index, conn_index)
+    response::fail(
+        index,
+        FactoryOpType::AddConnection,
+        FactoryOpRetCode::Fail,
+        "could not extract node IDs from ports payload",
+    )
 }
 
 pub async fn handle_del(
@@ -106,46 +53,13 @@ pub async fn handle_del(
     region_name: String,
     req: CsdFactoryOpDelConnection,
 ) -> ScFactoryOpRet {
-    let Some(region) = ctx.player.factory.region_mut(&region_name) else {
-            return response::fail(
-                index,
-                FactoryOpType::DelConnection,
-                FactoryOpRetCode::Fail,
-                format!("region {region_name} not found"),
-            );
-    };
-
-    let before = region.connections.len();
-    region.connections.retain(|c| c.index != req.index);
-    if region.connections.len() == before {
-        return response::fail(
+    match ctx.player.factory.del_connection(&region_name, req.index) {
+        Ok(()) => response::ok(index, FactoryOpType::DelConnection),
+        Err(msg) => response::fail(
             index,
             FactoryOpType::DelConnection,
             FactoryOpRetCode::Fail,
-            format!("no connection with index {}", req.index),
-        );
+            msg,
+        ),
     }
-
-    response::ok(index, FactoryOpType::DelConnection)
-}
-
-/// Best-effort port parser. The proto's `ScdFactorySyncSceneConnectionPort`
-/// doesn't expose a node_id field directly, so we look at `port_type`
-/// (Hub=0, PowerPole=1, Logic=2) to figure out what kind of endpoints
-/// we're connecting, and leave the actual node_id extraction as a TODO
-/// until the wire format is confirmed against a live capture.
-fn parse_ports(
-    ports: &[ScdFactorySyncSceneConnectionPort],
-    conn_type: FCConnectionType,
-) -> (Option<u32>, Option<u32>, FCConnectionPortType) {
-    let port_type = match conn_type {
-        FCConnectionType::Power => FCConnectionPortType::PowerPole,
-        FCConnectionType::Travel => FCConnectionPortType::Hub,
-    };
-
-    let _ = ports;
-    // TODO: once the wire format is confirmed, extract node_id from
-    // each port entry. For now return None so the caller fails loudly
-    // rather than silently wiring up the wrong endpoints.
-    (None, None, port_type)
 }

@@ -366,9 +366,10 @@ impl LevelScriptManager {
                 .map(|r| &r.properties);
             if let Some(props) = stored_props
                 && let Some(is_over) = props.get("isOver")
-                    && is_over.value_bool_list.first().copied().unwrap_or(false) {
-                        continue;
-                    }
+                && is_over.value_bool_list.first().copied().unwrap_or(false)
+            {
+                continue;
+            }
 
             if self
                 .set_state(scene_name, script_id, LevelScriptState::Active)

@@ -67,9 +67,7 @@ fn help_text() -> String {
 }
 
 async fn heal_command(ctx: &mut NetContext<'_>, args: &[&str]) -> Result<GmOutcome, String> {
-    let heal_all = args
-        .first()
-        .is_none_or(|v| !v.eq_ignore_ascii_case("team"));
+    let heal_all = args.first().is_none_or(|v| !v.eq_ignore_ascii_case("team"));
 
     let mut targets = HashSet::new();
     if heal_all {
@@ -79,7 +77,11 @@ async fn heal_command(ctx: &mut NetContext<'_>, args: &[&str]) -> Result<GmOutco
     } else {
         let team_idx = ctx.player.char_bag.meta.curr_team_index as usize;
         if let Some(team) = ctx.player.char_bag.teams.get(team_idx) {
-            for objid in team.char_team.iter().filter_map(perlica_logic::character::char_bag::TeamSlot::object_id) {
+            for objid in team
+                .char_team
+                .iter()
+                .filter_map(perlica_logic::character::char_bag::TeamSlot::object_id)
+            {
                 targets.insert(objid);
             }
         }

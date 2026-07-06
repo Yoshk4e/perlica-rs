@@ -106,12 +106,12 @@ pub async fn on_cs_scene_interactive_event_trigger(
         })
         .persist(&ctx.player.uid, ctx.db)
         .await
-        {
-            warn!(
-                "Failed to persist scene save state after interactive event: uid={}, error={}",
-                ctx.player.uid, e
-            );
-        }
+    {
+        warn!(
+            "Failed to persist scene save state after interactive event: uid={}, error={}",
+            ctx.player.uid, e
+        );
+    }
 
     ScSceneInteractiveEventTrigger {}
 }
@@ -128,11 +128,7 @@ async fn handle_activate(ctx: &mut NetContext<'_>, req: &CsSceneInteractiveEvent
     let entity_id = req.id;
     let scene_name = req.scene_name.clone();
 
-    let is_camp = ctx
-        .player
-        .entities
-        .get(entity_id)
-        .is_some_and(is_campfire);
+    let is_camp = ctx.player.entities.get(entity_id).is_some_and(is_campfire);
 
     if !is_camp {
         warn!(
@@ -163,25 +159,24 @@ async fn handle_activate(ctx: &mut NetContext<'_>, req: &CsSceneInteractiveEvent
 
     let _ = ctx.notify(prop_update).await;
 
-    if is_camp
-        && let Some(entity) = ctx.player.entities.get(entity_id) {
-            ctx.player
-                .scene
-                .set_checkpoint(perlica_logic::scene::CheckpointInfo {
-                    scene_name: scene_name.clone(),
-                    pos_x: entity.pos_x,
-                    pos_y: entity.pos_y,
-                    pos_z: entity.pos_z,
-                });
-            ctx.player
-                .scene
-                .set_revival_mode(perlica_logic::scene::RevivalMode::CheckPoint);
+    if is_camp && let Some(entity) = ctx.player.entities.get(entity_id) {
+        ctx.player
+            .scene
+            .set_checkpoint(perlica_logic::scene::CheckpointInfo {
+                scene_name: scene_name.clone(),
+                pos_x: entity.pos_x,
+                pos_y: entity.pos_y,
+                pos_z: entity.pos_z,
+            });
+        ctx.player
+            .scene
+            .set_revival_mode(perlica_logic::scene::RevivalMode::CheckPoint);
 
-            debug!(
-                "Campfire activated: id={}, checkpoint set at ({}, {}, {}) in '{}'",
-                entity_id, entity.pos_x, entity.pos_y, entity.pos_z, scene_name
-            );
-        }
+        debug!(
+            "Campfire activated: id={}, checkpoint set at ({}, {}, {}) in '{}'",
+            entity_id, entity.pos_x, entity.pos_y, entity.pos_z, scene_name
+        );
+    }
 
     info!(
         "Interactive 'activate' processed for id={} in '{}'",
@@ -229,11 +224,13 @@ async fn handle_chest_open(ctx: &mut NetContext<'_>, req: &CsSceneInteractiveEve
         return;
     };
 
-    let bundles: Vec<(String, i64)> = if let Some(entry) = ctx.assets.rewards.get(&reward_id) { entry
-    .item_bundles
-    .iter()
-    .map(|b| (b.id.clone(), b.count))
-    .collect() } else {
+    let bundles: Vec<(String, i64)> = if let Some(entry) = ctx.assets.rewards.get(&reward_id) {
+        entry
+            .item_bundles
+            .iter()
+            .map(|b| (b.id.clone(), b.count))
+            .collect()
+    } else {
         warn!(
             "Chest id={} ({}) references unknown rewardId `{}` - opening with empty drop",
             entity_id, template_id, reward_id

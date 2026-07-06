@@ -450,7 +450,8 @@ impl CharBag {
     }
 
     fn get_weapon_data_for_char(&self, char_id: u64) -> Option<WeaponData> {
-        self.get_equipped_weapon(char_id).map(std::convert::Into::into)
+        self.get_equipped_weapon(char_id)
+            .map(std::convert::Into::into)
     }
 
     pub fn char_bag_info(&self, assets: &BeyondAssets) -> Result<ScSyncCharBagInfo> {

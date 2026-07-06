@@ -493,7 +493,10 @@ mod tests {
             quest_id: quest_id.to_string(),
             ordinal_key: quest_id.split("_q#").last().unwrap_or("1").to_string(),
             numeric_ordinal: quest_id.split("_q#").last().and_then(|s| s.parse().ok()),
-            objective_keys: objective_keys.iter().map(std::string::ToString::to_string).collect(),
+            objective_keys: objective_keys
+                .iter()
+                .map(std::string::ToString::to_string)
+                .collect(),
         }
     }
 

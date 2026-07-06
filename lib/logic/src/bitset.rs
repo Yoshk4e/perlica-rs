@@ -116,7 +116,9 @@ impl BitsetManager {
     }
 
     pub fn count(&self, bitset_type: BitsetType) -> usize {
-        self.bits.get(&bitset_type).map_or(0, std::collections::HashSet::len)
+        self.bits
+            .get(&bitset_type)
+            .map_or(0, std::collections::HashSet::len)
     }
 
     bitset_helpers! {

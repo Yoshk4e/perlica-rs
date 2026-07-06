@@ -1,5 +1,4 @@
 use crate::net::NetContext;
-use std::collections::HashMap;
 use perlica_db::Persistable;
 use perlica_logic::mail::StoredMail;
 use perlica_proto::{
@@ -7,6 +6,7 @@ use perlica_proto::{
     CsMailDef, CsReadMail, MailContent, RewardItem, ScDelMailNotify, ScGetMail,
     ScGetMailAttachment, ScNewMailNotify, ScReadMail, ScSyncAllMail,
 };
+use std::collections::HashMap;
 use tracing::{debug, warn};
 
 pub async fn push_mail_sync(ctx: &mut NetContext<'_>) -> bool {
@@ -209,12 +209,13 @@ pub async fn on_cs_get_all_mail_attachment(
 
     // TODO: grant items for each success ID.
     if !success.is_empty()
-        && let Err(e) = ctx.player.mail.persist(&ctx.player.uid, ctx.db).await {
-            warn!(
-                "Failed to persist mail after claim all attachments: uid={}, error={}",
-                ctx.player.uid, e
-            );
-        }
+        && let Err(e) = ctx.player.mail.persist(&ctx.player.uid, ctx.db).await
+    {
+        warn!(
+            "Failed to persist mail after claim all attachments: uid={}, error={}",
+            ctx.player.uid, e
+        );
+    }
 
     ScGetMailAttachment {
         success_mail_id_list: success,

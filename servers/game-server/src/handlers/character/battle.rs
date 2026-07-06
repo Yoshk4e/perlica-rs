@@ -23,16 +23,11 @@ pub async fn on_cs_char_set_battle_info(ctx: &mut NetContext<'_>, req: CsCharSet
     );
 
     let team_idx = ctx.player.char_bag.meta.curr_team_index as usize;
-    let in_active_team = ctx
-        .player
-        .char_bag
-        .teams
-        .get(team_idx)
-        .is_some_and(|team| {
-            team.char_team
-                .iter()
-                .any(|slot| slot.object_id() == Some(req.objid))
-        });
+    let in_active_team = ctx.player.char_bag.teams.get(team_idx).is_some_and(|team| {
+        team.char_team
+            .iter()
+            .any(|slot| slot.object_id() == Some(req.objid))
+    });
 
     if !in_active_team {
         warn!(

@@ -93,7 +93,8 @@ pub async fn push_factory(ctx: &mut NetContext<'_>) -> bool {
     let top_left_x = center_x - hub_w / 2;
     let top_left_y = center_y - hub_h / 2;
 
-    let Some(region_id) = FactoryManager::derive_region_id(&ctx.assets.factory_table, &scene_name) else {
+    let Some(region_id) = FactoryManager::derive_region_id(&ctx.assets.factory_table, &scene_name)
+    else {
         warn!(
             scene = %scene_name,
             "no levelRegionData entry for scene, skipping factory push"

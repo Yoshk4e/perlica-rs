@@ -95,14 +95,15 @@ impl FactoryManager {
             .clone();
 
         if let Some(region) = factory_table.get_region(&region_id)
-            && region.level_id != scene_name {
-                tracing::warn!(
-                    scene_name,
-                    region_id,
-                    expected_scene = %region.level_id,
-                    "factory regionData/levelRegionData disagree on scene mapping"
-                );
-            }
+            && region.level_id != scene_name
+        {
+            tracing::warn!(
+                scene_name,
+                region_id,
+                expected_scene = %region.level_id,
+                "factory regionData/levelRegionData disagree on scene mapping"
+            );
+        }
 
         Some(region_id)
     }

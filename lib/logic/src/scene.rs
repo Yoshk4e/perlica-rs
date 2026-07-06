@@ -1507,14 +1507,15 @@ impl SceneManager {
                 continue;
             };
 
-            let is_resident = self
-                .scene_cache
-                .as_ref().map_or_else(|| {
+            let is_resident = self.scene_cache.as_ref().map_or_else(
+                || {
                     is_always_resident_interactive(
                         &interactive.base.template_id,
                         interactive.base.entity_type,
                     )
-                }, |c| c.resident_ids.contains(&interactive.base.level_logic_id));
+                },
+                |c| c.resident_ids.contains(&interactive.base.level_logic_id),
+            );
             if is_resident {
                 continue;
             }

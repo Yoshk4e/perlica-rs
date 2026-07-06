@@ -31,7 +31,13 @@ fn empty_payload(op_type: FactoryOpType) -> Option<sc_factory_op_ret::OpPayload>
         ScdFactoryOpRetSetCollectTarget, ScdFactoryOpRetSetSelectTarget,
         ScdFactoryOpRetSetTravelPoleDefaultNext,
     };
-    use sc_factory_op_ret::OpPayload::{Dismantle, DismantleBoxConveyor, EnableNode, MoveNode, SetCollectTarget, SetSelectTarget, SetTravelPoleDefaultNext, DelConnection, GridBoxInnerMove, GridBoxInnerSplit, MoveItemBagToCache, MoveItemBagToGridBox, MoveItemCacheToBag, MoveItemCacheToCache, MoveItemCacheToDepot, MoveItemConveyorToBag, MoveItemDepotToCache, MoveItemDepotToGridBox, MoveItemGridBoxToBag, CacheTransportEnable};
+    use sc_factory_op_ret::OpPayload::{
+        CacheTransportEnable, DelConnection, Dismantle, DismantleBoxConveyor, EnableNode,
+        GridBoxInnerMove, GridBoxInnerSplit, MoveItemBagToCache, MoveItemBagToGridBox,
+        MoveItemCacheToBag, MoveItemCacheToCache, MoveItemCacheToDepot, MoveItemConveyorToBag,
+        MoveItemDepotToCache, MoveItemDepotToGridBox, MoveItemGridBoxToBag, MoveNode,
+        SetCollectTarget, SetSelectTarget, SetTravelPoleDefaultNext,
+    };
     Some(match op_type {
         FactoryOpType::Dismantle => Dismantle(ScdFactoryOpRetDismantle::default()),
         FactoryOpType::DismantleBoxConveyor => {
@@ -107,14 +113,13 @@ pub fn ok_with_place(index: impl Into<String>, node_id: u32) -> ScFactoryOpRet {
         ret_code: FactoryOpRetCode::OkA8d3 as i32,
         op_type: FactoryOpType::Place as i32,
         err_message: String::new(),
-        op_payload: Some(sc_factory_op_ret::OpPayload::Place(ScdFactoryOpRetPlace { node_id })),
+        op_payload: Some(sc_factory_op_ret::OpPayload::Place(ScdFactoryOpRetPlace {
+            node_id,
+        })),
     }
 }
 
-pub fn ok_with_place_box_conveyor(
-    index: impl Into<String>,
-    node_ids: Vec<u32>,
-) -> ScFactoryOpRet {
+pub fn ok_with_place_box_conveyor(index: impl Into<String>, node_ids: Vec<u32>) -> ScFactoryOpRet {
     ScFactoryOpRet {
         index: index.into(),
         ret_code: FactoryOpRetCode::OkA8d3 as i32,
@@ -138,10 +143,7 @@ pub fn ok_with_add_connection(index: impl Into<String>, conn_index: u64) -> ScFa
     }
 }
 
-pub fn ok_with_cache_transport_transfer(
-    index: impl Into<String>,
-    success: bool,
-) -> ScFactoryOpRet {
+pub fn ok_with_cache_transport_transfer(index: impl Into<String>, success: bool) -> ScFactoryOpRet {
     ScFactoryOpRet {
         index: index.into(),
         ret_code: FactoryOpRetCode::OkA8d3 as i32,
@@ -153,10 +155,7 @@ pub fn ok_with_cache_transport_transfer(
     }
 }
 
-pub fn ok_with_use_heal_tower(
-    index: impl Into<String>,
-    used_count: u32,
-) -> ScFactoryOpRet {
+pub fn ok_with_use_heal_tower(index: impl Into<String>, used_count: u32) -> ScFactoryOpRet {
     ScFactoryOpRet {
         index: index.into(),
         ret_code: FactoryOpRetCode::OkA8d3 as i32,

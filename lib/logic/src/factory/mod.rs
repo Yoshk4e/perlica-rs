@@ -68,6 +68,7 @@ pub mod component_factory;
 pub mod grid;
 pub mod manager;
 pub mod node;
+pub mod ops;
 pub mod power;
 pub mod processor;
 pub mod region;

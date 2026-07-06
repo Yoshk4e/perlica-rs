@@ -25,12 +25,12 @@ pub async fn on_cs_weapon_puton(ctx: &mut NetContext<'_>, req: CsWeaponPuton) ->
             .db
             .persist_char_bag_incremental(&ctx.player.uid, &mut ctx.player.char_bag)
             .await
-        {
-            warn!(
-                "Failed to persist char_bag after weapon puton: uid={}, error={}",
-                ctx.player.uid, e
-            );
-        }
+    {
+        warn!(
+            "Failed to persist char_bag after weapon puton: uid={}, error={}",
+            ctx.player.uid, e
+        );
+    }
 
     response.unwrap_or(ScWeaponPuton {
         charid: req.charid,

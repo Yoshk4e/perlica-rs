@@ -1,13 +1,6 @@
-//! `EnableNode` op. Flips the `is_deactive` flag on a placed node.
-//!
-//! Disabling a node should pause its producers (their `start_tick` gets
-//! cleared so progress freezes), but the actual pause wiring lives in
-//! the per-component logic and isn't fully hooked up yet -- see the TODO
-//! in `handle`.
-
 use crate::net::NetContext;
-use perlica_logic::factory::FactoryComponent;
-use perlica_proto::{CsdFactoryOpEnableNode, FactoryOpType, ScFactoryOpRet};
+use perlica_logic::factory::ops;
+use perlica_proto::{CsdFactoryOpEnableNode, FactoryOpRetCode, FactoryOpType, ScFactoryOpRet};
 
 use super::super::response;
 
@@ -17,39 +10,23 @@ pub async fn handle(
     region_name: String,
     req: CsdFactoryOpEnableNode,
 ) -> ScFactoryOpRet {
-    let Some(region) = ctx.player.factory.region_mut(&region_name) else {
-            return response::fail(
-                index,
-                FactoryOpType::EnableNode,
-                perlica_proto::FactoryOpRetCode::Fail,
-                format!("region {region_name} not found"),
-            );
-    };
-
-    let Some(node) = region.node_mut(req.node_id) else {
-            return response::fail(
-                index,
-                FactoryOpType::EnableNode,
-                perlica_proto::FactoryOpRetCode::Fail,
-                format!("node {} not found", req.node_id),
-            );
-    };
-
-    node.is_deactive = !req.enable;
-
-    // TODO: when a producer is paused via disable, we need to snapshot
-    // its current progress into `current_progress` and clear `start_tick`
-    // so the timer doesn't keep running while disabled. Reverse on
-    // re-enable. Lives in the component layer once that lands.
-    for (_, comp) in &mut node.components {
-        if let FactoryComponent::Producer(state) = comp
-            && !req.enable && state.start_tick.is_some() {
-                let _ = state.start_tick.take();
-            }
-            // re-enable resume is handled by the completion checker when
-            // it next ticks -- don't restart `start_tick` here, that
-            // would need the recipe speed lookup which we don't have yet.
+    match ctx
+        .player
+        .factory
+        .enable_node(&region_name, req.node_id, req.enable)
+    {
+        Ok(()) => response::ok(index, FactoryOpType::EnableNode),
+        Err(ops::EnableNodeError::RegionNotFound) => response::fail(
+            index,
+            FactoryOpType::EnableNode,
+            FactoryOpRetCode::Fail,
+            format!("region {region_name} not found"),
+        ),
+        Err(ops::EnableNodeError::NodeNotFound) => response::fail(
+            index,
+            FactoryOpType::EnableNode,
+            FactoryOpRetCode::Fail,
+            format!("node {} not found", req.node_id),
+        ),
     }
-
-    response::ok(index, FactoryOpType::EnableNode)
 }

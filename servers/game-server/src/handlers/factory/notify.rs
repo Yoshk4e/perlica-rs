@@ -46,7 +46,10 @@ pub fn remove_nodes(region_name: &str, node_ids: &[u32]) -> ScFactoryModifyRegio
 /// "These components changed state on their existing nodes". Used by ops
 /// that mutate component state without touching the node list (e.g.
 /// EnableNode, SetSelectTarget, CacheTransportEnable).
-pub fn modify_components(region_name: &str, _component_ids: &[(u32, u32)]) -> ScFactoryModifyRegionComponents {
+pub fn modify_components(
+    region_name: &str,
+    _component_ids: &[(u32, u32)],
+) -> ScFactoryModifyRegionComponents {
     ScFactoryModifyRegionComponents {
         tms: 0,
         name: region_name.to_string(),

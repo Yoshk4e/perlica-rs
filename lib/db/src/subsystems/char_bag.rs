@@ -130,12 +130,13 @@ pub(crate) async fn load(pool: &SqlitePool, uid: &str) -> Result<CharBag> {
         let slot_idx: i64 = r.try_get("slot_index")?;
         let char_idx: Option<i64> = r.try_get("char_index")?;
         if let Some(team) = bag.teams.get_mut(team_idx as usize)
-            && let Some(slot) = team.char_team.get_mut(slot_idx as usize) {
-                *slot = match char_idx {
-                    Some(c) => TeamSlot::Occupied(CharIndex::from_usize(c as usize)),
-                    None => TeamSlot::Empty,
-                };
-            }
+            && let Some(slot) = team.char_team.get_mut(slot_idx as usize)
+        {
+            *slot = match char_idx {
+                Some(c) => TeamSlot::Occupied(CharIndex::from_usize(c as usize)),
+                None => TeamSlot::Empty,
+            };
+        }
     }
 
     let weapon_rows = sqlx::query(

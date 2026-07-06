@@ -63,7 +63,11 @@ impl ConsumedItems {
     }
 
     pub fn is_empty(&self) -> bool {
-        self.by_depot.is_empty() || self.by_depot.values().all(std::collections::HashMap::is_empty)
+        self.by_depot.is_empty()
+            || self
+                .by_depot
+                .values()
+                .all(std::collections::HashMap::is_empty)
     }
 }
 
@@ -557,8 +561,7 @@ impl WeaponDepot {
             return Err(LogicError::WeaponMaxBreakthrough(inst_id));
         }
         let next_show_lv = cur + 1;
-        let req = Self::get_breakthrough_required_level(&tmpl, next_show_lv, assets)
-            .unwrap_or(1);
+        let req = Self::get_breakthrough_required_level(&tmpl, next_show_lv, assets).unwrap_or(1);
         if lv < req {
             return Err(LogicError::WeaponBreakthroughLevelTooLow {
                 id: inst_id,

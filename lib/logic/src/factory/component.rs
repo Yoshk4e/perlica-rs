@@ -271,15 +271,20 @@ impl FactoryComponent {
             ScdFactorySyncComponentHealTower, ScdFactorySyncComponentInventory,
             ScdFactorySyncComponentPowerPole, ScdFactorySyncComponentPowerSave,
             ScdFactorySyncComponentProducer, ScdFactorySyncComponentSelector,
-            ScdFactorySyncComponentStablePower,
-            ScdFactorySyncComponentTravelPole,
+            ScdFactorySyncComponentStablePower, ScdFactorySyncComponentTravelPole,
             scd_factory_sync_component::ComponentPayload,
         };
 
         let component_type = self.discriminant();
         let payload = match self {
-            Self::Transform | Self::Bus | Self::FormulaMan | Self::BoxRouterM1
-            | Self::BusUnloader | Self::Hub | Self::BoxBridge | Self::SpecialDesc => None,
+            Self::Transform
+            | Self::Bus
+            | Self::FormulaMan
+            | Self::BoxRouterM1
+            | Self::BusUnloader
+            | Self::Hub
+            | Self::BoxBridge
+            | Self::SpecialDesc => None,
 
             Self::Inventory(state) => Some(ComponentPayload::Inventory(
                 ScdFactorySyncComponentInventory {
@@ -362,12 +367,12 @@ impl FactoryComponent {
                 },
             )),
 
-            Self::GridBox(state) => Some(ComponentPayload::GridBox(
-                ScdFactorySyncComponentGridBox {
+            Self::GridBox(state) => {
+                Some(ComponentPayload::GridBox(ScdFactorySyncComponentGridBox {
                     items: state.items.iter().map(item_to_proto).collect(),
                     ports: vec![],
-                },
-            )),
+                }))
+            }
 
             Self::HealTower(state) => Some(ComponentPayload::HealTower(
                 ScdFactorySyncComponentHealTower {

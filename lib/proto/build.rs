@@ -1,6 +1,6 @@
+use std::fmt::Write;
 use std::fs;
 use std::path::Path;
-use std::fmt::Write;
 
 fn main() {
     println!("cargo::rustc-check-cfg=cfg(rust_analyzer)");
@@ -57,12 +57,13 @@ fn generate_net_message_impls() {
         }
 
         if let Some((name, id)) = parse_enum_line(line)
-            && struct_names.contains(&name) {
-                let _ = write!(
-                    output,
-                    "impl NetMessage for {name} {{\n    const CMD_ID: i32 = {id};\n}}\n\n"
-                );
-            }
+            && struct_names.contains(&name)
+        {
+            let _ = write!(
+                output,
+                "impl NetMessage for {name} {{\n    const CMD_ID: i32 = {id};\n}}\n\n"
+            );
+        }
     }
 
     fs::write("out/net_message_impls.rs", output).expect("Failed to write net_message_impls.rs");

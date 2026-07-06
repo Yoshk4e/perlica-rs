@@ -27,12 +27,12 @@ pub async fn on_cs_weapon_attach_gem(
             .db
             .persist_char_bag_incremental(&ctx.player.uid, &mut ctx.player.char_bag)
             .await
-        {
-            warn!(
-                "Failed to persist char_bag after weapon attach gem: uid={}, error={}",
-                ctx.player.uid, e
-            );
-        }
+    {
+        warn!(
+            "Failed to persist char_bag after weapon attach gem: uid={}, error={}",
+            ctx.player.uid, e
+        );
+    }
 
     response.unwrap_or(ScWeaponAttachGem {
         weaponid: req.weaponid,
@@ -66,12 +66,12 @@ pub async fn on_cs_weapon_detach_gem(
             .db
             .persist_char_bag_incremental(&ctx.player.uid, &mut ctx.player.char_bag)
             .await
-        {
-            warn!(
-                "Failed to persist char_bag after weapon detach gem: uid={}, error={}",
-                ctx.player.uid, e
-            );
-        }
+    {
+        warn!(
+            "Failed to persist char_bag after weapon detach gem: uid={}, error={}",
+            ctx.player.uid, e
+        );
+    }
 
     response.unwrap_or(ScWeaponDetachGem {
         weaponid: req.weaponid,

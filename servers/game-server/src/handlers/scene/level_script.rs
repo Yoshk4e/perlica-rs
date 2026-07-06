@@ -30,16 +30,21 @@ fn is_progression_flag(scene: &str, script_id: i32, key: &str) -> bool {
     matches!(
         (scene, script_id, key),
         // map01_dg003 prologue tutorial controller (script 5)
-        ("map01_dg003", 5,
-"isFMVOver" | "isTimelineOver" | "isWalkLimitFinish" | "isRunLimitFinish") |
-("map01_dg003", 10, "isPreBattleOver") |
-("map01_dg003", 14, "is_spot_interacted") |
-("map01_dg003", 15, "isBombVistaOver") |
-("map01_dg003", 17, "isTreasureVistaOver" | "is_G_Jump_Over") |
-("map01_dg003", 18, "isPatriotVistaOver") |
-("map01_dg003", 19,
-"is_barrierwal_interacted" | "isFogChangeOver" | "isCemeteryVistaOver") |
-("map01_dg003", 21, "isTowerVistaOver")
+        (
+            "map01_dg003",
+            5,
+            "isFMVOver" | "isTimelineOver" | "isWalkLimitFinish" | "isRunLimitFinish"
+        ) | ("map01_dg003", 10, "isPreBattleOver")
+            | ("map01_dg003", 14, "is_spot_interacted")
+            | ("map01_dg003", 15, "isBombVistaOver")
+            | ("map01_dg003", 17, "isTreasureVistaOver" | "is_G_Jump_Over")
+            | ("map01_dg003", 18, "isPatriotVistaOver")
+            | (
+                "map01_dg003",
+                19,
+                "is_barrierwal_interacted" | "isFogChangeOver" | "isCemeteryVistaOver"
+            )
+            | ("map01_dg003", 21, "isTowerVistaOver")
     )
 }
 
@@ -183,13 +188,12 @@ async fn maybe_drive_quest_progression(
         }
     }
 
-    if did_advance
-        && let Err(e) = ctx.player.missions.persist(&ctx.player.uid, ctx.db).await {
-            debug!(
-                "Failed to persist missions after quest progression: uid={}, error={}",
-                ctx.player.uid, e
-            );
-        }
+    if did_advance && let Err(e) = ctx.player.missions.persist(&ctx.player.uid, ctx.db).await {
+        debug!(
+            "Failed to persist missions after quest progression: uid={}, error={}",
+            ctx.player.uid, e
+        );
+    }
 }
 
 /// Helper: check that `req_scene` matches the player's current scene.
