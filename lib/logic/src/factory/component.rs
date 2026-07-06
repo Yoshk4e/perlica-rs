@@ -115,11 +115,15 @@ pub struct StablePowerState {
 }
 
 /// State for a `BurnPower` component (fuel-burning generator).
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct BurnPowerState {
     pub fuel_remaining: i64,
     pub fuel_start_tick: Option<Tick>,
     pub in_power: bool,
+    /// Power output per tick when fuel is burning. From `powerStationData.power_provide`.
+    pub power_gen_per_sec: i64,
+    /// What fuel item is currently burning. Empty when no fuel loaded.
+    pub current_burn_item_id: String,
 }
 
 /// State for a `GridBox` component: multi-slot storage grid used by
@@ -133,6 +137,10 @@ pub struct GridBoxState {
 #[derive(Debug, Clone, Copy)]
 pub struct HealTowerState {
     pub points: i64,
+    pub in_power: bool,
+    pub power_cost: i64,
+    /// Current heal-cast progress, 0..total_progress.
+    pub current_progress: i64,
 }
 
 /// State for a `TravelPole` component: fast-travel waypoint.
@@ -162,6 +170,13 @@ pub struct CacheTransportState {
     pub enabled: bool,
     pub source_node_id: u32,
     pub target_node_id: u32,
+    pub in_power: bool,
+    pub in_use: bool,
+    pub power_cost: i64,
+    /// Transfer progress for the current item, 0..total_progress.
+    pub current_progress: i64,
+    /// Total ticks needed to move one item-stack from source to target.
+    pub total_progress: i64,
 }
 
 /// All 17 component variants matching `FCComponentType`. Order matters for
@@ -328,8 +343,8 @@ impl FactoryComponent {
             Self::BurnPower(state) => Some(ComponentPayload::BurnPower(
                 ScdFactorySyncComponentBurnPower {
                     current_least_progress: state.fuel_remaining,
-                    current_burn_item_id: String::new(),
-                    power_gen_per_sec: 0,
+                    current_burn_item_id: state.current_burn_item_id.clone(),
+                    power_gen_per_sec: state.power_gen_per_sec,
                     in_power: state.in_power,
                 },
             )),
@@ -356,23 +371,21 @@ impl FactoryComponent {
 
             Self::HealTower(state) => Some(ComponentPayload::HealTower(
                 ScdFactorySyncComponentHealTower {
-                    in_power: true,
-                    current_progress: 0,
+                    in_power: state.in_power,
+                    current_progress: state.current_progress,
                     current_point: state.points as i32,
-                    power_cost: 0,
+                    power_cost: state.power_cost,
                 },
             )),
 
             Self::CacheTransport(state) => Some(ComponentPayload::CacheTransport(
                 ScdFactorySyncComponentCacheTransport {
-                    current_progress: 0,
-                    total_progress: 0,
+                    current_progress: state.current_progress,
+                    total_progress: state.total_progress,
                     auto_transport: state.enabled,
-                    in_power: true,
-                    in_use: false,
-                    power_cost: 0,
-                    // TODO: proto has more fields than our internal state.
-                    // Fill source/target once the proto struct is confirmed.
+                    in_power: state.in_power,
+                    in_use: state.in_use,
+                    power_cost: state.power_cost,
                 },
             )),
 
@@ -465,7 +478,9 @@ mod tests {
             FactoryComponent::BurnPower(BurnPowerState {
                 fuel_remaining: 0,
                 fuel_start_tick: None,
-                in_power: false
+                in_power: false,
+                power_gen_per_sec: 100,
+                current_burn_item_id: String::new(),
             })
             .is_power_source()
         );

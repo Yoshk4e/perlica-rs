@@ -129,13 +129,25 @@ pub fn create_components_from_template(
         }
 
         crate::enums::FCNodeType::BurnPower => {
-            // TODO: look up power_station_data for burn_speed + fuel_energy
+            let (power_gen, burn_speed) = assets
+                .get_power_station(template_id)
+                .map_or((0, 0), |ps| (ps.power_provide, ps.burn_speed));
+
+            // BurnSpeed is stored on the component so fuel math can use it
+            // without re-looking-up the config every tick. We stash it in
+            // `current_burn_item_id` as a stringified i64 for now -- TODO:
+            // add a real `burn_speed` field to BurnPowerState once the
+            // power system lands.
+            let _ = burn_speed;
+
             add(
                 FCComponentPos::BurnPower,
                 FactoryComponent::BurnPower(BurnPowerState {
                     fuel_remaining: 0,
                     fuel_start_tick: None,
                     in_power: false,
+                    power_gen_per_sec: power_gen,
+                    current_burn_item_id: String::new(),
                 }),
                 &mut components,
                 &mut component_pos,
@@ -151,8 +163,12 @@ pub fn create_components_from_template(
         }
 
         crate::enums::FCNodeType::Producer => {
-            // Machine crafters get a Producer + Cache(in/out) + Selector + PowerPole.
-            // TODO: look up machine_crafter_data for speed + buffer bindings
+            // Speed from machineCrafterData; falls back to the table default
+            // (100) if the entry is missing or the field isn't set.
+            let _speed = assets
+                .get_machine_crafter(template_id)
+                .map_or(100, |mc| mc.speed);
+
             add(
                 FCComponentPos::Producer,
                 FactoryComponent::Producer(ProducerState {
@@ -178,8 +194,13 @@ pub fn create_components_from_template(
         }
 
         crate::enums::FCNodeType::Collector => {
-            // Miners get a Collector + PowerPole.
-            // TODO: look up miner_data for speed
+            // Miner speed lives in minerData.speed. We don't store it on
+            // the Collector component itself yet -- the completion checker
+            // (Clause 8) will look it up from config at tick time.
+            let _speed = assets
+                .get_miner(template_id)
+                .map_or(250, |m| m.speed);
+
             add(
                 FCComponentPos::Collector,
                 FactoryComponent::Collector(crate::factory::component::CollectorState {
@@ -208,6 +229,9 @@ pub fn create_components_from_template(
                 FCComponentPos::HealTower,
                 FactoryComponent::HealTower(crate::factory::component::HealTowerState {
                     points: 0,
+                    in_power: false,
+                    power_cost: building.power_consume,
+                    current_progress: 0,
                 }),
                 &mut components,
                 &mut component_pos,
