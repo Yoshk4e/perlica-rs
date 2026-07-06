@@ -69,6 +69,7 @@ pub mod grid;
 pub mod manager;
 pub mod node;
 pub mod power;
+pub mod processor;
 pub mod region;
 pub mod tick;
 

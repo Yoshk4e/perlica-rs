@@ -12,11 +12,17 @@ pub mod hs_feedback;
 pub mod hs_inout;
 pub mod notify;
 pub mod op;
+pub mod processor;
 pub mod response;
 
 pub use hs_feedback::on_cs_factory_hs_fb;
 pub use hs_inout::on_cs_factory_hs_inout;
 pub use op::on_cs_factory_op;
+pub use processor::{
+    on_cs_factory_processor_make_equip, on_cs_factory_processor_make_gem,
+    on_cs_factory_processor_make_item, on_cs_factory_processor_mark_unlock_formula_read,
+    on_cs_factory_processor_recast_gem,
+};
 
 use std::collections::HashMap;
 

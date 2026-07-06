@@ -126,6 +126,10 @@ handlers! {
         CsFactoryOp                      => factory::on_cs_factory_op,
         CsFactoryHsFb                    => factory::on_cs_factory_hs_fb,
         CsFactoryHsInout                 => factory::on_cs_factory_hs_inout,
+        CsFactoryProcessorMakeItem       => factory::on_cs_factory_processor_make_item,
+        CsFactoryProcessorMakeEquip      => factory::on_cs_factory_processor_make_equip,
+        CsFactoryProcessorMakeGem        => factory::on_cs_factory_processor_make_gem,
+        CsFactoryProcessorRecastGem      => factory::on_cs_factory_processor_recast_gem,
         // Mail Commands
         CsGetMail                        => mail::on_cs_get_mail,
         CsReadMail                       => mail::on_cs_read_mail,
@@ -147,6 +151,8 @@ handlers! {
         CsSceneDestroyEntity   => scene::on_cs_scene_destroy_entity,
         CsSceneSetLevelScriptActive => scene::on_cs_scene_set_level_script_active,
         CsSceneCommitLevelScriptCacheStep => scene::on_cs_scene_commit_level_script_cache_step,
+        // Factory (no response -- fire-and-forget)
+        CsFactoryProcessorMarkUnlockFormulaRead => factory::on_cs_factory_processor_mark_unlock_formula_read,
     }
 }
 
