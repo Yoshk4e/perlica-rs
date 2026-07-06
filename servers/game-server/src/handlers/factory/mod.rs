@@ -8,10 +8,14 @@
 //! every op handler ends up needing, so they're collected in one place
 //! rather than copy-pasted across the op files.
 
+pub mod hs_feedback;
+pub mod hs_inout;
 pub mod notify;
 pub mod op;
 pub mod response;
 
+pub use hs_feedback::on_cs_factory_hs_fb;
+pub use hs_inout::on_cs_factory_hs_inout;
 pub use op::on_cs_factory_op;
 
 use std::collections::HashMap;

@@ -124,6 +124,8 @@ handlers! {
         CsFinishDialog                   => scene::on_cs_finish_dialog,
         // Factory Commands
         CsFactoryOp                      => factory::on_cs_factory_op,
+        CsFactoryHsFb                    => factory::on_cs_factory_hs_fb,
+        CsFactoryHsInout                 => factory::on_cs_factory_hs_inout,
         // Mail Commands
         CsGetMail                        => mail::on_cs_get_mail,
         CsReadMail                       => mail::on_cs_read_mail,

@@ -167,6 +167,11 @@ pub async fn handle_inner_split(
 }
 
 // ---- Bag <-> GridBox ----
+//
+// The player's bag is represented as the inventory node (node_id=1) with
+// its Inventory component. Items move between the bag and a GridBox one
+// stack at a time. `bag_grid_index` is the slot in the bag, `grid_box_index`
+// is the slot in the GridBox.
 
 pub async fn handle_move_bag_to_gridbox(
     ctx: &mut NetContext<'_>,
@@ -174,23 +179,70 @@ pub async fn handle_move_bag_to_gridbox(
     region_name: String,
     req: CsdFactoryOpMoveItemBagToGridBox,
 ) -> ScFactoryOpRet {
-    // Validate the target GridBox exists, then leave the actual move for
-    // the bag-integration TODO. The validation borrow is scoped so we
-    // don't hold `&mut factory` while touching `ctx` for the noop.
-    let found = {
-        let Some(region) = ctx.player.factory.region_mut(&region_name) else {
-            return missing_region(index, FactoryOpType::MoveItemBagToGridBox, &region_name);
-        };
-        find_gridbox(region, req.component_id).is_some()
+    let Some(region) = ctx.player.factory.region_mut(&region_name) else {
+        return missing_region(index, FactoryOpType::MoveItemBagToGridBox, &region_name);
     };
-    if !found {
+
+    // Pull the item from the bag (inventory node, component_id=1).
+    let bag_item = {
+        let Some(inv_node) = region.node_mut(1) else {
+            return response::fail(
+                index,
+                FactoryOpType::MoveItemBagToGridBox,
+                FactoryOpRetCode::Fail,
+                "inventory node not found",
+            );
+        };
+        let Some(slot) = inv_node.component_mut(1) else {
+            return response::fail(
+                index,
+                FactoryOpType::MoveItemBagToGridBox,
+                FactoryOpRetCode::Fail,
+                "inventory component not found",
+            );
+        };
+        let FactoryComponent::Inventory(inv_state) = slot else {
+            return response::fail(
+                index,
+                FactoryOpType::MoveItemBagToGridBox,
+                FactoryOpRetCode::Fail,
+                "component 1 is not an Inventory",
+            );
+        };
+        // The bag uses inst_id as the key. bag_grid_index maps to a
+        // specific inst_id -- since we don't have a slot-indexed bag
+        // yet, treat bag_grid_index as the inst_id directly.
+        let key = req.bag_grid_index as u32;
+        inv_state.items.remove(&key)
+    };
+
+    let Some(item) = bag_item else {
+        return response::fail(
+            index,
+            FactoryOpType::MoveItemBagToGridBox,
+            FactoryOpRetCode::Fail,
+            "bag slot is empty",
+        );
+    };
+
+    // Push into the GridBox at the requested index.
+    let Some(gridbox) = find_gridbox(region, req.component_id) else {
         return missing_component(index, FactoryOpType::MoveItemBagToGridBox, req.component_id);
+    };
+
+    let idx = req.grid_box_index as usize;
+    if idx >= gridbox.items.len() {
+        gridbox.items.resize(idx + 1, ItemSlot { item_id: String::new(), count: 0, inst_id: 0 });
     }
 
-    // TODO(bag-integration): pull the item at `req.bag_grid_index` from
-    // the player's bag, push it into the gridbox at `req.grid_box_index`.
-    // Need the bag API exposed to factory handlers.
-    let _ = (req.bag_grid_index, req.grid_box_index);
+    // Stack if same item, otherwise overwrite (the client guarantees the
+    // destination is empty or matches).
+    if gridbox.items[idx].item_id == item.item_id && gridbox.items[idx].count > 0 {
+        gridbox.items[idx].count += item.count;
+    } else {
+        gridbox.items[idx] = item;
+    }
+
     response::ok(index, FactoryOpType::MoveItemBagToGridBox)
 }
 
@@ -200,23 +252,73 @@ pub async fn handle_move_gridbox_to_bag(
     region_name: String,
     req: CsdFactoryOpMoveItemGridBoxToBag,
 ) -> ScFactoryOpRet {
-    let found = {
-        let Some(region) = ctx.player.factory.region_mut(&region_name) else {
-            return missing_region(index, FactoryOpType::MoveItemGridBoxToBag, &region_name);
-        };
-        find_gridbox(region, req.component_id).is_some()
+    let Some(region) = ctx.player.factory.region_mut(&region_name) else {
+        return missing_region(index, FactoryOpType::MoveItemGridBoxToBag, &region_name);
     };
-    if !found {
+
+    let Some(gridbox) = find_gridbox(region, req.component_id) else {
         return missing_component(index, FactoryOpType::MoveItemGridBoxToBag, req.component_id);
+    };
+
+    if req.grid_box_index < 0 || req.grid_box_index as usize >= gridbox.items.len() {
+        return response::fail(
+            index,
+            FactoryOpType::MoveItemGridBoxToBag,
+            FactoryOpRetCode::Fail,
+            "grid_box_index out of range",
+        );
     }
 
-    // TODO(bag-integration): take the slot at `req.grid_box_index`,
-    // push it into the bag at `req.bag_grid_index`, clear the gridbox slot.
-    let _ = (req.grid_box_index, req.bag_grid_index);
+    // Pop the item from the GridBox slot.
+    let item = std::mem::replace(
+        &mut gridbox.items[req.grid_box_index as usize],
+        ItemSlot { item_id: String::new(), count: 0, inst_id: 0 },
+    );
+
+    if item.count == 0 {
+        return response::fail(
+            index,
+            FactoryOpType::MoveItemGridBoxToBag,
+            FactoryOpRetCode::Fail,
+            "gridbox slot is empty",
+        );
+    }
+
+    // Push into the bag at bag_grid_index (used as inst_id key).
+    let Some(inv_node) = region.node_mut(1) else {
+        return response::fail(
+            index,
+            FactoryOpType::MoveItemGridBoxToBag,
+            FactoryOpRetCode::Fail,
+            "inventory node not found",
+        );
+    };
+    let Some(slot) = inv_node.component_mut(1) else {
+        return response::fail(
+            index,
+            FactoryOpType::MoveItemGridBoxToBag,
+            FactoryOpRetCode::Fail,
+            "inventory component not found",
+        );
+    };
+    let FactoryComponent::Inventory(inv_state) = slot else {
+        return response::fail(
+            index,
+            FactoryOpType::MoveItemGridBoxToBag,
+            FactoryOpRetCode::Fail,
+            "component 1 is not an Inventory",
+        );
+    };
+    inv_state.items.insert(req.bag_grid_index as u32, item);
+
     response::ok(index, FactoryOpType::MoveItemGridBoxToBag)
 }
 
 // ---- Depot <-> GridBox ----
+//
+// The depot is the hub's inventory (node_id=2, component_id=8). Items
+// move between the depot and a GridBox by item_id (depot side) and
+// grid_box_index (GridBox side).
 
 pub async fn handle_move_depot_to_gridbox(
     ctx: &mut NetContext<'_>,
@@ -224,20 +326,81 @@ pub async fn handle_move_depot_to_gridbox(
     region_name: String,
     req: CsdFactoryOpMoveItemDepotToGridBox,
 ) -> ScFactoryOpRet {
-    let found = {
-        let Some(region) = ctx.player.factory.region_mut(&region_name) else {
-            return missing_region(index, FactoryOpType::MoveItemDepotToGridBox, &region_name);
-        };
-        find_gridbox(region, req.component_id).is_some()
+    let Some(region) = ctx.player.factory.region_mut(&region_name) else {
+        return missing_region(index, FactoryOpType::MoveItemDepotToGridBox, &region_name);
     };
-    if !found {
+
+    // Pull one unit of the requested item from the depot.
+    let depot_item = {
+        let Some(hub_node) = region.node_mut(2) else {
+            return response::fail(
+                index,
+                FactoryOpType::MoveItemDepotToGridBox,
+                FactoryOpRetCode::Fail,
+                "hub node not found",
+            );
+        };
+        let Some(slot) = hub_node.component_mut(8) else {
+            return response::fail(
+                index,
+                FactoryOpType::MoveItemDepotToGridBox,
+                FactoryOpRetCode::Fail,
+                "depot component not found",
+            );
+        };
+        let FactoryComponent::Inventory(inv_state) = slot else {
+            return response::fail(
+                index,
+                FactoryOpType::MoveItemDepotToGridBox,
+                FactoryOpRetCode::Fail,
+                "component 8 is not an Inventory",
+            );
+        };
+        // Find the item by item_id (stackables use inst_id=0) and
+        // decrement its count by 1.
+        let mut found = None;
+        for (&inst_id, slot) in &mut inv_state.items {
+            if slot.item_id == req.item_id && slot.count > 0 {
+                slot.count -= 1;
+                found = Some(ItemSlot {
+                    item_id: req.item_id.clone(),
+                    count: 1,
+                    inst_id,
+                });
+                if slot.count == 0 {
+                    inv_state.items.remove(&inst_id);
+                }
+                break;
+            }
+        }
+        found
+    };
+
+    let Some(item) = depot_item else {
+        return response::fail(
+            index,
+            FactoryOpType::MoveItemDepotToGridBox,
+            FactoryOpRetCode::Fail,
+            "depot doesn't have that item",
+        );
+    };
+
+    // Push into the GridBox.
+    let Some(gridbox) = find_gridbox(region, req.component_id) else {
         return missing_component(index, FactoryOpType::MoveItemDepotToGridBox, req.component_id);
+    };
+
+    let idx = req.grid_box_index as usize;
+    if idx >= gridbox.items.len() {
+        gridbox.items.resize(idx + 1, ItemSlot { item_id: String::new(), count: 0, inst_id: 0 });
     }
 
-    // TODO(depot-integration): pull `req.item_id` from the hub depot
-    // (node_id=2, Inventory component id=8), push into the gridbox at
-    // `req.grid_box_index`.
-    let _ = (req.item_id, req.grid_box_index);
+    if gridbox.items[idx].item_id == item.item_id && gridbox.items[idx].count > 0 {
+        gridbox.items[idx].count += item.count;
+    } else {
+        gridbox.items[idx] = item;
+    }
+
     response::ok(index, FactoryOpType::MoveItemDepotToGridBox)
 }
 
@@ -250,11 +413,12 @@ pub async fn handle_move_gridbox_to_depot(
     let Some(region) = ctx.player.factory.region_mut(&region_name) else {
         return missing_region(index, FactoryOpType::MoveItemGridBoxToDepot, &region_name);
     };
-    let Some(state) = find_gridbox(region, req.component_id) else {
+
+    let Some(gridbox) = find_gridbox(region, req.component_id) else {
         return missing_component(index, FactoryOpType::MoveItemGridBoxToDepot, req.component_id);
     };
 
-    if req.grid_box_index < 0 || req.grid_box_index as usize >= state.items.len() {
+    if req.grid_box_index < 0 || req.grid_box_index as usize >= gridbox.items.len() {
         return response::fail(
             index,
             FactoryOpType::MoveItemGridBoxToDepot,
@@ -263,8 +427,60 @@ pub async fn handle_move_gridbox_to_depot(
         );
     }
 
-    // TODO(depot-integration): pop `state.items[req.grid_box_index]`,
-    // push into the hub depot's inventory. Clear the gridbox slot.
+    // Pop the entire stack from the GridBox slot.
+    let item = std::mem::replace(
+        &mut gridbox.items[req.grid_box_index as usize],
+        ItemSlot { item_id: String::new(), count: 0, inst_id: 0 },
+    );
+
+    if item.count == 0 {
+        return response::fail(
+            index,
+            FactoryOpType::MoveItemGridBoxToDepot,
+            FactoryOpRetCode::Fail,
+            "gridbox slot is empty",
+        );
+    }
+
+    // Push into the depot inventory. Stack with existing same-item slots.
+    let Some(hub_node) = region.node_mut(2) else {
+        return response::fail(
+            index,
+            FactoryOpType::MoveItemGridBoxToDepot,
+            FactoryOpRetCode::Fail,
+            "hub node not found",
+        );
+    };
+    let Some(slot) = hub_node.component_mut(8) else {
+        return response::fail(
+            index,
+            FactoryOpType::MoveItemGridBoxToDepot,
+            FactoryOpRetCode::Fail,
+            "depot component not found",
+        );
+    };
+    let FactoryComponent::Inventory(inv_state) = slot else {
+        return response::fail(
+            index,
+            FactoryOpType::MoveItemGridBoxToDepot,
+            FactoryOpRetCode::Fail,
+            "component 8 is not an Inventory",
+        );
+    };
+
+    // Try to stack with an existing slot of the same item_id.
+    let mut stacked = false;
+    for existing in inv_state.items.values_mut() {
+        if existing.item_id == item.item_id && existing.inst_id == item.inst_id {
+            existing.count += item.count;
+            stacked = true;
+            break;
+        }
+    }
+    if !stacked {
+        inv_state.items.insert(item.inst_id, item);
+    }
+
     let _ = ctx;
     response::ok(index, FactoryOpType::MoveItemGridBoxToDepot)
 }
