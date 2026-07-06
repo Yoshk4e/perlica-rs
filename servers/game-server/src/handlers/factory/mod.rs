@@ -1,3 +1,19 @@
+//! Factory command handlers.
+//!
+//! `push_factory` is the login-time dump of the player's whole factory
+//! state. Everything else lives under `op/` and is dispatched from
+//! `op::on_cs_factory_op` based on `FactoryOpType`.
+//!
+//! The `response` and `notify` modules hold the wire-format builders that
+//! every op handler ends up needing, so they're collected in one place
+//! rather than copy-pasted across the op files.
+
+pub mod notify;
+pub mod op;
+pub mod response;
+
+pub use op::on_cs_factory_op;
+
 use std::collections::HashMap;
 
 use crate::net::NetContext;
