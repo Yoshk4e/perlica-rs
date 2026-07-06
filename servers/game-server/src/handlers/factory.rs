@@ -4,6 +4,7 @@ use crate::net::NetContext;
 use perlica_logic::enums::{
     FCComponentPos, FCComponentType, FCDirection, FCMeshType, FCNodeType, FCPropertyKey,
 };
+use perlica_logic::factory::{FactoryManager, GridPos, GridRange};
 use perlica_proto::{
     ScFactorySyncContext, ScdFactoryRectInt, ScdFactorySubPort, ScdFactorySyncBlackboard,
     ScdFactorySyncBlackboardPower, ScdFactorySyncComponent, ScdFactorySyncComponentBusLoader,
@@ -74,6 +75,73 @@ pub async fn push_factory(ctx: &mut NetContext<'_>) -> bool {
     let center_y = map.pos_y + map.range_h as i32 / 2;
     let top_left_x = center_x - hub_w / 2;
     let top_left_y = center_y - hub_h / 2;
+
+    let region_id = match FactoryManager::derive_region_id(&ctx.assets.factory_table, &scene_name) {
+        Some(id) => id,
+        None => {
+            warn!(
+                scene = %scene_name,
+                "no levelRegionData entry for scene, skipping factory push"
+            );
+            return false;
+        }
+    };
+
+    // This generates the inventory node (node ID = 1) and hub node
+    // (node ID = 2) using the 1+7 component layout provided by the
+    // live server. The proto is generated manually here, Clause 3 will
+    // change this block to `region.to_proto()` when the `to_proto`
+    // implementations come into play (tasks 3.1 through 3.3).
+    //
+    // This code only does the bootstrapping if the player misses the
+    // cached version: If they have already been on this region before
+    // and created buildings on this wire name, we do not touch the
+    // existing state.
+    // TODO(Clause 4 / DB): With the persistence, this same check will
+    // restore state from the `factory_regions` table on login.
+    let hub_position = GridPos {
+        x: top_left_x,
+        y: top_left_y,
+    };
+    let hub_range = GridRange {
+        x: top_left_x,
+        y: top_left_y,
+        w: building.range.width,
+        h: building.range.height,
+    };
+    let power_gen = hub_data.power_generate;
+    let power_save_max = hub_data.power_storage_capacity;
+    if !ctx.player.factory.regions.contains_key(&region_name) {
+        let region = FactoryManager::bootstrap_region(
+            region_name.clone(),
+            region_id.clone(),
+            scene_name.clone(),
+            HUB_TEMPLATE,
+            hub_position,
+            hub_range,
+            power_gen,
+            power_save_max,
+        );
+        ctx.player
+            .factory
+            .regions
+            .insert(region_name.clone(), region);
+        debug!(
+            uid = %ctx.player.uid,
+            scene = %scene_name,
+            region = %region_name,
+            region_id = %region_id,
+            "factory region bootstrapped in internal model"
+        );
+    } else {
+        debug!(
+            uid = %ctx.player.uid,
+            scene = %scene_name,
+            region = %region_name,
+            region_id = %region_id,
+            "factory region already present in internal model, skipping bootstrap"
+        );
+    }
 
     let bc_port_in = building.input_ports.first().map(|p| ScdFactorySubPort {
         position: Some(ScdFactoryVector2Int {
@@ -332,6 +400,7 @@ pub async fn push_factory(ctx: &mut NetContext<'_>) -> bool {
         uid = %ctx.player.uid,
         scene = %scene_name,
         region = %region_name,
+        region_id = %region_id,
         hub = HUB_TEMPLATE,
         top_left_x,
         top_left_y,
@@ -341,6 +410,12 @@ pub async fn push_factory(ctx: &mut NetContext<'_>) -> bool {
         power_cap = hub_data.power_storage_capacity,
         "pushing factory context"
     );
+
+    // TODO(Clause 3): change the above proto construction to
+    // `region.to_proto()` when `FactoryRegion::to_proto()` is implemented
+    // (tasks 3.1-3.3). As the internal representation has already been
+    // initialized via `FactoryManager::bootstrap_region`, this is just
+    // a format change.
 
     ctx.notify(msg).await.is_ok()
 }

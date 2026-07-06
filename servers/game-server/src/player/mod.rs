@@ -7,6 +7,7 @@ use perlica_logic::{
     bitset::BitsetManager,
     character::char_bag::CharBag,
     entity::EntityManager,
+    factory::FactoryManager,
     mail::MailManager,
     mission::{GuideManager, MissionManager},
     movement::MovementManager,
@@ -34,6 +35,7 @@ pub struct Player {
     pub guides: GuideManager,
     pub mail: MailManager,
     pub wallet: WalletState,
+    pub factory: FactoryManager,
     pub is_new_player: bool,
 }
 impl Player {
@@ -65,6 +67,7 @@ impl Default for Player {
             guides: GuideManager::default(),
             mail: MailManager::new(),
             wallet: WalletState::default(),
+            factory: FactoryManager::new(),
             is_new_player: false,
         }
     }

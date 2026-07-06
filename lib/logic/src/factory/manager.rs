@@ -1,31 +1,51 @@
-//! Highest level factory state, one for each player. Owns all regions, along
-//! with the machine tables for manufacture/processing/recycling/etc which are
-//! keyed by region names, rather than nodes being nested within those regions.
+//! # High-level factory state, one per player. Holds all regions as well
+//! as the machine-specific tables (manufacture/processing/recycling/etc.),
+//! which are indexed by region name, not embedded within the regions.
+//! This corresponds to how the proto groups them.
 //!
-//! TODO: This is not wired up yet. The `Player` struct currently only
-//! contains this in memory, see the TODO on the `Player::factory` field in game-server.
-//! The database table for this resides in §7 of the implementation plan
-//! (`0003_factory.sql`) but has not yet been implemented.
+//! # Status of Clause 1
+//!
+//! - In [`FactoryManager::new` / `Default`,] we set `current_region = "test01"`,
+//!   which is the only wire name that the alpha client accepts (§1.3).
+//! - In [`FactoryManager::derive_region_id`], the cross-check against `regionData`
+//!   is hooked to `FTableAssets::get_level_region`.
+//! - In [`FactoryManager::bootstrap_region`], we create the inventory node (id=1)
+//!   and hub node (id=2) with the 1+7 components layout, which the live server
+//!   pushes in `push_factory`. Position/rotation of the nodes are baked into the
+//!   scene geometry and therefore remain `None` in our proto builder in
+//!   `handlers/factory.rs`, until Clause 3 replaces the hard-coded values with
+//!   `region.to_proto()`.
+//! - The way to retrieve/create a region is through
+//!   [`FactoryManager::get_or_bootstrap`].
+//!
+//!
+//! # TODO (forward-looking)
+//!
+//! - **Clause 1.6** `Player::factory: FactoryManager` connection is set up,
+//!   but needs to be persisted yet. The database schema is specified in
+//!   §7 (`0003_factory.sql`). `db/src/subsystems/factory.rs`
+//!   implementation is Clause 4 and beyond work.
+//! - **Clause 1.5** `push_factory` is still building the proto manually.
+//!   Once Clause 3 `to_proto()` is implemented, use
+//!   `manager.get_or_bootstrap(...).to_proto()` for `push_factory` body.
+//! - **Clause 3.4** replace the current hub component layout in
+//!  `bootstrap_region` with `component_factory::create_components_from_template("sp_hub_1")`.
 
 use std::collections::HashMap;
 
 use config::factory_table::FTableAssets;
 
 use super::{
-    CharacterWorkState, FCComponentPos, FCDirection, FCMeshType, FCNodeType, FactoryComponent,
-    FactoryNode, FactoryRegion, GridPos, GridRange, InteractiveObject, InventoryState,
-    ManualWorkQueue, ManufactureMachine, Mesh, NodeTransform, PowerBlackboard, PowerPoleState,
-    PowerSaveState, ProcessorMachine, RecyclerMachine, SelectorState, SoilMachine, SttState,
-    TradeMachine, WorkshopMachine,
+    BusLoaderState, CharacterWorkState, FactoryComponent, FactoryNode, FactoryRegion, GridPos,
+    GridRange, InteractiveObject, InventoryState, ManualWorkQueue, ManufactureMachine, Mesh,
+    NodeTransform, PowerBlackboard, PowerPoleState, PowerSaveState, ProcessorMachine,
+    RecyclerMachine, SelectorState, SoilMachine, StablePowerState, SttState, TradeMachine,
+    WorkshopMachine,
 };
-use crate::factory::{BusLoaderState, StablePowerState};
+use crate::enums::{FCComponentPos, FCDirection, FCMeshType, FCNodeType};
 
 #[derive(Debug, Clone, Default)]
 pub struct FactoryManager {
-    /// hardwired value, always “test01” for now (see §1.3 of the impl plan --
-    /// the client will reject anything else). The `regions` map is still
-    /// indexed by this same key, as that’s the only key we get from the
-    /// client.
     pub current_region: String,
     pub regions: HashMap<String, FactoryRegion>,
     pub quickbars: Vec<super::QuickbarState>,
@@ -48,6 +68,17 @@ impl FactoryManager {
         }
     }
 
+    /// Borrow the current region (the one the client thinks is active).
+    pub fn current(&self) -> Option<&FactoryRegion> {
+        self.regions.get(&self.current_region)
+    }
+
+    /// Mutably borrow the current region.
+    pub fn current_mut(&mut self) -> Option<&mut FactoryRegion> {
+        self.regions.get_mut(&self.current_region)
+    }
+
+    /// Borrow a region by wire name.
     pub fn region(&self, wire_name: &str) -> Option<&FactoryRegion> {
         self.regions.get(wire_name)
     }
@@ -63,8 +94,6 @@ impl FactoryManager {
             .first()?
             .clone();
 
-        // tables should agree with each other; if they don't, something's off
-        // in the JSON, but it's not worth hard-failing the caller over.
         if let Some(region) = factory_table.get_region(&region_id) {
             if region.level_id != scene_name {
                 tracing::warn!(
@@ -91,17 +120,36 @@ impl FactoryManager {
             .or_insert_with(make)
     }
 
-    /// Constructs the two nodes with which each newly-created region is seeded,
-    /// namely the player's inventory (node 1) and the hub building (node 2).
-    /// This is the internal model equivalent of the proto that `push_factory`
-    /// creates in `handlers/factory.rs` right now, but they haven't been
-    /// connected yet because the `to_proto()` translation is clause 3. When
-    /// the clause 3 lands, `push_factory` should create this instead.
+    /// Create an empty region with the inventory node (id=1) and hub node
+    /// (id=2) already placed. This is the model-level equivalent of the
+    /// proto created by `push_factory` that Clause 3 will eventually
+    /// replace using `region.to_proto()` on the region created here.
     ///
-    /// TODO(clause 3): replaces the hard-coded 8-component hub building
-    /// structure with the generic `component_factory` (building template ->
-    /// components), so that other buildings won't require their own bootstrap
-    /// function.
+    /// # Components layout
+    ///
+    /// Hub node contains 7 components in wire format:
+    ///
+    /// | id | position          | component    |
+    /// |----|-------------------|--------------|
+    /// | 2  | `Hub`             | `Hub`        |
+    /// | 3  | `BusLoader`       | `BusLoader`  |
+    /// | 4  | `PowerPole`       | `PowerPole`  |
+    /// | 5  | `PowerSave`       | `PowerSave`  |
+    /// | 6  | `StablePower`     | `StablePower`|
+    /// | 7  | `Selector`        | `Selector`   |
+    /// | 8  | `Inventory`       | `Inventory`  |
+    ///
+    /// The inventory node contains 1 component (the `Inventory`,
+    /// component_id=1).
+    ///
+    /// TODO(Clause 3.4): use
+    /// `component_factory::create_components_from_template("sp_hub_1")`
+    /// to bootstrap this building in the same manner as others.
+    // TODO(Clause 1.8): according to AC "The Hub node has 8 components",
+    // verify if there is any "Transform" component (component_id=1) in live
+    // server besides component positions, or if AC only counts
+    // component_pos entries. Current implementation matches the
+    // `push_factory` proto (7 components).
     #[allow(clippy::too_many_arguments)]
     pub fn bootstrap_region(
         wire_name: impl Into<String>,
@@ -121,7 +169,7 @@ impl FactoryManager {
             node_type: FCNodeType::Inventory,
             template_id: "__inventory__".to_string(),
             transform: NodeTransform {
-                // not placed on the grid, so no position/mesh
+                // Off-grid: no position/mesh, no world transform.
                 position: None,
                 direction: FCDirection::Up,
                 mesh: None,
@@ -160,8 +208,6 @@ impl FactoryManager {
             ],
         };
 
-        // 8 components -- Hub, BusLoader, PowerPole, PowerSave, StablePower,
-        // Selector, Inventory. matches the sp_hub_1 layout push_factory sends.
         let hub_node = FactoryNode {
             node_id: 2,
             node_type: FCNodeType::Hub,
@@ -171,9 +217,10 @@ impl FactoryManager {
                 direction: FCDirection::Up,
                 mesh: Some(hub_mesh),
                 scene_name: scene_name.clone(),
-                // TODO: world position/rotation are baked scene
-                // geometry with no table source; push_factory hardcodes them
-                // for now. carry that over here once nodes flow through here.
+                // TODO(Clause 3): world position/rotation are baked scene
+                // geometry with no table source; `push_factory` hardcodes
+                // them for `sp_hub_1` on `map01_lv001`. Carry those over
+                // here once nodes flow through `region.to_proto()`.
                 world_position: None,
                 world_rotation: None,
                 bc_port_in: None,
