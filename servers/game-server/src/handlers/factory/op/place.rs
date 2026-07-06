@@ -15,7 +15,7 @@ use std::collections::HashMap;
 use crate::net::NetContext;
 use perlica_logic::enums::{FCDirection, FCMeshType, FCNodeType};
 use perlica_logic::factory::{
-    FactoryComponent, FactoryNode, GridPos, GridRange, Mesh, NodeTransform,
+    FactoryNode, GridPos, GridRange, Mesh, NodeTransform,
 };
 use perlica_proto::{
     CsdFactoryOpPlace, FactoryOpRetCode, FactoryOpType, ScFactoryOpRet, ScdFactoryVector2Int,
@@ -160,35 +160,19 @@ pub async fn handle(
         region.scene_name.clone()
     };
 
-    // Build the node. Component set comes from the factory; if it
-    // doesn't know this template yet (component_factory is stubbed),
-    // we fall back to an empty component list with a TODO and let the
-    // caller fail loudly.
-    // TODO(Clause 3.4): wire `component_factory::create_components_from_template`
-    // once it's implemented. Currently returns None for everything that
-    // isn't the hub bootstrap path.
-    let components: Vec<(u32, FactoryComponent)> =
-        match perlica_logic::factory::component_factory::create_components_from_template(
-            &req.template_id,
-        ) {
-            Some(built) => built.components,
-            None => {
-                return response::fail(
-                    index,
-                    FactoryOpType::Place,
-                    FactoryOpRetCode::Fail,
-                    format!(
-                        "no component layout for template {} yet -- needs Clause 3.4",
-                        req.template_id
-                    ),
-                );
-            }
-        };
-
-    let component_pos: HashMap<_, _> = match perlica_logic::factory::component_factory::create_components_from_template(&req.template_id) {
-        Some(built) => built.component_pos,
-        None => HashMap::new(),
+    let Some(built) = perlica_logic::factory::component_factory::create_components_from_template(
+        &req.template_id,
+        &ctx.assets.factory_table,
+    ) else {
+        return response::fail(
+            index,
+            FactoryOpType::Place,
+            FactoryOpRetCode::NoBuildingItem,
+            format!("no component layout for template {}", req.template_id),
+        );
     };
+    let components = built.components;
+    let component_pos = built.component_pos;
 
     let node_id = {
         let region = ctx.player.factory.region_mut(&region_name).unwrap();

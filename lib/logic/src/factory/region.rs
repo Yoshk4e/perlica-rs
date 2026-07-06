@@ -143,6 +143,35 @@ impl FactoryRegion {
     // TODO (Clause 4): The power loss/power recovery routines defined in
     // `power.rs` require iterating through each node in the region and modifying
     // the producer/collector parts; they accept `&mut FactoryRegion`.
+
+    /// Serialize to the wire format. Emits nodes in ascending `node_id`
+    /// order (the client expects them sorted). Scene data is left empty
+    /// here -- the handler fills it from `FactoryMapTable` since the
+    /// region doesn't own a reference to the config assets.
+    pub fn to_proto(&self) -> perlica_proto::ScdFactorySyncRegion {
+        use perlica_proto::{
+            ScdFactorySyncBlackboard, ScdFactorySyncBlackboardPower, ScdFactorySyncRegion,
+        };
+
+        let mut nodes: Vec<_> = self.nodes.values().collect();
+        nodes.sort_by_key(|n| n.node_id);
+
+        ScdFactorySyncRegion {
+            name: self.name.clone(),
+            blackboard: Some(ScdFactorySyncBlackboard {
+                inventory_node_id: self.blackboard.inventory_node_id,
+                power: Some(ScdFactorySyncBlackboardPower {
+                    power_cost: self.blackboard.power_cost,
+                    power_gen: self.blackboard.power_gen,
+                    power_save_max: self.blackboard.power_save_max,
+                    power_save_current: self.blackboard.power_save_current,
+                    is_stop_by_power: self.blackboard.is_stop_by_power,
+                }),
+            }),
+            nodes: nodes.iter().map(|n| n.to_proto()).collect(),
+            scenes: vec![],
+        }
+    }
 }
 
 #[cfg(test)]

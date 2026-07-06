@@ -98,10 +98,101 @@ impl FactoryNode {
         self.component_mut(id)
     }
 
-    // TODO(Clause 3.2): `to_proto(&self) -> ScdFactorySyncNode', complete
-    // conversion to the same format used by the live server. Once this is in,
-    // the handler-side proto generation in `handlers/factory.rs` should be
-    // switched out for `region.to_proto()
+    /// Serialize to the wire format. Converts transform, mesh, components,
+    /// and dynamic properties into the matching `ScdFactorySyncNode`.
+    pub fn to_proto(&self) -> perlica_proto::ScdFactorySyncNode {
+        use perlica_proto::{
+            ScdFactorySyncDynamicProperty, ScdFactorySyncInteractiveObject, ScdFactorySyncMesh,
+            ScdFactorySyncNode, ScdFactorySyncTransform, ScdFactoryVector2Int,
+        };
+
+        let transform = Some(ScdFactorySyncTransform {
+            position: self.transform.position.map(|p| ScdFactoryVector2Int {
+                x: p.x,
+                y: p.y,
+            }),
+            direction: self.transform.direction as i32,
+            mesh: self.transform.mesh.as_ref().map(|m| ScdFactorySyncMesh {
+                mesh_type: m.mesh_type as i32,
+                points: m
+                    .points
+                    .iter()
+                    .map(|p| ScdFactoryVector2Int {
+                        x: p.x,
+                        y: p.y,
+                    })
+                    .collect(),
+            }),
+            scene_name: self.transform.scene_name.clone(),
+            world_position: self
+                .transform
+                .world_position
+                .map(|v| perlica_proto::Vector {
+                    x: v.x as f32,
+                    y: v.y as f32,
+                    z: v.z as f32,
+                }),
+            world_rotation: self
+                .transform
+                .world_rotation
+                .map(|v| perlica_proto::Vector {
+                    x: v.x as f32,
+                    y: v.y as f32,
+                    z: v.z as f32,
+                }),
+            bc_port_in: None,
+            bc_port_out: None,
+        });
+
+        let interactive_object =
+            self.interactive_object
+                .map(|io| ScdFactorySyncInteractiveObject {
+                    object_id: io.object_id as u64,
+                });
+
+        let dynamic_property = Some(ScdFactorySyncDynamicProperty {
+            values: self
+                .dynamic_property
+                .iter()
+                .map(|(&k, v)| {
+                    (
+                        k as i32,
+                        perlica_proto::ScdFactorySyncDynamicPropertyValue {
+                            value: Some(
+                                perlica_proto::scd_factory_sync_dynamic_property_value::Value::StringValue(
+                                    v.clone(),
+                                ),
+                            ),
+                        },
+                    )
+                })
+                .collect(),
+        });
+
+        let component_pos = self
+            .component_pos
+            .iter()
+            .map(|(&k, &v)| (k as i32, v))
+            .collect();
+
+        let components = self
+            .components
+            .iter()
+            .map(|(id, comp)| comp.to_proto(*id))
+            .collect();
+
+        ScdFactorySyncNode {
+            node_id: self.node_id,
+            node_type: self.node_type as i32,
+            template_id: self.template_id.clone(),
+            transform,
+            is_deactive: self.is_deactive,
+            interactive_object,
+            dynamic_property,
+            component_pos,
+            components,
+        }
+    }
 }
 
 #[cfg(test)]

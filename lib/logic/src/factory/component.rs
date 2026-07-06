@@ -243,6 +243,185 @@ impl FactoryComponent {
     pub fn is_power_relay(&self) -> bool {
         matches!(self, Self::PowerPole(_))
     }
+
+    /// Serialize to the wire format. Maps each variant's state to the
+    /// matching `ScdFactorySyncComponent` payload. Variants with no
+    /// state (Hub, Transform, Bus, etc.) get `component_payload: None`.
+    pub fn to_proto(&self, component_id: u32) -> perlica_proto::ScdFactorySyncComponent {
+        use perlica_proto::{
+            ScdFactorySyncComponent, ScdFactorySyncComponentBoxConveyor,
+            ScdFactorySyncComponentBurnPower, ScdFactorySyncComponentBusLoader,
+            ScdFactorySyncComponentCache, ScdFactorySyncComponentCacheTransport,
+            ScdFactorySyncComponentCollector, ScdFactorySyncComponentGridBox,
+            ScdFactorySyncComponentHealTower, ScdFactorySyncComponentInventory,
+            ScdFactorySyncComponentPowerPole, ScdFactorySyncComponentPowerSave,
+            ScdFactorySyncComponentProducer, ScdFactorySyncComponentSelector,
+            ScdFactorySyncComponentStablePower,
+            ScdFactorySyncComponentTravelPole,
+            scd_factory_sync_component::ComponentPayload,
+        };
+
+        let component_type = self.discriminant();
+        let payload = match self {
+            Self::Transform | Self::Bus | Self::FormulaMan | Self::BoxRouterM1
+            | Self::BusUnloader | Self::Hub | Self::BoxBridge | Self::SpecialDesc => None,
+
+            Self::Inventory(state) => Some(ComponentPayload::Inventory(
+                ScdFactorySyncComponentInventory {
+                    // Proto uses inst_id -> count; our internal map already
+                    // keys by inst_id (0 for stackables).
+                    items: state
+                        .items
+                        .iter()
+                        .map(|(&inst_id, slot)| (inst_id, slot.count as i32))
+                        .collect(),
+                },
+            )),
+
+            Self::Cache(state) => Some(ComponentPayload::Cache(ScdFactorySyncComponentCache {
+                items: state.items.iter().map(item_to_proto).collect(),
+                ports: state.ports.iter().map(cache_port_to_proto).collect(),
+            })),
+
+            Self::Selector(state) => Some(ComponentPayload::Selector(
+                ScdFactorySyncComponentSelector {
+                    selected_item_id: state.selected_item_id.clone(),
+                    ports: state.ports.iter().map(cache_port_to_proto).collect(),
+                },
+            )),
+
+            Self::Collector(state) => Some(ComponentPayload::Collector(
+                ScdFactorySyncComponentCollector {
+                    items_round: state.items_round.iter().map(item_to_proto).collect(),
+                    current_progress: state.current_progress as i64,
+                    in_power: state.in_power,
+                    in_block: state.in_block,
+                    power_cost: state.power_cost,
+                },
+            )),
+
+            Self::Producer(state) => Some(ComponentPayload::Producer(
+                ScdFactorySyncComponentProducer {
+                    formula_id: state.formula_id.clone(),
+                    current_progress: state.current_progress as i64,
+                    in_power: state.in_power,
+                    in_block: state.in_block,
+                    power_cost: state.power_cost,
+                    last_formula_id: state.last_formula_id.clone(),
+                },
+            )),
+
+            Self::BoxConveyor(state) => Some(ComponentPayload::BoxConveyor(
+                ScdFactorySyncComponentBoxConveyor {
+                    last_pop_tms: 0,
+                    items: state.items.iter().map(conveyor_item_to_proto).collect(),
+                },
+            )),
+
+            Self::BusLoader(state) => Some(ComponentPayload::BusLoader(
+                ScdFactorySyncComponentBusLoader {
+                    last_putin_item_id: state.last_putin_item_id.clone(),
+                    ports: state.ports.iter().map(cache_port_to_proto).collect(),
+                },
+            )),
+
+            Self::BurnPower(state) => Some(ComponentPayload::BurnPower(
+                ScdFactorySyncComponentBurnPower {
+                    current_least_progress: state.fuel_remaining,
+                    current_burn_item_id: String::new(),
+                    power_gen_per_sec: 0,
+                    in_power: state.in_power,
+                },
+            )),
+
+            Self::PowerPole(state) => Some(ComponentPayload::PowerPole(
+                ScdFactorySyncComponentPowerPole {
+                    in_power: state.in_power,
+                },
+            )),
+
+            Self::PowerSave(state) => Some(ComponentPayload::PowerSave(
+                ScdFactorySyncComponentPowerSave {
+                    power_save: state.power_save,
+                    in_power: state.in_power,
+                },
+            )),
+
+            Self::GridBox(state) => Some(ComponentPayload::GridBox(
+                ScdFactorySyncComponentGridBox {
+                    items: state.items.iter().map(item_to_proto).collect(),
+                    ports: vec![],
+                },
+            )),
+
+            Self::HealTower(state) => Some(ComponentPayload::HealTower(
+                ScdFactorySyncComponentHealTower {
+                    in_power: true,
+                    current_progress: 0,
+                    current_point: state.points as i32,
+                    power_cost: 0,
+                },
+            )),
+
+            Self::CacheTransport(state) => Some(ComponentPayload::CacheTransport(
+                ScdFactorySyncComponentCacheTransport {
+                    current_progress: 0,
+                    total_progress: 0,
+                    auto_transport: state.enabled,
+                    in_power: true,
+                    in_use: false,
+                    power_cost: 0,
+                    // TODO: proto has more fields than our internal state.
+                    // Fill source/target once the proto struct is confirmed.
+                },
+            )),
+
+            Self::StablePower(state) => Some(ComponentPayload::StablePower(
+                ScdFactorySyncComponentStablePower {
+                    in_power: state.in_power,
+                    power_gen_per_sec: state.power_gen_per_sec,
+                },
+            )),
+
+            Self::TravelPole(state) => Some(ComponentPayload::TravelPole(
+                ScdFactorySyncComponentTravelPole {
+                    in_power: true,
+                    power_cost: 0,
+                    default_next: state.default_next.unwrap_or(0),
+                },
+            )),
+        };
+
+        ScdFactorySyncComponent {
+            component_id,
+            component_type,
+            component_payload: payload,
+        }
+    }
+}
+
+fn item_to_proto(slot: &ItemSlot) -> perlica_proto::ScdFactorySyncItem {
+    perlica_proto::ScdFactorySyncItem {
+        id: slot.item_id.clone(),
+        count: slot.count as i32,
+        tms: 0,
+    }
+}
+
+fn conveyor_item_to_proto(item: &ConveyorItem) -> perlica_proto::ScdFactorySyncItem {
+    perlica_proto::ScdFactorySyncItem {
+        id: item.item.item_id.clone(),
+        count: item.item.count as i32,
+        tms: (item.progress * 1000.0) as i64,
+    }
+}
+
+fn cache_port_to_proto(port: &CachePort) -> perlica_proto::ScdFactorySyncComponentSubPort {
+    perlica_proto::ScdFactorySyncComponentSubPort {
+        index: port.direction,
+        bind_com_id: 0,
+        in_block: false,
+    }
 }
 
 #[cfg(test)]
