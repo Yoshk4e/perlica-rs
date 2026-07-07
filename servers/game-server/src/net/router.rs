@@ -148,6 +148,9 @@ handlers! {
         CsFactoryManuallyWorkCancel      => factory::on_cs_factory_manually_work_cancel,
         CsFactoryManuallyWorkPause       => factory::on_cs_factory_manually_work_pause,
         CsFactoryManuallyWorkResume      => factory::on_cs_factory_manually_work_resume,
+        CsFactoryQuickbarSetOne          => factory::on_cs_factory_quickbar_set_one,
+        CsFactoryQuickbarMoveOne         => factory::on_cs_factory_quickbar_move_one,
+        CsFactorySttUnlockNode           => factory::on_cs_factory_stt_unlock_node,
         // Mail Commands
         CsGetMail                        => mail::on_cs_get_mail,
         CsReadMail                       => mail::on_cs_read_mail,

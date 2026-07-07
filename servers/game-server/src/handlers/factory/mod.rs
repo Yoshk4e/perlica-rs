@@ -16,9 +16,11 @@ pub mod manufacture;
 pub mod notify;
 pub mod op;
 pub mod processor;
+pub mod quickbar;
 pub mod recycler;
 pub mod response;
 pub mod soil;
+pub mod stt;
 pub mod trade;
 pub mod workshop;
 
@@ -41,8 +43,10 @@ pub use processor::{
     on_cs_factory_processor_make_item, on_cs_factory_processor_mark_unlock_formula_read,
     on_cs_factory_processor_recast_gem,
 };
+pub use quickbar::{on_cs_factory_quickbar_move_one, on_cs_factory_quickbar_set_one};
 pub use recycler::{on_cs_factory_recycler_commit_material, on_cs_factory_recycler_fetch_product};
 pub use soil::{on_cs_factory_soil_cancel, on_cs_factory_soil_harvest, on_cs_factory_soil_plant};
+pub use stt::on_cs_factory_stt_unlock_node;
 pub use trade::{
     on_cs_factory_trade_cash_order, on_cs_factory_trade_delete_order,
     on_cs_factory_trade_set_contract,
