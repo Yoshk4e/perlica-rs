@@ -409,9 +409,10 @@ impl FactoryManager {
         for (_, comp) in &mut node.components {
             if let FactoryComponent::Producer(state) = comp
                 && !enable
-                && state.start_tick.is_some()
+                && let Some(start) = state.start_tick.take()
             {
-                let _ = state.start_tick.take();
+                let elapsed = crate::factory::tick::elapsed_since(start);
+                state.current_progress = state.current_progress.saturating_add(elapsed);
             }
         }
 
@@ -441,6 +442,7 @@ impl FactoryManager {
             node_id_b,
             index: idx,
         });
+        crate::factory::power::recompute_blackboard(region);
         Ok(idx)
     }
 
@@ -451,6 +453,7 @@ impl FactoryManager {
         if region.connections.len() == before {
             return Err("no connection with that index");
         }
+        crate::factory::power::recompute_blackboard(region);
         Ok(())
     }
 
@@ -839,12 +842,13 @@ impl FactoryManager {
             };
         } else {
             let (left, right) = state.items.split_at_mut(from.max(to));
-            let (lower, higher) = if from < to {
-                (&mut left[0], &mut right[0])
+            let split = from.max(to);
+            let (lower_idx, higher_idx) = if from < to {
+                (from, 0) // from is in left, to is right[0]
             } else {
-                (&mut left[to], &mut right[from - to - 1])
+                (to, from - split) // to is in left, from is right[from-split]
             };
-            std::mem::swap(lower, higher);
+            std::mem::swap(&mut left[lower_idx], &mut right[higher_idx]);
         }
         Ok(())
     }
@@ -1327,10 +1331,19 @@ impl FactoryManager {
             return Err(GridBoxError::InventoryComponentMissing);
         };
         for item in moved_items {
-            if let Some(existing) = inv_state.items.get_mut(&0) {
-                existing.count += item.item.count;
-            } else {
-                inv_state.items.insert(0, item.item);
+            let item_id = &item.item.item_id;
+            let inst_id = item.item.inst_id;
+            // Stack with existing same-item slot (matching item_id + inst_id).
+            let mut stacked = false;
+            for slot in inv_state.items.values_mut() {
+                if slot.item_id == *item_id && slot.inst_id == inst_id {
+                    slot.count += item.item.count;
+                    stacked = true;
+                    break;
+                }
+            }
+            if !stacked {
+                inv_state.items.insert(inst_id, item.item);
             }
         }
         Ok(())
@@ -1362,11 +1375,11 @@ impl FactoryManager {
         let Some(region) = self.region_mut(region_name) else {
             return;
         };
+        let new_dir = if in_out { 0 } else { 2 };
         for node in region.nodes.values_mut() {
             for (_, comp) in &mut node.components {
                 if let FactoryComponent::BoxConveyor(state) = comp {
-                    state.direction = if in_out { 0 } else { 2 };
-                    return;
+                    state.direction = new_dir;
                 }
             }
         }
@@ -1465,15 +1478,18 @@ fn find_gridbox(region: &mut FactoryRegion, component_id: u32) -> Option<&mut Gr
     None
 }
 
-fn move_item_into_cache(dest: &mut Vec<ItemSlot>, item_id: &str, _source: Vec<ItemSlot>) {
-    if let Some(slot) = dest.iter_mut().find(|s| s.item_id == item_id) {
-        slot.count += 1;
-    } else {
-        dest.push(ItemSlot {
-            item_id: item_id.to_string(),
-            count: 1,
-            inst_id: 0,
-        });
+fn move_item_into_cache(dest: &mut Vec<ItemSlot>, item_id: &str, source: Vec<ItemSlot>) {
+    // Move ALL matching items from source into dest, stacking by item_id.
+    for src_slot in &source {
+        if src_slot.item_id != item_id {
+            // Keep non-matching items in dest (they were taken from source).
+            continue;
+        }
+        if let Some(dest_slot) = dest.iter_mut().find(|s| s.item_id == item_id) {
+            dest_slot.count += src_slot.count;
+        } else {
+            dest.push(src_slot.clone());
+        }
     }
 }
 

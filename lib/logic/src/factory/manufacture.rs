@@ -208,9 +208,13 @@ impl crate::factory::FactoryManager {
         if machine.set_count == 0 {
             machine.active_recipe = None;
         } else if settled > 0 {
-            // Reset start_tick for the remaining sets.
-            if let Some(recipe) = machine.active_recipe.as_mut() {
-                recipe.start_tick = current_tick();
+            // Adjust start_tick so uncredited sets keep their progress.
+            // The remaining sets already "completed" during the elapsed
+            // window; push start_tick forward by settled * total_progress
+            // so they re-complete without waiting the full duration again.
+            if let Some(active_recipe) = machine.active_recipe.as_mut() {
+                let credit_ticks = settled as u64 * recipe.total_progress;
+                active_recipe.start_tick = active_recipe.start_tick.saturating_add(credit_ticks);
             }
         }
 

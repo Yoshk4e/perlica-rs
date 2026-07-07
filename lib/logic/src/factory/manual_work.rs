@@ -126,15 +126,20 @@ impl FactoryManager {
         (back_items, break_items)
     }
 
-    /// Pause the manual work queue.
+    /// Pause the manual work queue. Snapshots the head unit's elapsed
+    /// progress into `progress` so it can be restored on resume.
     pub fn manual_work_pause(&mut self) {
+        if let Some(head) = self.manual_work_state.queue.first_mut() {
+            let elapsed = elapsed_since(head.start_tick);
+            head.progress = head.progress.saturating_add(elapsed);
+        }
         self.manual_work_state.is_paused = true;
     }
 
-    /// Resume the manual work queue.
+    /// Resume the manual work queue. Resets `start_tick` to now so the
+    /// head unit continues from its snapshotted `progress`.
     pub fn manual_work_resume(&mut self) {
         if self.manual_work_state.is_paused {
-            // Reset the start_tick of the head unit so it resumes from now.
             if let Some(head) = self.manual_work_state.queue.first_mut() {
                 head.start_tick = current_tick();
             }

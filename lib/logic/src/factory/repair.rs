@@ -110,6 +110,10 @@ impl FactoryManager {
         };
 
         region.nodes.insert(node_id, node);
+
+        // Power graph may have changed (new producer/pole/consumer).
+        crate::factory::power::recompute_blackboard(region);
+
         Some(node_id)
     }
 }
