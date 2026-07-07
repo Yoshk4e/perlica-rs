@@ -131,6 +131,7 @@ pub fn ok_with_place_box_conveyor(index: impl Into<String>, node_ids: Vec<u32>) 
     }
 }
 
+#[allow(dead_code)]
 pub fn ok_with_add_connection(index: impl Into<String>, conn_index: u64) -> ScFactoryOpRet {
     ScFactoryOpRet {
         index: index.into(),

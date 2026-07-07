@@ -130,6 +130,10 @@ handlers! {
         CsFactoryProcessorMakeEquip      => factory::on_cs_factory_processor_make_equip,
         CsFactoryProcessorMakeGem        => factory::on_cs_factory_processor_make_gem,
         CsFactoryProcessorRecastGem      => factory::on_cs_factory_processor_recast_gem,
+        CsFactoryManufactureStart        => factory::on_cs_factory_manufacture_start,
+        CsFactoryManufactureCancel       => factory::on_cs_factory_manufacture_cancel,
+        CsFactoryManufactureSettle       => factory::on_cs_factory_manufacture_settle,
+        CsFactoryWorkshopMake            => factory::on_cs_factory_workshop_make,
         // Mail Commands
         CsGetMail                        => mail::on_cs_get_mail,
         CsReadMail                       => mail::on_cs_read_mail,

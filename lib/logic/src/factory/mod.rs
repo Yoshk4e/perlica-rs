@@ -66,13 +66,16 @@ pub mod blackboard;
 pub mod component;
 pub mod component_factory;
 pub mod grid;
+pub mod machine_crafter;
 pub mod manager;
+pub mod manufacture;
 pub mod node;
 pub mod ops;
 pub mod power;
 pub mod processor;
 pub mod region;
 pub mod tick;
+pub mod workshop;
 
 #[cfg(test)]
 mod tests;

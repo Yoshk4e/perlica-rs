@@ -10,19 +10,26 @@
 
 pub mod hs_feedback;
 pub mod hs_inout;
+pub mod manufacture;
 pub mod notify;
 pub mod op;
 pub mod processor;
 pub mod response;
+pub mod workshop;
 
 pub use hs_feedback::on_cs_factory_hs_fb;
 pub use hs_inout::on_cs_factory_hs_inout;
+pub use manufacture::{
+    on_cs_factory_manufacture_cancel, on_cs_factory_manufacture_settle,
+    on_cs_factory_manufacture_start,
+};
 pub use op::on_cs_factory_op;
 pub use processor::{
     on_cs_factory_processor_make_equip, on_cs_factory_processor_make_gem,
     on_cs_factory_processor_make_item, on_cs_factory_processor_mark_unlock_formula_read,
     on_cs_factory_processor_recast_gem,
 };
+pub use workshop::on_cs_factory_workshop_make;
 
 use std::collections::HashMap;
 
