@@ -37,9 +37,9 @@ impl FactoryManager {
             // TODO: this scan is O(n*m) -- cache the reverse mapping
             // once the skill table is large enough to matter.
             let _ = assets; // skill lookup needs the building's template_id
-                            // which we don't have here without looking up
-                            // the node. For now, store empty skills and
-                            // let the caller fill them later.
+            // which we don't have here without looking up
+            // the node. For now, store empty skills and
+            // let the caller fill them later.
             workers.push(CharacterWorker {
                 region_name: region_name.to_string(),
                 char_inst_id: char_id.parse().unwrap_or(0),
@@ -49,22 +49,20 @@ impl FactoryManager {
         }
 
         // Remove any existing workers for this node, then add the new ones.
-        self.character_work_state
-            .workers
-            .retain(|w| !(w.region_name == region_name && w.char_inst_id != 0
+        self.character_work_state.workers.retain(|w| {
+            !(w.region_name == region_name
+                && w.char_inst_id != 0
                 && char_id_sequence
                     .iter()
-                    .any(|c| c.parse::<u32>().unwrap_or(0) == w.char_inst_id)));
+                    .any(|c| c.parse::<u32>().unwrap_or(0) == w.char_inst_id))
+        });
         self.character_work_state.workers.extend(workers);
         true
     }
 
     /// Punch characters out of their work slots. Returns the list of
     /// punched-out character IDs for the response.
-    pub fn character_work_punch_out(
-        &mut self,
-        char_id_list: &[String],
-    ) -> Vec<String> {
+    pub fn character_work_punch_out(&mut self, char_id_list: &[String]) -> Vec<String> {
         let mut punched = vec![];
         for char_id in char_id_list {
             let inst_id = char_id.parse::<u32>().unwrap_or(0);
@@ -105,9 +103,10 @@ impl FactoryManager {
                     // fractional bonus (e.g. -0.2 for 20% faster).
                     for (i, &ty) in skill.type_list.iter().enumerate() {
                         if ty == 1
-                            && let Some(&param) = skill.param_list.get(i) {
-                                modifiers.push(param);
-                            }
+                            && let Some(&param) = skill.param_list.get(i)
+                        {
+                            modifiers.push(param);
+                        }
                     }
                 }
             }

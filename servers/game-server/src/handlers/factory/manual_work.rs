@@ -2,10 +2,45 @@
 //! in `perlica_logic::factory::manual_work`.
 
 use crate::net::NetContext;
+use perlica_logic::factory::current_tick;
 use perlica_proto::{
     CsFactoryManuallyWorkAppend, CsFactoryManuallyWorkCancel, CsFactoryManuallyWorkPause,
     CsFactoryManuallyWorkResume, ScFactoryManuallyWorkCancel, ScFactoryModifyManuallyWork,
+    ScdFactorySyncManuallyWorkUnit,
 };
+
+fn serialize_queue(
+    manager: &perlica_logic::factory::FactoryManager,
+) -> ScFactoryModifyManuallyWork {
+    let queue: Vec<ScdFactorySyncManuallyWorkUnit> = manager
+        .manual_work_state
+        .queue
+        .iter()
+        .map(|unit| ScdFactorySyncManuallyWorkUnit {
+            id: unit.recipe_id.clone(),
+            count: 1,
+        })
+        .collect();
+
+    let head_start_tms = manager
+        .manual_work_state
+        .queue
+        .first()
+        .map_or(0, |u| u.start_tick as i64);
+
+    let pause_tms = if manager.manual_work_state.is_paused {
+        current_tick() as i64
+    } else {
+        0
+    };
+
+    ScFactoryModifyManuallyWork {
+        queue,
+        in_block: manager.manual_work_state.is_paused,
+        head_start_tms,
+        pause_tms,
+    }
+}
 
 pub async fn on_cs_factory_manually_work_append(
     ctx: &mut NetContext<'_>,
@@ -19,12 +54,7 @@ pub async fn on_cs_factory_manually_work_append(
         req.count,
     );
 
-    ScFactoryModifyManuallyWork {
-        queue: vec![],
-        in_block: ctx.player.factory.manual_work_state.is_paused,
-        head_start_tms: 0,
-        pause_tms: 0,
-    }
+    serialize_queue(&ctx.player.factory)
 }
 
 pub async fn on_cs_factory_manually_work_cancel(
@@ -48,13 +78,7 @@ pub async fn on_cs_factory_manually_work_pause(
     _req: CsFactoryManuallyWorkPause,
 ) -> ScFactoryModifyManuallyWork {
     ctx.player.factory.manual_work_pause();
-
-    ScFactoryModifyManuallyWork {
-        queue: vec![],
-        in_block: true,
-        head_start_tms: 0,
-        pause_tms: 0,
-    }
+    serialize_queue(&ctx.player.factory)
 }
 
 pub async fn on_cs_factory_manually_work_resume(
@@ -62,11 +86,5 @@ pub async fn on_cs_factory_manually_work_resume(
     _req: CsFactoryManuallyWorkResume,
 ) -> ScFactoryModifyManuallyWork {
     ctx.player.factory.manual_work_resume();
-
-    ScFactoryModifyManuallyWork {
-        queue: vec![],
-        in_block: false,
-        head_start_tms: 0,
-        pause_tms: 0,
-    }
+    serialize_queue(&ctx.player.factory)
 }

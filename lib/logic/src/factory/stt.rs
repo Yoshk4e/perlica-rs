@@ -125,8 +125,7 @@ fn evaluate_condition(
                 .and_then(|l| l.first())
                 .copied()
                 .unwrap_or(0) as usize;
-            !building_id.is_empty()
-                && region.count_buildings_by_template(building_id) >= required
+            !building_id.is_empty() && region.count_buildings_by_template(building_id) >= required
         }
         // Type 511: "Produce N total items"
         511 => {
@@ -176,7 +175,14 @@ fn execute_action(
                 }
             }
             if !stacked {
-                inv.items.insert(0, ItemSlot { item_id, count, inst_id: 0 });
+                inv.items.insert(
+                    0,
+                    ItemSlot {
+                        item_id,
+                        count,
+                        inst_id: 0,
+                    },
+                );
             }
         }
     }

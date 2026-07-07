@@ -74,11 +74,13 @@ impl FactoryManager {
         &mut self,
         assets: &FTableAssets,
         region_name: &str,
-    ) -> (std::collections::HashMap<String, i32>, std::collections::HashMap<String, i32>) {
+    ) -> (
+        std::collections::HashMap<String, i32>,
+        std::collections::HashMap<String, i32>,
+    ) {
         let mut back_items: std::collections::HashMap<String, i32> =
             std::collections::HashMap::new();
-        let break_items: std::collections::HashMap<String, i32> =
-            std::collections::HashMap::new();
+        let break_items: std::collections::HashMap<String, i32> = std::collections::HashMap::new();
 
         // For each queued unit, refund its ingredients.
         for unit in &self.manual_work_state.queue {
@@ -93,29 +95,30 @@ impl FactoryManager {
         // Push refunded items back into the bag.
         if let Some(region) = self.region_mut(region_name)
             && let Some(bag_node) = region.node_mut(1)
-                && let Some(bag_comp) = bag_node.component_mut(1)
-                    && let crate::factory::FactoryComponent::Inventory(inv_state) = bag_comp {
-                        for (item_id, count) in &back_items {
-                            let mut stacked = false;
-                            for slot in inv_state.items.values_mut() {
-                                if slot.item_id == *item_id {
-                                    slot.count += *count as u32;
-                                    stacked = true;
-                                    break;
-                                }
-                            }
-                            if !stacked {
-                                inv_state.items.insert(
-                                    0,
-                                    ItemSlot {
-                                        item_id: item_id.clone(),
-                                        count: *count as u32,
-                                        inst_id: 0,
-                                    },
-                                );
-                            }
-                        }
+            && let Some(bag_comp) = bag_node.component_mut(1)
+            && let crate::factory::FactoryComponent::Inventory(inv_state) = bag_comp
+        {
+            for (item_id, count) in &back_items {
+                let mut stacked = false;
+                for slot in inv_state.items.values_mut() {
+                    if slot.item_id == *item_id {
+                        slot.count += *count as u32;
+                        stacked = true;
+                        break;
                     }
+                }
+                if !stacked {
+                    inv_state.items.insert(
+                        0,
+                        ItemSlot {
+                            item_id: item_id.clone(),
+                            count: *count as u32,
+                            inst_id: 0,
+                        },
+                    );
+                }
+            }
+        }
 
         self.manual_work_state.queue.clear();
         self.manual_work_state.is_paused = false;
@@ -142,11 +145,7 @@ impl FactoryManager {
     /// Tick the manual work queue. Completes units whose
     /// `elapsed >= totalProgress` and produces outcomes into the bag.
     /// Called by the server tick loop.
-    pub fn tick_manual_work(
-        &mut self,
-        assets: &FTableAssets,
-        region_name: &str,
-    ) -> usize {
+    pub fn tick_manual_work(&mut self, assets: &FTableAssets, region_name: &str) -> usize {
         if self.manual_work_state.is_paused || self.manual_work_state.queue.is_empty() {
             return 0;
         }
@@ -162,7 +161,11 @@ impl FactoryManager {
                 return 0;
             };
             let elapsed = elapsed_since(head.start_tick);
-            (head.recipe_id.clone(), recipe.total_progress, elapsed >= total_progress_for(recipe))
+            (
+                head.recipe_id.clone(),
+                recipe.total_progress,
+                elapsed >= total_progress_for(recipe),
+            )
         };
 
         let _ = total_progress;
@@ -178,28 +181,29 @@ impl FactoryManager {
             };
             if let Some(bag_node) = region.node_mut(1)
                 && let Some(bag_comp) = bag_node.component_mut(1)
-                    && let crate::factory::FactoryComponent::Inventory(inv_state) = bag_comp {
-                        for outcome in &recipe.outcomes {
-                            let mut stacked = false;
-                            for slot in inv_state.items.values_mut() {
-                                if slot.item_id == outcome.id {
-                                    slot.count += outcome.count;
-                                    stacked = true;
-                                    break;
-                                }
-                            }
-                            if !stacked {
-                                inv_state.items.insert(
-                                    0,
-                                    ItemSlot {
-                                        item_id: outcome.id.clone(),
-                                        count: outcome.count,
-                                        inst_id: 0,
-                                    },
-                                );
-                            }
+                && let crate::factory::FactoryComponent::Inventory(inv_state) = bag_comp
+            {
+                for outcome in &recipe.outcomes {
+                    let mut stacked = false;
+                    for slot in inv_state.items.values_mut() {
+                        if slot.item_id == outcome.id {
+                            slot.count += outcome.count;
+                            stacked = true;
+                            break;
                         }
                     }
+                    if !stacked {
+                        inv_state.items.insert(
+                            0,
+                            ItemSlot {
+                                item_id: outcome.id.clone(),
+                                count: outcome.count,
+                                inst_id: 0,
+                            },
+                        );
+                    }
+                }
+            }
 
             // Remove the completed unit.
             self.manual_work_state.queue.remove(0);

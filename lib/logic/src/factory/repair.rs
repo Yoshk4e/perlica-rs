@@ -1,15 +1,16 @@
 //! Repair & depot business logic.
+#![allow(clippy::question_mark)]
 //!
 //! Repair unlocks pre-placed broken buildings by deducting their cost
 //! items from the bag. Once repaired, the building becomes active in
 //! the region. Depot bridge messages move items between the player's
 //! bag and the factory depot (hub inventory).
 
-use config::repair_table::RepairAssets;
 use config::factory_table::FTableAssets;
+use config::repair_table::RepairAssets;
 
-use crate::factory::{FactoryComponent, FactoryManager, FactoryNode};
 use crate::enums::FCNodeType;
+use crate::factory::{FactoryComponent, FactoryManager, FactoryNode};
 
 impl FactoryManager {
     /// Repair a pre-placed broken building. Looks up the repair entry,
@@ -21,41 +22,41 @@ impl FactoryManager {
         factory_assets: &FTableAssets,
         region_name: &str,
         repair_id: &str,
-    ) -> bool {
+    ) -> Option<u32> {
         let Some(entry) = repair_assets.get_repair(repair_id) else {
-            return false;
+            return None;
         };
 
         // Deduct cost items from the bag.
         let Some(region) = self.region_mut(region_name) else {
-            return false;
+            return None;
         };
         let Some(bag_node) = region.node_mut(1) else {
-            return false;
+            return None;
         };
         let Some(bag_comp) = bag_node.component_mut(1) else {
-            return false;
+            return None;
         };
         let FactoryComponent::Inventory(bag_inv) = bag_comp else {
-            return false;
+            return None;
         };
 
         // Verify + consume cost items.
         for cost in &entry.cost_items {
             if !try_consume_from_inv(bag_inv, &cost.id, cost.count) {
-                return false;
+                return None;
             }
         }
 
         // Activate the building by placing it as a node.
         let building_id = &entry.building_id;
         let Some(building) = factory_assets.get_building(building_id) else {
-            return false;
+            return None;
         };
 
         let node_type = node_type_from_i32(building.building_type);
         let Some(node_type) = node_type else {
-            return false;
+            return None;
         };
 
         let node_id = region.allocate_node_id();
@@ -70,18 +71,26 @@ impl FactoryManager {
                 scene_name: entry.level_id.clone(),
                 world_position: None,
                 world_rotation: None,
-                bc_port_in: building.input_ports.first().map(|p| {
-                    crate::factory::SubPort {
-                        position: crate::factory::GridPos { x: p.point.x, y: p.point.y },
+                bc_port_in: building
+                    .input_ports
+                    .first()
+                    .map(|p| crate::factory::SubPort {
+                        position: crate::factory::GridPos {
+                            x: p.point.x,
+                            y: p.point.y,
+                        },
                         direction: p.side,
-                    }
-                }),
-                bc_port_out: building.output_ports.first().map(|p| {
-                    crate::factory::SubPort {
-                        position: crate::factory::GridPos { x: p.point.x, y: p.point.y },
+                    }),
+                bc_port_out: building
+                    .output_ports
+                    .first()
+                    .map(|p| crate::factory::SubPort {
+                        position: crate::factory::GridPos {
+                            x: p.point.x,
+                            y: p.point.y,
+                        },
                         direction: p.side,
-                    }
-                }),
+                    }),
             },
             is_deactive: false,
             interactive_object: Some(crate::factory::InteractiveObject { object_id: node_id }),
@@ -91,7 +100,7 @@ impl FactoryManager {
         };
 
         region.nodes.insert(node_id, node);
-        true
+        Some(node_id)
     }
 }
 

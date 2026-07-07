@@ -74,9 +74,9 @@ use perlica_proto::{
     ScdFactorySyncComponentPowerSave, ScdFactorySyncComponentSelector,
     ScdFactorySyncComponentStablePower, ScdFactorySyncDynamicProperty,
     ScdFactorySyncDynamicPropertyValue, ScdFactorySyncInteractiveObject, ScdFactorySyncMesh,
-    ScdFactorySyncNode, ScdFactorySyncRegion, ScdFactorySyncScene, ScdFactorySyncSceneBandwidth,
-    ScdFactorySyncTransform, ScdFactoryVector2Int, Vector, scd_factory_sync_component,
-    scd_factory_sync_dynamic_property_value,
+    ScdFactorySyncNode, ScdFactorySyncQuickbar, ScdFactorySyncRegion, ScdFactorySyncScene,
+    ScdFactorySyncSceneBandwidth, ScdFactorySyncTransform, ScdFactoryVector2Int, Vector,
+    scd_factory_sync_component, scd_factory_sync_dynamic_property_value,
 };
 use tracing::{debug, warn};
 
@@ -440,11 +440,22 @@ pub async fn push_factory(ctx: &mut NetContext<'_>) -> bool {
         scenes: vec![scene],
     };
 
+    let quickbars: Vec<_> = ctx
+        .player
+        .factory
+        .quickbars
+        .iter()
+        .map(|q| ScdFactorySyncQuickbar {
+            r#type: q.quickbar_type.parse().unwrap_or(0),
+            list: q.items.clone(),
+        })
+        .collect();
+
     let msg = ScFactorySyncContext {
-        tms: 0,
+        tms: perlica_logic::factory::current_tick() as i64,
         current_region: region_name.clone(),
         regions: vec![region],
-        quickbars: vec![],
+        quickbars,
     };
 
     debug!(
