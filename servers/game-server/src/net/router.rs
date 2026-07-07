@@ -151,6 +151,9 @@ handlers! {
         CsFactoryQuickbarSetOne          => factory::on_cs_factory_quickbar_set_one,
         CsFactoryQuickbarMoveOne         => factory::on_cs_factory_quickbar_move_one,
         CsFactorySttUnlockNode           => factory::on_cs_factory_stt_unlock_node,
+        CsFactoryObserverOp              => factory::on_cs_factory_observer_op,
+        CsFactoryStatisticRequire        => factory::on_cs_factory_statistic_require,
+        CsFactoryRepairBuilding          => factory::on_cs_factory_repair_building,
         // Mail Commands
         CsGetMail                        => mail::on_cs_get_mail,
         CsReadMail                       => mail::on_cs_read_mail,
@@ -174,6 +177,7 @@ handlers! {
         CsSceneCommitLevelScriptCacheStep => scene::on_cs_scene_commit_level_script_cache_step,
         // Factory (no response -- fire-and-forget)
         CsFactoryProcessorMarkUnlockFormulaRead => factory::on_cs_factory_processor_mark_unlock_formula_read,
+        CsFactoryStatisticSetBookmarkItemIds => factory::on_cs_factory_statistic_set_bookmark_item_ids,
     }
 }
 

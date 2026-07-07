@@ -14,10 +14,12 @@ pub mod hs_inout;
 pub mod manual_work;
 pub mod manufacture;
 pub mod notify;
+pub mod observer;
 pub mod op;
 pub mod processor;
 pub mod quickbar;
 pub mod recycler;
+pub mod repair;
 pub mod response;
 pub mod soil;
 pub mod stt;
@@ -37,6 +39,10 @@ pub use manufacture::{
     on_cs_factory_manufacture_cancel, on_cs_factory_manufacture_settle,
     on_cs_factory_manufacture_start,
 };
+pub use observer::{
+    on_cs_factory_observer_op, on_cs_factory_statistic_require,
+    on_cs_factory_statistic_set_bookmark_item_ids,
+};
 pub use op::on_cs_factory_op;
 pub use processor::{
     on_cs_factory_processor_make_equip, on_cs_factory_processor_make_gem,
@@ -45,6 +51,7 @@ pub use processor::{
 };
 pub use quickbar::{on_cs_factory_quickbar_move_one, on_cs_factory_quickbar_set_one};
 pub use recycler::{on_cs_factory_recycler_commit_material, on_cs_factory_recycler_fetch_product};
+pub use repair::on_cs_factory_repair_building;
 pub use soil::{on_cs_factory_soil_cancel, on_cs_factory_soil_harvest, on_cs_factory_soil_plant};
 pub use stt::on_cs_factory_stt_unlock_node;
 pub use trade::{
