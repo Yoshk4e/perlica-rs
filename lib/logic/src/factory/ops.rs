@@ -191,18 +191,26 @@ impl FactoryManager {
 
         // Extract port layout from the building entry so the client
         // knows where belt I/O points are.
-        let bc_port_in = building.input_ports.first().map(|p| {
-            crate::factory::SubPort {
-                position: GridPos { x: p.point.x, y: p.point.y },
+        let bc_port_in = building
+            .input_ports
+            .first()
+            .map(|p| crate::factory::SubPort {
+                position: GridPos {
+                    x: p.point.x,
+                    y: p.point.y,
+                },
                 direction: p.side,
-            }
-        });
-        let bc_port_out = building.output_ports.first().map(|p| {
-            crate::factory::SubPort {
-                position: GridPos { x: p.point.x, y: p.point.y },
+            });
+        let bc_port_out = building
+            .output_ports
+            .first()
+            .map(|p| crate::factory::SubPort {
+                position: GridPos {
+                    x: p.point.x,
+                    y: p.point.y,
+                },
                 direction: p.side,
-            }
-        });
+            });
 
         let node_id = {
             let region = self.region_mut(region_name).unwrap();
@@ -228,9 +236,7 @@ impl FactoryManager {
                 is_deactive: false,
                 // Assign a sequential interactive_object ID so the client
                 // can route clicks. IDs 1 and 2 are reserved by the hub.
-                interactive_object: Some(crate::factory::InteractiveObject {
-                    object_id: node_id,
-                }),
+                interactive_object: Some(crate::factory::InteractiveObject { object_id: node_id }),
                 dynamic_property: HashMap::new(),
                 component_pos: built.component_pos,
                 components: built.components,

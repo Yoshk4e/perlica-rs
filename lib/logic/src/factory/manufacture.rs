@@ -54,11 +54,7 @@ impl crate::factory::FactoryManager {
                 0
             };
             let round_count = old_recipe_entry.map_or(1, |e| e.round_count as i32);
-            (
-                old_recipe.recipe_id.clone(),
-                completed as i32,
-                round_count,
-            )
+            (old_recipe.recipe_id.clone(), completed as i32, round_count)
         } else {
             (String::new(), 0, 0)
         };

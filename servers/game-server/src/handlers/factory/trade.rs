@@ -11,9 +11,12 @@ pub async fn on_cs_factory_trade_set_contract(
     ctx: &mut NetContext<'_>,
     req: CsFactoryTradeSetContract,
 ) -> ScFactoryModifyTrade {
-    ctx.player
-        .factory
-        .trade_set_contract(&ctx.assets.contracts, &req.region, req.node_id, &req.contract_id);
+    ctx.player.factory.trade_set_contract(
+        &ctx.assets.contracts,
+        &req.region,
+        req.node_id,
+        &req.contract_id,
+    );
 
     ScFactoryModifyTrade {
         machines: vec![],

@@ -139,6 +139,9 @@ handlers! {
         CsFactoryTradeSetContract        => factory::on_cs_factory_trade_set_contract,
         CsFactoryTradeCashOrder          => factory::on_cs_factory_trade_cash_order,
         CsFactoryTradeDeleteOrder        => factory::on_cs_factory_trade_delete_order,
+        CsFactorySoilPlant               => factory::on_cs_factory_soil_plant,
+        CsFactorySoilHarvest             => factory::on_cs_factory_soil_harvest,
+        CsFactorySoilCancel              => factory::on_cs_factory_soil_cancel,
         // Mail Commands
         CsGetMail                        => mail::on_cs_get_mail,
         CsReadMail                       => mail::on_cs_read_mail,

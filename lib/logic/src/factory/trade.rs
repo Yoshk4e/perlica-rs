@@ -30,16 +30,15 @@ impl FactoryManager {
             return false;
         }
 
-        let trade = self
-            .trade_state
-            .entry(region_name.to_string())
-            .or_insert(crate::factory::TradeMachine {
+        let trade = self.trade_state.entry(region_name.to_string()).or_insert(
+            crate::factory::TradeMachine {
                 region_name: region_name.to_string(),
                 building_level: 1,
                 active_contract: None,
                 orders: vec![],
                 last_gen_tick: current_tick(),
-            });
+            },
+        );
 
         trade.active_contract = Some(contract_id.to_string());
         trade.orders.clear();
@@ -74,7 +73,11 @@ impl FactoryManager {
             let Some(contract) = contracts.get_contract(contract_id) else {
                 return false;
             };
-            let Some(_idx) = trade.orders.iter().position(|o| o.inst_id == inst_id as u32) else {
+            let Some(_idx) = trade
+                .orders
+                .iter()
+                .position(|o| o.inst_id == inst_id as u32)
+            else {
                 return false;
             };
             // Collect the values we need so we don't hold the borrow.
@@ -91,7 +94,10 @@ impl FactoryManager {
             let Some(trade) = self.trade_state.get(region_name) else {
                 return false;
             };
-            trade.orders.iter().position(|o| o.inst_id == inst_id as u32)
+            trade
+                .orders
+                .iter()
+                .position(|o| o.inst_id == inst_id as u32)
         };
         let Some(idx) = idx else {
             return false;
@@ -194,29 +200,30 @@ impl FactoryManager {
             };
             if let Some(bag_node) = region.node_mut(1)
                 && let Some(slot) = bag_node.component_mut(1)
-                    && let crate::factory::FactoryComponent::Inventory(inv_state) = slot {
-                        for reward_id in &reward_ids {
-                            // Stack with existing same-item slots.
-                            let mut stacked = false;
-                            for existing in inv_state.items.values_mut() {
-                                if existing.item_id == *reward_id {
-                                    existing.count += 1;
-                                    stacked = true;
-                                    break;
-                                }
-                            }
-                            if !stacked {
-                                inv_state.items.insert(
-                                    0,
-                                    ItemSlot {
-                                        item_id: reward_id.clone(),
-                                        count: 1,
-                                        inst_id: 0,
-                                    },
-                                );
-                            }
+                && let crate::factory::FactoryComponent::Inventory(inv_state) = slot
+            {
+                for reward_id in &reward_ids {
+                    // Stack with existing same-item slots.
+                    let mut stacked = false;
+                    for existing in inv_state.items.values_mut() {
+                        if existing.item_id == *reward_id {
+                            existing.count += 1;
+                            stacked = true;
+                            break;
                         }
                     }
+                    if !stacked {
+                        inv_state.items.insert(
+                            0,
+                            ItemSlot {
+                                item_id: reward_id.clone(),
+                                count: 1,
+                                inst_id: 0,
+                            },
+                        );
+                    }
+                }
+            }
 
             let Some(trade) = self.trade_state.get_mut(region_name) else {
                 return false;
@@ -228,12 +235,7 @@ impl FactoryManager {
     }
 
     /// Cancel (delete) a trade order by inst_id.
-    pub fn trade_delete_order(
-        &mut self,
-        region_name: &str,
-        _node_id: u32,
-        inst_id: u64,
-    ) -> bool {
+    pub fn trade_delete_order(&mut self, region_name: &str, _node_id: u32, inst_id: u64) -> bool {
         let Some(trade) = self.trade_state.get_mut(region_name) else {
             return false;
         };
@@ -277,13 +279,7 @@ impl FactoryManager {
         let to_generate = new_slots.min(available);
 
         // Generate a unique inst_id for each new order.
-        let mut next_inst = trade
-            .orders
-            .iter()
-            .map(|o| o.inst_id)
-            .max()
-            .unwrap_or(0)
-            + 1;
+        let mut next_inst = trade.orders.iter().map(|o| o.inst_id).max().unwrap_or(0) + 1;
 
         for _ in 0..to_generate {
             // Weighted-random selection from orderIdGroup using orderWeight.

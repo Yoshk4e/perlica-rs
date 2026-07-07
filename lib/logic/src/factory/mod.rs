@@ -75,6 +75,7 @@ pub mod power;
 pub mod processor;
 pub mod recycler;
 pub mod region;
+pub mod soil;
 pub mod tick;
 pub mod trade;
 pub mod workshop;
