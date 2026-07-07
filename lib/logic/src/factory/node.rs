@@ -137,8 +137,24 @@ impl FactoryNode {
                     y: v.y as f32,
                     z: v.z as f32,
                 }),
-            bc_port_in: None,
-            bc_port_out: None,
+            bc_port_in: self.transform.bc_port_in.as_ref().map(|p| {
+                perlica_proto::ScdFactorySubPort {
+                    position: Some(perlica_proto::ScdFactoryVector2Int {
+                        x: p.position.x,
+                        y: p.position.y,
+                    }),
+                    direction: p.direction,
+                }
+            }),
+            bc_port_out: self.transform.bc_port_out.as_ref().map(|p| {
+                perlica_proto::ScdFactorySubPort {
+                    position: Some(perlica_proto::ScdFactoryVector2Int {
+                        x: p.position.x,
+                        y: p.position.y,
+                    }),
+                    direction: p.direction,
+                }
+            }),
         });
 
         let interactive_object =

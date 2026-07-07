@@ -106,22 +106,34 @@ impl FactoryManager {
 
     /// Fetch generated products from the recycler's temp storage.
     /// Pushes them into the player's bag, clears them from storage.
+    /// Also runs the lazy timer check to generate pending products.
     pub fn recycler_fetch_product(
         &mut self,
+        assets: &FTableAssets,
         recycler_const: &FRecyclerConstAssets,
         region_name: &str,
         _node_id: u32,
     ) -> Vec<ItemSlot> {
-        // Lazy timer check: if a product timer elapsed, push a product.
+        // Lazy timer check: if a product timer elapsed, generate a product.
         let gen_time = recycler_const.data.rec_basic_generate_time as u64;
-        let now = current_tick();
+        let max_storage = recycler_const.data.rec_temp_storage_length as usize;
         if let Some(machine) = self.recycler_state.get_mut(region_name)
             && let Some(start) = machine.product_timer_start
-                && elapsed_since(start) >= gen_time {
-                    // Pick a random product and push to temp storage.
-                    let _ = now;
-                    machine.product_timer_start = None;
-                }
+            && elapsed_since(start) >= gen_time
+        {
+            // Pick a product from the available list.
+            let products: Vec<String> = assets.recycler_product_ids().map(String::from).collect();
+            if let Some(product_id) = products.first()
+                && machine.temp_storage.len() < max_storage
+            {
+                machine.temp_storage.push(ItemSlot {
+                    item_id: product_id.clone(),
+                    count: 1,
+                    inst_id: 0,
+                });
+            }
+            machine.product_timer_start = None;
+        }
 
         let Some(machine) = self.recycler_state.get_mut(region_name) else {
             return vec![];
@@ -135,21 +147,22 @@ impl FactoryManager {
             };
             if let Some(bag_node) = region.node_mut(1)
                 && let Some(bag_comp) = bag_node.component_mut(1)
-                    && let crate::factory::FactoryComponent::Inventory(bag_inv) = bag_comp {
-                        for item in &items {
-                            let mut stacked = false;
-                            for slot in bag_inv.items.values_mut() {
-                                if slot.item_id == item.item_id {
-                                    slot.count += item.count;
-                                    stacked = true;
-                                    break;
-                                }
-                            }
-                            if !stacked {
-                                bag_inv.items.insert(0, item.clone());
-                            }
+                && let crate::factory::FactoryComponent::Inventory(bag_inv) = bag_comp
+            {
+                for item in &items {
+                    let mut stacked = false;
+                    for slot in bag_inv.items.values_mut() {
+                        if slot.item_id == item.item_id {
+                            slot.count += item.count;
+                            stacked = true;
+                            break;
                         }
                     }
+                    if !stacked {
+                        bag_inv.items.insert(0, item.clone());
+                    }
+                }
+            }
         }
 
         items

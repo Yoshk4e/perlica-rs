@@ -39,7 +39,7 @@ pub async fn on_cs_factory_recycler_fetch_product(
     let items = ctx
         .player
         .factory
-        .recycler_fetch_product(&ctx.assets.factory_recycler_const, &req.region, req.node_id);
+        .recycler_fetch_product(&ctx.assets.factory_table, &ctx.assets.factory_recycler_const, &req.region, req.node_id);
 
     ScFactoryRecyclerFetchProduct {
         items: items

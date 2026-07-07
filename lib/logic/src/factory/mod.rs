@@ -101,6 +101,27 @@ pub use node::{FactoryNode, InteractiveObject, Mesh, NodeTransform, SubPort, Vec
 pub use region::{FactoryConnection, FactoryRegion};
 pub use tick::{Tick, completion_tick, current_tick, elapsed_since, is_complete};
 
+pub fn push_item_to_bag(inv: &mut InventoryState, item_id: &str, count: u32, inst_id: u32) {
+    for slot in inv.items.values_mut() {
+        if slot.item_id == item_id && slot.inst_id == inst_id {
+            slot.count += count;
+            return;
+        }
+    }
+    let mut key = inst_id;
+    while inv.items.contains_key(&key) {
+        key += 1;
+    }
+    inv.items.insert(
+        key,
+        ItemSlot {
+            item_id: item_id.to_string(),
+            count,
+            inst_id,
+        },
+    );
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct GridPos {
     pub x: i32,

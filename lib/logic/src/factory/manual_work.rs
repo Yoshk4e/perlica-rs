@@ -162,7 +162,8 @@ impl FactoryManager {
         let (recipe_id, total_progress, is_done) = {
             let head = &self.manual_work_state.queue[0];
             let Some(recipe) = assets.get_manual_craft(&head.recipe_id) else {
-                // Recipe vanished from config -- drop the unit.
+                // Recipe vanished from config -- actually drop the unit.
+                self.manual_work_state.queue.remove(0);
                 return 0;
             };
             let elapsed = elapsed_since(head.start_tick);
