@@ -142,6 +142,12 @@ handlers! {
         CsFactorySoilPlant               => factory::on_cs_factory_soil_plant,
         CsFactorySoilHarvest             => factory::on_cs_factory_soil_harvest,
         CsFactorySoilCancel              => factory::on_cs_factory_soil_cancel,
+        CsFactoryCharacterWorkPunchIn    => factory::on_cs_factory_character_work_punch_in,
+        CsFactoryCharacterWorkPunchOut   => factory::on_cs_factory_character_work_punch_out,
+        CsFactoryManuallyWorkAppend      => factory::on_cs_factory_manually_work_append,
+        CsFactoryManuallyWorkCancel      => factory::on_cs_factory_manually_work_cancel,
+        CsFactoryManuallyWorkPause       => factory::on_cs_factory_manually_work_pause,
+        CsFactoryManuallyWorkResume      => factory::on_cs_factory_manually_work_resume,
         // Mail Commands
         CsGetMail                        => mail::on_cs_get_mail,
         CsReadMail                       => mail::on_cs_read_mail,

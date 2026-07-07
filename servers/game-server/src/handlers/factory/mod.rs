@@ -8,8 +8,10 @@
 //! every op handler ends up needing, so they're collected in one place
 //! rather than copy-pasted across the op files.
 
+pub mod character_work;
 pub mod hs_feedback;
 pub mod hs_inout;
+pub mod manual_work;
 pub mod manufacture;
 pub mod notify;
 pub mod op;
@@ -20,8 +22,15 @@ pub mod soil;
 pub mod trade;
 pub mod workshop;
 
+pub use character_work::{
+    on_cs_factory_character_work_punch_in, on_cs_factory_character_work_punch_out,
+};
 pub use hs_feedback::on_cs_factory_hs_fb;
 pub use hs_inout::on_cs_factory_hs_inout;
+pub use manual_work::{
+    on_cs_factory_manually_work_append, on_cs_factory_manually_work_cancel,
+    on_cs_factory_manually_work_pause, on_cs_factory_manually_work_resume,
+};
 pub use manufacture::{
     on_cs_factory_manufacture_cancel, on_cs_factory_manufacture_settle,
     on_cs_factory_manufacture_start,

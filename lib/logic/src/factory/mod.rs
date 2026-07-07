@@ -63,12 +63,14 @@
 //! - **DB** (`db/migrations/0003_factory.sql`, `db/src/subsystems/f
 
 pub mod blackboard;
+pub mod character_work;
 pub mod component;
 pub mod component_factory;
 pub mod grid;
 pub mod machine_crafter;
 pub mod manager;
 pub mod manufacture;
+pub mod manual_work;
 pub mod node;
 pub mod ops;
 pub mod power;
