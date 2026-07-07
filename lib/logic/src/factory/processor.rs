@@ -17,7 +17,8 @@ use config::factory_processor_const::FProcessorConstAssets;
 use config::factory_table::FTableAssets;
 
 use crate::factory::{
-    FactoryComponent, FactoryManager, InventoryState, ProcessorMachine, Tick, current_tick,
+    FactoryComponent, FactoryManager, InventoryState, ItemSlot, ProcessorMachine, Tick,
+    current_tick,
 };
 
 /// Result of a processor craft attempt. On success, `new_items` holds
@@ -51,12 +52,14 @@ pub fn make_item(
         return CraftResult { new_items: vec![] };
     }
 
-    CraftResult {
-        new_items: vec![CraftedItem {
-            item_id: recipe.outcome.id.clone(),
-            count: recipe.outcome.count.saturating_mul(count),
-        }],
-    }
+    let crafted = vec![CraftedItem {
+        item_id: recipe.outcome.id.clone(),
+        count: recipe.outcome.count.saturating_mul(count),
+    }];
+
+    push_crafted_to_bag(manager, region_name, &crafted);
+
+    CraftResult { new_items: crafted }
 }
 
 /// Make an equipment via the processor. Optionally consumes a refine
@@ -99,12 +102,14 @@ pub fn make_equip(
         return CraftResult { new_items: vec![] };
     }
 
-    CraftResult {
-        new_items: vec![CraftedItem {
-            item_id: recipe.outcome.id.clone(),
-            count: recipe.outcome.count.saturating_mul(count),
-        }],
-    }
+    let crafted = vec![CraftedItem {
+        item_id: recipe.outcome.id.clone(),
+        count: recipe.outcome.count.saturating_mul(count),
+    }];
+
+    push_crafted_to_bag(manager, region_name, &crafted);
+
+    CraftResult { new_items: crafted }
 }
 
 /// Make a gem via the processor. Consumes the gem instances listed in
@@ -121,14 +126,21 @@ pub fn make_gem(
         return CraftResult { new_items: vec![] };
     };
 
+    // Verify all gem inst_ids exist before removing any.
+    if !verify_gems_exist(manager, region_name, cost_gem_inst_ids) {
+        return CraftResult { new_items: vec![] };
+    }
+
     remove_gems_from_bag(manager, region_name, cost_gem_inst_ids);
 
-    CraftResult {
-        new_items: vec![CraftedItem {
-            item_id: recipe.outcome.id.clone(),
-            count: recipe.outcome.count.saturating_mul(count),
-        }],
-    }
+    let crafted = vec![CraftedItem {
+        item_id: recipe.outcome.id.clone(),
+        count: recipe.outcome.count.saturating_mul(count),
+    }];
+
+    push_crafted_to_bag(manager, region_name, &crafted);
+
+    CraftResult { new_items: crafted }
 }
 
 /// Recast a gem. Requires building level >= `building_level_gem_recast`.
@@ -291,4 +303,69 @@ fn recover_refine_points(proc: &mut ProcessorMachine, recover_time: u64, max_poi
         proc.refine_points = (proc.refine_points + recovered).min(max_points);
         proc.last_recovery_tick = now;
     }
+}
+
+/// Push crafted items into the player's bag. Stacks with existing
+/// same-item slots, or inserts a new slot.
+fn push_crafted_to_bag(manager: &mut FactoryManager, region_name: &str, items: &[CraftedItem]) {
+    let Some(region) = manager.region_mut(region_name) else {
+        return;
+    };
+    let Some(bag_node) = region.node_mut(1) else {
+        return;
+    };
+    let Some(bag_comp) = bag_node.component_mut(1) else {
+        return;
+    };
+    let FactoryComponent::Inventory(bag_inv) = bag_comp else {
+        return;
+    };
+
+    for item in items {
+        let mut stacked = false;
+        for slot in bag_inv.items.values_mut() {
+            if slot.item_id == item.item_id {
+                slot.count += item.count;
+                stacked = true;
+                break;
+            }
+        }
+        if !stacked {
+            bag_inv.items.insert(
+                0,
+                ItemSlot {
+                    item_id: item.item_id.clone(),
+                    count: item.count,
+                    inst_id: 0,
+                },
+            );
+        }
+    }
+}
+
+/// Verify that all gem inst_ids exist in the bag before removing any.
+fn verify_gems_exist(
+    manager: &FactoryManager,
+    region_name: &str,
+    inst_ids: &[u64],
+) -> bool {
+    let Some(region) = manager.region(region_name) else {
+        return false;
+    };
+    let Some(bag_node) = region.node(1) else {
+        return false;
+    };
+    let Some(bag_comp) = bag_node.component(1) else {
+        return false;
+    };
+    let FactoryComponent::Inventory(bag_inv) = bag_comp else {
+        return false;
+    };
+
+    for &inst_id in inst_ids {
+        if !bag_inv.items.contains_key(&(inst_id as u32)) {
+            return false;
+        }
+    }
+    true
 }

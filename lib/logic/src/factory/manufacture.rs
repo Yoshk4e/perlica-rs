@@ -9,7 +9,9 @@
 use config::factory_manufact_const::FManufactConstAssets;
 use config::factory_table::FTableAssets;
 
-use crate::factory::{ActiveRecipe, ItemSlot, ManufactureMachine, current_tick, elapsed_since};
+use crate::factory::{
+    ActiveRecipe, InventoryState, ItemSlot, ManufactureMachine, current_tick, elapsed_since,
+};
 
 impl crate::factory::FactoryManager {
     /// Start a manufacture recipe. Consumes ingredients from the bag,
@@ -23,13 +25,34 @@ impl crate::factory::FactoryManager {
         formula_id: &str,
         count: u32,
     ) -> Result<ManufactureStartResult, ManufactureError> {
-        let _recipe = assets
+        let recipe = assets
             .get_manufact_craft(formula_id)
             .ok_or(ManufactureError::RecipeNotFound)?
             .clone();
 
         let max_sets = assets_factory_manufact_max_sets(assets);
         let set_count = count.min(max_sets);
+
+        // Consume ingredients from the bag.
+        let Some(region) = self.region_mut(region_name) else {
+            return Err(ManufactureError::MachineNotFound);
+        };
+        let Some(bag_node) = region.node_mut(1) else {
+            return Err(ManufactureError::MachineNotFound);
+        };
+        let Some(bag_comp) = bag_node.component_mut(1) else {
+            return Err(ManufactureError::MachineNotFound);
+        };
+        let crate::factory::FactoryComponent::Inventory(bag_inv) = bag_comp else {
+            return Err(ManufactureError::MachineNotFound);
+        };
+        for ingredient in &recipe.ingredients {
+            let needed = ingredient.count.saturating_mul(set_count);
+            if !try_consume_from_inv(bag_inv, &ingredient.id, needed) {
+                return Err(ManufactureError::MachineNotFound);
+            }
+        }
+        // bag_inv borrow ends here
 
         let machine = self
             .manufacture_state
@@ -227,4 +250,29 @@ pub struct ManufactureSettleResult {
 fn assets_factory_manufact_max_sets(_assets: &FTableAssets) -> u32 {
     // Default to 4 if the const isn't available.
     4
+}
+
+fn try_consume_from_inv(inv: &mut InventoryState, item_id: &str, needed: u32) -> bool {
+    let mut remaining = needed;
+    let mut to_remove = vec![];
+
+    for (&inst_id, slot) in &mut inv.items {
+        if slot.item_id == item_id && slot.count > 0 {
+            let take = slot.count.min(remaining);
+            slot.count -= take;
+            remaining -= take;
+            if slot.count == 0 {
+                to_remove.push(inst_id);
+            }
+            if remaining == 0 {
+                break;
+            }
+        }
+    }
+
+    for inst_id in to_remove {
+        inv.items.remove(&inst_id);
+    }
+
+    remaining == 0
 }

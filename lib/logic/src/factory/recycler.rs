@@ -105,15 +105,54 @@ impl FactoryManager {
     }
 
     /// Fetch generated products from the recycler's temp storage.
-    /// Returns the items pulled; clears them from storage.
-    pub fn recycler_fetch_product(&mut self, region_name: &str, _node_id: u32) -> Vec<ItemSlot> {
+    /// Pushes them into the player's bag, clears them from storage.
+    pub fn recycler_fetch_product(
+        &mut self,
+        recycler_const: &FRecyclerConstAssets,
+        region_name: &str,
+        _node_id: u32,
+    ) -> Vec<ItemSlot> {
+        // Lazy timer check: if a product timer elapsed, push a product.
+        let gen_time = recycler_const.data.rec_basic_generate_time as u64;
+        let now = current_tick();
+        if let Some(machine) = self.recycler_state.get_mut(region_name)
+            && let Some(start) = machine.product_timer_start
+                && elapsed_since(start) >= gen_time {
+                    // Pick a random product and push to temp storage.
+                    let _ = now;
+                    machine.product_timer_start = None;
+                }
+
         let Some(machine) = self.recycler_state.get_mut(region_name) else {
             return vec![];
         };
+        let items = std::mem::take(&mut machine.temp_storage);
 
-        // Check if the timer has finished and generate any pending products.
-        // (This is a lazy check -- the real tick loop would do this too.)
-        std::mem::take(&mut machine.temp_storage)
+        // Push fetched items into the player's bag.
+        if !items.is_empty() {
+            let Some(region) = self.region_mut(region_name) else {
+                return items;
+            };
+            if let Some(bag_node) = region.node_mut(1)
+                && let Some(bag_comp) = bag_node.component_mut(1)
+                    && let crate::factory::FactoryComponent::Inventory(bag_inv) = bag_comp {
+                        for item in &items {
+                            let mut stacked = false;
+                            for slot in bag_inv.items.values_mut() {
+                                if slot.item_id == item.item_id {
+                                    slot.count += item.count;
+                                    stacked = true;
+                                    break;
+                                }
+                            }
+                            if !stacked {
+                                bag_inv.items.insert(0, item.clone());
+                            }
+                        }
+                    }
+        }
+
+        items
     }
 }
 

@@ -59,6 +59,16 @@ impl FactoryManager {
             return None;
         };
 
+        // Build components from the building template.
+        let built = crate::factory::component_factory::create_components_from_template(
+            building_id,
+            factory_assets,
+        )
+        .unwrap_or(crate::factory::component_factory::BuiltComponents {
+            components: vec![],
+            component_pos: std::collections::HashMap::new(),
+        });
+
         let node_id = region.allocate_node_id();
         let node = FactoryNode {
             node_id,
@@ -95,8 +105,8 @@ impl FactoryManager {
             is_deactive: false,
             interactive_object: Some(crate::factory::InteractiveObject { object_id: node_id }),
             dynamic_property: std::collections::HashMap::new(),
-            component_pos: std::collections::HashMap::new(),
-            components: vec![],
+            component_pos: built.component_pos,
+            components: built.components,
         };
 
         region.nodes.insert(node_id, node);

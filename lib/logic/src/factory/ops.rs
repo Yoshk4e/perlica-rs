@@ -245,6 +245,11 @@ impl FactoryManager {
             node_id
         };
 
+        // Power graph may have changed (new producer/pole/consumer).
+        if let Some(region) = self.region_mut(region_name) {
+            crate::factory::power::recompute_blackboard(region);
+        }
+
         Ok(node_id)
     }
 
@@ -291,6 +296,9 @@ impl FactoryManager {
                 );
             }
         }
+
+        // Power graph may have changed (removed producer/pole/consumer).
+        crate::factory::power::recompute_blackboard(region);
 
         Ok(template_id)
     }
