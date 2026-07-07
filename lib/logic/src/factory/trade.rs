@@ -174,10 +174,53 @@ impl FactoryManager {
         };
 
         if filled {
+            // Grant rewards from the contract's reward_items to the bag.
+            // reward_items is a Vec<String> of item IDs, each granting 1 count.
+            let reward_ids: Vec<String> = {
+                let Some(trade) = self.trade_state.get(region_name) else {
+                    return false;
+                };
+                let Some(contract_id) = &trade.active_contract else {
+                    return false;
+                };
+                let Some(contract) = contracts.get_contract(contract_id) else {
+                    return false;
+                };
+                contract.reward_items.clone()
+            };
+
+            let Some(region) = self.region_mut(region_name) else {
+                return false;
+            };
+            if let Some(bag_node) = region.node_mut(1)
+                && let Some(slot) = bag_node.component_mut(1)
+                    && let crate::factory::FactoryComponent::Inventory(inv_state) = slot {
+                        for reward_id in &reward_ids {
+                            // Stack with existing same-item slots.
+                            let mut stacked = false;
+                            for existing in inv_state.items.values_mut() {
+                                if existing.item_id == *reward_id {
+                                    existing.count += 1;
+                                    stacked = true;
+                                    break;
+                                }
+                            }
+                            if !stacked {
+                                inv_state.items.insert(
+                                    0,
+                                    ItemSlot {
+                                        item_id: reward_id.clone(),
+                                        count: 1,
+                                        inst_id: 0,
+                                    },
+                                );
+                            }
+                        }
+                    }
+
             let Some(trade) = self.trade_state.get_mut(region_name) else {
                 return false;
             };
-            // TODO: grant rewards from contract.reward_items to the bag.
             trade.orders.remove(idx);
         }
 

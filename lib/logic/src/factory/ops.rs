@@ -189,6 +189,21 @@ impl FactoryManager {
         let built = create_components_from_template(template_id, assets)
             .ok_or(PlaceError::NoComponentLayout)?;
 
+        // Extract port layout from the building entry so the client
+        // knows where belt I/O points are.
+        let bc_port_in = building.input_ports.first().map(|p| {
+            crate::factory::SubPort {
+                position: GridPos { x: p.point.x, y: p.point.y },
+                direction: p.side,
+            }
+        });
+        let bc_port_out = building.output_ports.first().map(|p| {
+            crate::factory::SubPort {
+                position: GridPos { x: p.point.x, y: p.point.y },
+                direction: p.side,
+            }
+        });
+
         let node_id = {
             let region = self.region_mut(region_name).unwrap();
             let node_id = region.allocate_node_id();
@@ -207,11 +222,15 @@ impl FactoryManager {
                     scene_name,
                     world_position: None,
                     world_rotation: None,
-                    bc_port_in: None,
-                    bc_port_out: None,
+                    bc_port_in,
+                    bc_port_out,
                 },
                 is_deactive: false,
-                interactive_object: None,
+                // Assign a sequential interactive_object ID so the client
+                // can route clicks. IDs 1 and 2 are reserved by the hub.
+                interactive_object: Some(crate::factory::InteractiveObject {
+                    object_id: node_id,
+                }),
                 dynamic_property: HashMap::new(),
                 component_pos: built.component_pos,
                 components: built.components,
@@ -706,7 +725,9 @@ impl FactoryManager {
                         bc_port_out: None,
                     },
                     is_deactive: false,
-                    interactive_object: None,
+                    interactive_object: Some(crate::factory::InteractiveObject {
+                        object_id: node_id,
+                    }),
                     dynamic_property: HashMap::new(),
                     component_pos: HashMap::new(),
                     components: vec![(
@@ -1386,16 +1407,31 @@ fn build_hs_fb_payload(comp: &FactoryComponent) -> Option<HsFbPayload> {
             current_least_progress: state.fuel_remaining,
         }),
         FactoryComponent::CacheTransport(state) => Some(HsFbPayload::CacheTransport {
-            progress_incr_per_ms: 0,
+            // Rate = 1000ms / total_progress (ticks per second).
+            progress_incr_per_ms: if state.total_progress > 0 {
+                1000 / state.total_progress
+            } else {
+                0
+            },
             current_progress: state.current_progress,
         }),
         FactoryComponent::GridBox(state) => Some(HsFbPayload::GridBox {
             items: state.items.iter().map(|s| s.inst_id).collect(),
         }),
-        FactoryComponent::BoxRouterM1 => Some(HsFbPayload::BoxRouterM1 { items: vec![] }),
-        FactoryComponent::BoxBridge => Some(HsFbPayload::BoxBridge { items: vec![] }),
+        FactoryComponent::BoxRouterM1 => {
+            // BoxRouterM1 holds a single item internally; we don't track
+            // it on the state yet (it's a unit variant). Return empty
+            // until the state is extended.
+            Some(HsFbPayload::BoxRouterM1 { items: vec![] })
+        }
+        FactoryComponent::BoxBridge => {
+            // Same as BoxRouterM1 -- unit variant, no held-item state.
+            Some(HsFbPayload::BoxBridge { items: vec![] })
+        }
         FactoryComponent::HealTower(state) => Some(HsFbPayload::HealTower {
-            progress_incr_per_ms: 0,
+            // Heal rate = 1 point per 1000ms (1/sec). The actual rate
+            // comes from FacSkillConst which we don't have on the state.
+            progress_incr_per_ms: 1,
             current_progress: state.current_progress,
             current_point: state.points as i32,
         }),

@@ -43,7 +43,25 @@ impl crate::factory::FactoryManager {
             });
 
         let old = machine.active_recipe.take();
-        let old_info = old.map(|r| (r.recipe_id, r.start_tick));
+
+        // Compute how many sets were completed from the old recipe.
+        let (old_formula, old_got, old_least_multi) = if let Some(ref old_recipe) = old {
+            let old_recipe_entry = assets.get_manufact_craft(&old_recipe.recipe_id);
+            let completed = if let Some(entry) = old_recipe_entry {
+                let elapsed = elapsed_since(old_recipe.start_tick);
+                u32::try_from(elapsed / entry.total_progress.max(1)).unwrap_or(0)
+            } else {
+                0
+            };
+            let round_count = old_recipe_entry.map_or(1, |e| e.round_count as i32);
+            (
+                old_recipe.recipe_id.clone(),
+                completed as i32,
+                round_count,
+            )
+        } else {
+            (String::new(), 0, 0)
+        };
 
         machine.active_recipe = Some(ActiveRecipe {
             recipe_id: formula_id.to_string(),
@@ -52,9 +70,9 @@ impl crate::factory::FactoryManager {
         machine.set_count = set_count;
 
         Ok(ManufactureStartResult {
-            old_formula: old_info.map(|(id, _)| id).unwrap_or_default(),
-            old_got: 0,
-            old_least_multi: 0,
+            old_formula,
+            old_got,
+            old_least_multi,
         })
     }
 
@@ -62,6 +80,7 @@ impl crate::factory::FactoryManager {
     /// so the client can update its UI.
     pub fn manufacture_cancel(
         &mut self,
+        assets: &FTableAssets,
         region_name: &str,
         _node_id: u32,
     ) -> Result<ManufactureCancelResult, ManufactureError> {
@@ -73,10 +92,24 @@ impl crate::factory::FactoryManager {
         let old = machine.active_recipe.take();
         machine.set_count = 0;
 
+        let (old_formula, old_got, old_least_multi) = if let Some(ref old_recipe) = old {
+            let old_recipe_entry = assets.get_manufact_craft(&old_recipe.recipe_id);
+            let completed = if let Some(entry) = old_recipe_entry {
+                let elapsed = elapsed_since(old_recipe.start_tick);
+                u32::try_from(elapsed / entry.total_progress.max(1)).unwrap_or(0)
+            } else {
+                0
+            };
+            let round_count = old_recipe_entry.map_or(1, |e| e.round_count as i32);
+            (old_recipe.recipe_id.clone(), completed as i32, round_count)
+        } else {
+            (String::new(), 0, 0)
+        };
+
         Ok(ManufactureCancelResult {
-            old_formula: old.map(|r| r.recipe_id).unwrap_or_default(),
-            old_got: 0,
-            old_least_multi: 0,
+            old_formula,
+            old_got,
+            old_least_multi,
         })
     }
 

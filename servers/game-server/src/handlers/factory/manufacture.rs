@@ -42,7 +42,7 @@ pub async fn on_cs_factory_manufacture_cancel(
     match ctx
         .player
         .factory
-        .manufacture_cancel(&req.region, req.node_id)
+        .manufacture_cancel(&ctx.assets.factory_table, &req.region, req.node_id)
     {
         Ok(result) => ScFactoryManufactureCancel {
             region: req.region,
