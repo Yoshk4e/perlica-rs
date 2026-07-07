@@ -76,6 +76,7 @@ pub mod processor;
 pub mod recycler;
 pub mod region;
 pub mod tick;
+pub mod trade;
 pub mod workshop;
 
 #[cfg(test)]
@@ -158,6 +159,9 @@ pub struct TradeOrder {
     pub order_id: String,
     pub accumulated_value: u64,
     pub items_committed: Vec<ItemSlot>,
+    /// Unique per-order instance ID, assigned by the server when the
+    /// order is generated. Used by the client to target cash/delete ops.
+    pub inst_id: u32,
 }
 
 /// Clause 12, trader state.

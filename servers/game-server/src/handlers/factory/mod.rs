@@ -16,6 +16,7 @@ pub mod op;
 pub mod processor;
 pub mod recycler;
 pub mod response;
+pub mod trade;
 pub mod workshop;
 
 pub use hs_feedback::on_cs_factory_hs_fb;
@@ -31,6 +32,10 @@ pub use processor::{
     on_cs_factory_processor_recast_gem,
 };
 pub use recycler::{on_cs_factory_recycler_commit_material, on_cs_factory_recycler_fetch_product};
+pub use trade::{
+    on_cs_factory_trade_cash_order, on_cs_factory_trade_delete_order,
+    on_cs_factory_trade_set_contract,
+};
 pub use workshop::on_cs_factory_workshop_make;
 
 use std::collections::HashMap;

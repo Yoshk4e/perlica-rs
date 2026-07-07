@@ -136,6 +136,9 @@ handlers! {
         CsFactoryWorkshopMake            => factory::on_cs_factory_workshop_make,
         CsFactoryRecyclerCommitMaterial  => factory::on_cs_factory_recycler_commit_material,
         CsFactoryRecyclerFetchProduct    => factory::on_cs_factory_recycler_fetch_product,
+        CsFactoryTradeSetContract        => factory::on_cs_factory_trade_set_contract,
+        CsFactoryTradeCashOrder          => factory::on_cs_factory_trade_cash_order,
+        CsFactoryTradeDeleteOrder        => factory::on_cs_factory_trade_delete_order,
         // Mail Commands
         CsGetMail                        => mail::on_cs_get_mail,
         CsReadMail                       => mail::on_cs_read_mail,
