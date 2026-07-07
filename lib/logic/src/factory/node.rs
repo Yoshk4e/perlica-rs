@@ -47,7 +47,7 @@ pub struct InteractiveObject {
 /// `position` can be `None` only for the virtual node `Inventory` (node_id=1),
 /// which exists out-of-map. `mesh` is `None` because of the same reason.
 /// `world_*` fields are pre-calculated scene geometry and are non-zero only
-/// for pre-placed nodes (TODO(Clause 3): always `None` currently as in
+/// for pre-placed nodes (world position/rotation set by the handler from baked scene data
 /// `bootstrap_region`; the handler-side proto builder holds hard-coded values
 /// for `sp_hub_1` until there's a table source for them).
 #[derive(Debug, Clone)]

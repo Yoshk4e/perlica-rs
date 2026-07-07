@@ -14,7 +14,7 @@ pub struct PowerBlackboard {
     pub power_save_max: i64,
     pub power_save_current: i64,
     /// true once cost > gen + stored. flips all producers/collectors to
-    /// paused (start_tick = None) until power recovers -- see power.rs (TODO, Clause 4)
+    /// paused (start_tick = None) until power recovers -- see power.rs
     pub is_stop_by_power: bool,
 }
 

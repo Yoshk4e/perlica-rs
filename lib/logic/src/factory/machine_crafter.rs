@@ -47,9 +47,9 @@ fn tick_region(region: &mut FactoryRegion, assets: &FTableAssets, now: Tick) -> 
         .nodes
         .values()
         .filter(|n| {
-            n.components
-                .iter()
-                .any(|(_, c)| matches!(c, FactoryComponent::Producer(s) if !s.formula_id.is_empty()))
+            n.components.iter().any(
+                |(_, c)| matches!(c, FactoryComponent::Producer(s) if !s.formula_id.is_empty()),
+            )
         })
         .map(|n| n.node_id)
         .collect();
@@ -64,15 +64,17 @@ fn tick_region(region: &mut FactoryRegion, assets: &FTableAssets, now: Tick) -> 
             let mut found = None;
             for (_, comp) in &node.components {
                 if let FactoryComponent::Producer(state) = comp
-                    && !state.formula_id.is_empty() && state.start_tick.is_some() {
-                        // Look up speed from machineCrafterData using the
-                        // node's template_id (which is the machine_id).
-                        let speed = assets
-                            .get_machine_crafter(&node.template_id)
-                            .map_or(100, |mc| mc.speed);
-                        found = Some((state.formula_id.clone(), state.start_tick, speed));
-                        break;
-                    }
+                    && !state.formula_id.is_empty()
+                    && state.start_tick.is_some()
+                {
+                    // Look up speed from machineCrafterData using the
+                    // node's template_id (which is the machine_id).
+                    let speed = assets
+                        .get_machine_crafter(&node.template_id)
+                        .map_or(100, |mc| mc.speed);
+                    found = Some((state.formula_id.clone(), state.start_tick, speed));
+                    break;
+                }
             }
             match found {
                 Some(v) => v,
@@ -112,9 +114,10 @@ fn tick_region(region: &mut FactoryRegion, assets: &FTableAssets, now: Tick) -> 
         if !ingredients_ok {
             // Not enough ingredients -- pause the producer.
             if let Some(slot) = node.component_mut(find_producer_id(node))
-                && let FactoryComponent::Producer(state) = slot {
-                    state.start_tick = None;
-                }
+                && let FactoryComponent::Producer(state) = slot
+            {
+                state.start_tick = None;
+            }
             continue;
         }
 
@@ -123,11 +126,12 @@ fn tick_region(region: &mut FactoryRegion, assets: &FTableAssets, now: Tick) -> 
 
         // Restart the recipe.
         if let Some(slot) = node.component_mut(find_producer_id(node))
-            && let FactoryComponent::Producer(state) = slot {
-                state.last_formula_id = state.formula_id.clone();
-                state.current_progress = 0;
-                state.start_tick = Some(now);
-            }
+            && let FactoryComponent::Producer(state) = slot
+        {
+            state.last_formula_id = state.formula_id.clone();
+            state.current_progress = 0;
+            state.start_tick = Some(now);
+        }
 
         // Record the completed recipe in production_totals for STT.
         // Collect the outcome items first to avoid holding a borrow on

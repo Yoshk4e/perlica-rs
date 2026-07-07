@@ -209,11 +209,9 @@ pub enum FactoryComponent {
 }
 
 impl FactoryComponent {
-    /// Discriminant as the matching `FCComponentType` integer. Used by the
-    /// Phase 3 `to_proto()` so we have one source of truth for the
+    /// Discriminant as the matching `FCComponentType` integer. Used by
+    /// `to_proto()` so we have one source of truth for the
     /// variant->integer mapping.
-    // TODO(phase 3): replace body with `FCComponentType::from(self).into()` once
-    // the From impl lands alongside to_proto.
     pub fn discriminant(&self) -> i32 {
         use crate::enums::FCComponentType as T;
         (match self {

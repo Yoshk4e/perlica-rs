@@ -73,6 +73,7 @@ pub mod node;
 pub mod ops;
 pub mod power;
 pub mod processor;
+pub mod recycler;
 pub mod region;
 pub mod tick;
 pub mod workshop;

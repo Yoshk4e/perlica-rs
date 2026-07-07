@@ -134,6 +134,8 @@ handlers! {
         CsFactoryManufactureCancel       => factory::on_cs_factory_manufacture_cancel,
         CsFactoryManufactureSettle       => factory::on_cs_factory_manufacture_settle,
         CsFactoryWorkshopMake            => factory::on_cs_factory_workshop_make,
+        CsFactoryRecyclerCommitMaterial  => factory::on_cs_factory_recycler_commit_material,
+        CsFactoryRecyclerFetchProduct    => factory::on_cs_factory_recycler_fetch_product,
         // Mail Commands
         CsGetMail                        => mail::on_cs_get_mail,
         CsReadMail                       => mail::on_cs_read_mail,

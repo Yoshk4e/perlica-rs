@@ -73,10 +73,11 @@ impl FactoryManager {
         // Push outcomes into the bag.
         for item in &produced {
             if let Some(existing) = bag_inv.items.get_mut(&0)
-                && existing.item_id == item.item_id {
-                    existing.count += item.count;
-                    continue;
-                }
+                && existing.item_id == item.item_id
+            {
+                existing.count += item.count;
+                continue;
+            }
             bag_inv.items.insert(0, item.clone());
         }
 

@@ -39,7 +39,11 @@ pub async fn on_cs_factory_manufacture_cancel(
     ctx: &mut NetContext<'_>,
     req: CsFactoryManufactureCancel,
 ) -> ScFactoryManufactureCancel {
-    match ctx.player.factory.manufacture_cancel(&req.region, req.node_id) {
+    match ctx
+        .player
+        .factory
+        .manufacture_cancel(&req.region, req.node_id)
+    {
         Ok(result) => ScFactoryManufactureCancel {
             region: req.region,
             node_id: req.node_id,

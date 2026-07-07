@@ -142,7 +142,7 @@ impl FactoryManager {
     /// The inventory node contains 1 component (the `Inventory`,
     /// component_id=1).
     ///
-    /// TODO(Clause 3.4): use
+    /// Uses component_factory to build from template config.
     /// `component_factory::create_components_from_template("sp_hub_1")`
     /// to bootstrap this building in the same manner as others.
     // TODO(Clause 1.8): according to AC "The Hub node has 8 components",
@@ -217,7 +217,7 @@ impl FactoryManager {
                 direction: FCDirection::Up,
                 mesh: Some(hub_mesh),
                 scene_name: scene_name.clone(),
-                // TODO(Clause 3): world position/rotation are baked scene
+                // World position/rotation are baked scene
                 // geometry with no table source; `push_factory` hardcodes
                 // them for `sp_hub_1` on `map01_lv001`. Carry those over
                 // here once nodes flow through `region.to_proto()`.

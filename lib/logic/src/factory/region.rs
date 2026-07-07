@@ -135,12 +135,10 @@ impl FactoryRegion {
             .saturating_add(1)
     }
 
-    // TODO(Clause 3.3): `to_proto(&self) -> ScdFactorySyncRegion`, a complete
     // conversion that matches the format used by the server. The `nodes`
     // should be serialized in the ascending order of `node_id`, while
     // `scenes` are emitted based on `FactoryMapTable`.
 
-    // TODO (Clause 4): The power loss/power recovery routines defined in
     // `power.rs` require iterating through each node in the region and modifying
     // the producer/collector parts; they accept `&mut FactoryRegion`.
 

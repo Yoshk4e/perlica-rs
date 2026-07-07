@@ -10,11 +10,12 @@ pub async fn handle(
     region_name: String,
     req: CsdFactoryOpDismantle,
 ) -> ScFactoryOpRet {
-    match ctx.player.factory.dismantle(&region_name, req.node_id) {
-        Ok(_template_id) => {
-            // TODO: return the building item to the player's bag
-            response::ok(index, FactoryOpType::Dismantle)
-        }
+    match ctx
+        .player
+        .factory
+        .dismantle(&ctx.assets.factory_table, &region_name, req.node_id)
+    {
+        Ok(_) => response::ok(index, FactoryOpType::Dismantle),
         Err(ops::DismantleError::RegionNotFound) => response::fail(
             index,
             FactoryOpType::Dismantle,

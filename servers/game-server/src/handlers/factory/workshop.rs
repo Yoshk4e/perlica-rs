@@ -13,10 +13,12 @@ pub async fn on_cs_factory_workshop_make(
     let region_name = ctx.player.factory.current_region.clone();
     let multi = req.multi.max(1) as u32;
 
-    let _ = ctx
-        .player
-        .factory
-        .workshop_make(&ctx.assets.factory_table, &region_name, &req.formula_id, multi);
+    let _ = ctx.player.factory.workshop_make(
+        &ctx.assets.factory_table,
+        &region_name,
+        &req.formula_id,
+        multi,
+    );
 
     // The response is ScFactoryModifyWorkshop which carries the updated
     // machine list. For now we return an empty update -- the client will

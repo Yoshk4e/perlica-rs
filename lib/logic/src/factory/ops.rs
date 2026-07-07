@@ -223,7 +223,12 @@ impl FactoryManager {
         Ok(node_id)
     }
 
-    pub fn dismantle(&mut self, region_name: &str, node_id: u32) -> Result<String, DismantleError> {
+    pub fn dismantle(
+        &mut self,
+        assets: &FTableAssets,
+        region_name: &str,
+        node_id: u32,
+    ) -> Result<String, DismantleError> {
         let region = self
             .region_mut(region_name)
             .ok_or(DismantleError::RegionNotFound)?;
@@ -238,6 +243,29 @@ impl FactoryManager {
         region
             .connections
             .retain(|c| c.node_id_a != node_id && c.node_id_b != node_id);
+
+        // Return the building's source item to the player's bag.
+        if let Some(entry) = assets.item_for_building(&template_id)
+            && let Some(inv_node) = region.node_mut(1)
+            && let Some(slot) = inv_node.component_mut(1)
+            && let crate::factory::FactoryComponent::Inventory(inv_state) = slot
+        {
+            let item_id = entry.item_id.clone();
+            if let Some(existing) = inv_state.items.get_mut(&0) {
+                if existing.item_id == item_id {
+                    existing.count += 1;
+                }
+            } else {
+                inv_state.items.insert(
+                    0,
+                    crate::factory::ItemSlot {
+                        item_id,
+                        count: 1,
+                        inst_id: 0,
+                    },
+                );
+            }
+        }
 
         Ok(template_id)
     }
@@ -458,26 +486,88 @@ impl FactoryManager {
     }
 
     pub fn cache_transport_transfer(
-        &self,
+        &mut self,
         region_name: &str,
         component_id: u32,
     ) -> Result<bool, TargetError> {
-        let region = self
-            .region(region_name)
-            .ok_or(TargetError::RegionNotFound)?;
-        for node in region.nodes.values() {
-            if let Some(slot) = node.component(component_id) {
-                if let FactoryComponent::CacheTransport(state) = slot {
-                    if !state.enabled {
-                        return Ok(false);
+        // Find the CacheTransport component and read source/target IDs.
+        let (source_id, target_id) = {
+            let region = self
+                .region(region_name)
+                .ok_or(TargetError::RegionNotFound)?;
+            let mut found = None;
+            for node in region.nodes.values() {
+                if let Some(slot) = node.component(component_id) {
+                    if let FactoryComponent::CacheTransport(state) = slot {
+                        if !state.enabled {
+                            return Ok(false);
+                        }
+                        found = Some((state.source_node_id, state.target_node_id));
+                        break;
                     }
-                    // TODO(hs-transport): actual item pull from source + push to target
-                    return Ok(false);
+                    return Err(TargetError::WrongComponentType);
                 }
-                return Err(TargetError::WrongComponentType);
+            }
+            found.ok_or(TargetError::ComponentNotFound)?
+        };
+
+        // Pull one item from the source node's Cache, push to target's.
+        let region = self
+            .region_mut(region_name)
+            .ok_or(TargetError::RegionNotFound)?;
+
+        // Find and remove one item from the source cache.
+        let mut moved_item = None;
+        for node in region.nodes.values_mut() {
+            if node.node_id == source_id {
+                for (_, comp) in &mut node.components {
+                    if let FactoryComponent::Cache(state) = comp
+                        && let Some(slot) = state.items.first().cloned()
+                        && slot.count > 0
+                    {
+                        let take = ItemSlot {
+                            item_id: slot.item_id.clone(),
+                            count: 1,
+                            inst_id: slot.inst_id,
+                        };
+                        if let Some(first) = state.items.first_mut() {
+                            first.count = first.count.saturating_sub(1);
+                            if first.count == 0 {
+                                state.items.remove(0);
+                            }
+                        }
+                        moved_item = Some(take);
+                        break;
+                    }
+                }
+                break;
             }
         }
-        Err(TargetError::ComponentNotFound)
+
+        let Some(item) = moved_item else {
+            return Ok(false);
+        };
+
+        // Push into target cache.
+        for node in region.nodes.values_mut() {
+            if node.node_id == target_id {
+                for (_, comp) in &mut node.components {
+                    if let FactoryComponent::Cache(state) = comp {
+                        if let Some(existing) =
+                            state.items.iter_mut().find(|s| s.item_id == item.item_id)
+                        {
+                            existing.count += item.count;
+                        } else {
+                            state.items.push(item);
+                        }
+                        return Ok(true);
+                    }
+                }
+                break;
+            }
+        }
+
+        Ok(false)
     }
 
     pub fn use_heal_tower(

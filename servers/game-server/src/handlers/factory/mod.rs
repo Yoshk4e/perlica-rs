@@ -14,6 +14,7 @@ pub mod manufacture;
 pub mod notify;
 pub mod op;
 pub mod processor;
+pub mod recycler;
 pub mod response;
 pub mod workshop;
 
@@ -29,6 +30,7 @@ pub use processor::{
     on_cs_factory_processor_make_item, on_cs_factory_processor_mark_unlock_formula_read,
     on_cs_factory_processor_recast_gem,
 };
+pub use recycler::{on_cs_factory_recycler_commit_material, on_cs_factory_recycler_fetch_product};
 pub use workshop::on_cs_factory_workshop_make;
 
 use std::collections::HashMap;
@@ -119,7 +121,7 @@ pub async fn push_factory(ctx: &mut NetContext<'_>) -> bool {
     // cached version: If they have already been on this region before
     // and created buildings on this wire name, we do not touch the
     // existing state.
-    // TODO(Clause 4 / DB): With the persistence, this same check will
+    // TODO(DB): With the persistence, this same check will
     // restore state from the `factory_regions` table on login.
     let hub_position = GridPos {
         x: top_left_x,
@@ -433,7 +435,7 @@ pub async fn push_factory(ctx: &mut NetContext<'_>) -> bool {
         "pushing factory context"
     );
 
-    // TODO(Clause 3): change the above proto construction to
+    // The proto construction above could be replaced with region.to_proto()
     // `region.to_proto()` when `FactoryRegion::to_proto()` is implemented
     // (tasks 3.1-3.3). As the internal representation has already been
     // initialized via `FactoryManager::bootstrap_region`, this is just

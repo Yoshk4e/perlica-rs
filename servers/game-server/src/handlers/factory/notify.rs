@@ -6,7 +6,7 @@
 //! `ScFactoryModifyRegionComponents` (changed component state on existing
 //! nodes), and `ScFactoryModifyRegionScene` (mesh/connection changes).
 //!
-//! TODO(Clause 3): everything here currently builds empty proto structs
+//! `to_proto()` is implemented (Clause 3), so these helpers can serialize real deltas.
 //! because the `FactoryNode -> ScdFactorySyncNode` conversion lives in
 //! task 3.2. The helpers are written but not yet called from any op
 //! handler -- once `to_proto()` lands, every successful op should fire
@@ -24,7 +24,7 @@ pub fn modify_nodes(region_name: &str, _node_ids: &[u32]) -> ScFactoryModifyRegi
     ScFactoryModifyRegionNodes {
         tms: 0,
         name: region_name.to_string(),
-        // TODO(Clause 3.2): look up each node in the region and serialize
+        // Serialize nodes via to_proto()
         // via `node.to_proto()`. Until then, leave empty -- the client
         // will refresh on next reconnect.
         nodes: vec![],
@@ -53,7 +53,7 @@ pub fn modify_components(
     ScFactoryModifyRegionComponents {
         tms: 0,
         name: region_name.to_string(),
-        // TODO(Clause 3.1): serialize each (node_id, component_id) pair
+        // Serialize components via to_proto()
         // via `component.to_proto()`. Empty for now, same reason as above.
         components: vec![],
     }

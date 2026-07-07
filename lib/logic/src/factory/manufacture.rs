@@ -6,8 +6,8 @@
 //! `max_setCount` sets can be queued at once, and the outcome buffer
 //! caps at `manufactOutcomeBufferStackMaxCount = 99`.
 
-use config::factory_table::FTableAssets;
 use config::factory_manufact_const::FManufactConstAssets;
+use config::factory_table::FTableAssets;
 
 use crate::factory::{ActiveRecipe, ItemSlot, ManufactureMachine, current_tick, elapsed_since};
 
