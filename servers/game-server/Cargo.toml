@@ -20,5 +20,11 @@ byteorder.workspace = true
 toml.workspace = true
 perlica-muip.workspace = true
 
+# Transport encryption (ChaCha20 keystream + RSA-PKCS1v1.5 key exchange).
+# Pure-Rust RustCrypto stack; no C deps, works on every tier-1 target.
+chacha20 = "0.9"
+rsa = { version = "0.9", features = ["pem"] }
+rand = "0.8"
+
 [lints]
 workspace = true

@@ -39,6 +39,10 @@ pub struct Player {
     // Field name mirrors the wire field.
     #[allow(clippy::struct_field_names)]
     pub is_new_player: bool,
+    /// Set by the login handler when this CS_LOGIN evicted a still-live
+    /// session for the same UID. Consumed by `run_login_sequence` to decide
+    /// whether to follow up the normal login push with SC_RECONNECT_FULL.
+    pub is_reconnect: bool,
 }
 impl Player {
     pub fn on_login(&mut self, uid: String) {
@@ -71,6 +75,7 @@ impl Default for Player {
             wallet: WalletState::default(),
             factory: FactoryManager::new(),
             is_new_player: false,
+            is_reconnect: false,
         }
     }
 }

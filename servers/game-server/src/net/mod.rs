@@ -7,12 +7,14 @@
 //! them and dispatches each individually.
 //!
 //! - **context** - `NetContext` passed into every handler
+//! - **crypto**  - transport encryption (ChaCha20 keystream, RSA key exchange)
 //! - **session** - per-connection read/write loops and lifecycle
 //! - **router**  - maps command IDs to handler functions
 //! - **registry** - lets other systems look up a live session by UID
 //! - **notify**  - server-push notifications outside the request cycle
 
 pub mod context;
+pub mod crypto;
 pub mod notify;
 pub mod registry;
 pub mod router;

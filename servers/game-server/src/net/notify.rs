@@ -8,6 +8,12 @@ pub enum Notification {
         command: String,
         respond_to: oneshot::Sender<MuipResult>,
     },
+    /// Sent to a live session when a new connection logs in with the same UID
+    /// (i.e. the client reconnected before the server noticed the old TCP
+    /// connection was dead). The recipient flushes its state to the DB,
+    /// unregisters, and terminates, then signals `respond_to` so the new
+    /// connection knows it's safe to proceed without racing the old one.
+    TakeOver { respond_to: oneshot::Sender<()> },
 }
 
 #[derive(Debug)]
@@ -43,6 +49,26 @@ impl PlayerHandle {
             .await
             .ok()?;
         rx.await.ok()
+    }
+
+    /// Asks the session behind this handle to flush, unregister, and close,
+    /// then waits for it to confirm. Returns once it's safe for the caller to
+    /// register a replacement session for the same UID.
+    ///
+    /// Returns `false` if the old session was already gone (channel closed
+    /// before or during the request) — in that case there's nothing to wait
+    /// for and the caller can proceed immediately.
+    pub async fn request_takeover(&self) -> bool {
+        let (tx, rx) = oneshot::channel();
+        if self
+            .tx
+            .send(Notification::TakeOver { respond_to: tx })
+            .await
+            .is_err()
+        {
+            return false;
+        }
+        rx.await.is_ok()
     }
 
     pub fn try_notify(&self, n: Notification) -> bool {
