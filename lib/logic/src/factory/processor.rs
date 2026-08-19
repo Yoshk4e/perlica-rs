@@ -344,11 +344,7 @@ fn push_crafted_to_bag(manager: &mut FactoryManager, region_name: &str, items: &
 }
 
 /// Verify that all gem inst_ids exist in the bag before removing any.
-fn verify_gems_exist(
-    manager: &FactoryManager,
-    region_name: &str,
-    inst_ids: &[u64],
-) -> bool {
+fn verify_gems_exist(manager: &FactoryManager, region_name: &str, inst_ids: &[u64]) -> bool {
     let Some(region) = manager.region(region_name) else {
         return false;
     };
