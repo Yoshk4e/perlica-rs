@@ -68,14 +68,15 @@ use perlica_logic::enums::{
 };
 use perlica_logic::factory::{FactoryManager, GridPos, GridRange};
 use perlica_proto::{
-    ScFactorySyncContext, ScdFactoryRectInt, ScdFactorySubPort, ScdFactorySyncBlackboard,
-    ScdFactorySyncBlackboardPower, ScdFactorySyncComponent, ScdFactorySyncComponentBusLoader,
-    ScdFactorySyncComponentInventory, ScdFactorySyncComponentPowerPole,
-    ScdFactorySyncComponentPowerSave, ScdFactorySyncComponentSelector,
-    ScdFactorySyncComponentStablePower, ScdFactorySyncDynamicProperty,
-    ScdFactorySyncDynamicPropertyValue, ScdFactorySyncInteractiveObject, ScdFactorySyncMesh,
-    ScdFactorySyncNode, ScdFactorySyncQuickbar, ScdFactorySyncRegion, ScdFactorySyncScene,
-    ScdFactorySyncSceneBandwidth, ScdFactorySyncTransform, ScdFactoryVector2Int, Vector,
+    ScFactorySync, ScFactorySyncContext, ScdFactoryRectInt, ScdFactorySttNode, ScdFactorySubPort,
+    ScdFactorySyncBlackboard, ScdFactorySyncBlackboardPower, ScdFactorySyncComponent,
+    ScdFactorySyncComponentBusLoader, ScdFactorySyncComponentInventory,
+    ScdFactorySyncComponentPowerPole, ScdFactorySyncComponentPowerSave,
+    ScdFactorySyncComponentSelector, ScdFactorySyncComponentStablePower,
+    ScdFactorySyncDynamicProperty, ScdFactorySyncDynamicPropertyValue, ScdFactorySyncFormulaMan,
+    ScdFactorySyncInteractiveObject, ScdFactorySyncMesh, ScdFactorySyncNode,
+    ScdFactorySyncQuickbar, ScdFactorySyncRegion, ScdFactorySyncScene,
+    ScdFactorySyncSceneBandwidth, ScdFactorySyncStt, ScdFactorySyncTransform, ScdFactoryVector2Int,
     scd_factory_sync_component, scd_factory_sync_dynamic_property_value,
 };
 use tracing::{debug, warn};
@@ -463,6 +464,37 @@ pub async fn push_factory(ctx: &mut NetContext<'_>) -> bool {
         quickbars,
     };
 
+    // Full factory sync (SC_FACTORY_SYNC, cmd 200). The client only
+    // initializes its STT tech tree (`FacTechTreeSystem::SyncFactoryData`)
+    // and the visible/unlocked formula lists from this message, so it must
+    // be pushed at login or the tech tree stays empty. Node ids come from
+    // the config tables directly because the client looks each one up in
+    // its own config and throws on an unknown id.
+    let stt_nodes: Vec<_> = ctx
+        .player
+        .factory
+        .stt_sync_all(&ctx.assets.factory_sttree, &region_name)
+        .into_iter()
+        .map(|(id, data)| ScdFactorySttNode {
+            id,
+            state: data.state,
+            values: data.values,
+            flags: data.flags,
+        })
+        .collect();
+    let formulas = ctx.player.factory.stt_state.visible_formulas.clone();
+    let sync = ScFactorySync {
+        stt: Some(ScdFactorySyncStt { nodes: stt_nodes }),
+        formula_man: Some(ScdFactorySyncFormulaMan {
+            unlocked: formulas.clone(),
+            visible: formulas,
+        }),
+        // manufacture/trade/repair/etc. left `None`: every client sync
+        // handler checks the field before use and returns cleanly, and the
+        // dedicated context/subsystem messages carry that state instead.
+        ..Default::default()
+    };
+
     debug!(
         uid = %ctx.player.uid,
         scene = %scene_name,
@@ -484,5 +516,5 @@ pub async fn push_factory(ctx: &mut NetContext<'_>) -> bool {
     // initialized via `FactoryManager::bootstrap_region`, this is just
     // a format change.
 
-    ctx.notify(msg).await.is_ok()
+    ctx.notify(sync).await.is_ok() && ctx.notify(msg).await.is_ok()
 }

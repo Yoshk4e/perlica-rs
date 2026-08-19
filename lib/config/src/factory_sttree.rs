@@ -48,4 +48,8 @@ impl FSttreeAssets {
     pub fn all_node_ids(&self) -> impl Iterator<Item = &str> {
         self.data.node_table.keys().map(String::as_str)
     }
+
+    pub fn sp_node_ids(&self) -> impl Iterator<Item = &str> {
+        self.data.sp_node_table.keys().map(String::as_str)
+    }
 }

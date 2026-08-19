@@ -1,5 +1,5 @@
 use crate::net::NetContext;
-use perlica_proto::{CsFactorySttUnlockNode, ScFactoryModifyStt};
+use perlica_proto::{CsFactorySttUnlockNode, ScFactoryModifyStt, ScdFactorySttNode};
 use tracing::warn;
 
 pub async fn on_cs_factory_stt_unlock_node(
@@ -16,11 +16,29 @@ pub async fn on_cs_factory_stt_unlock_node(
 
     if !success {
         warn!(node_id = %req.node_id, "STT unlock failed");
+        return ScFactoryModifyStt { nodes: vec![] };
     }
 
-    // The proto ScFactoryModifyStt has a `nodes` field (Vec<ScdFactorySttNode>)
-    // but the ScdFactorySttNode struct is complex and needs the full STT
-    // node config to serialize properly. The client will refresh on next
-    // sync. The unlock state is tracked server-side in stt_state.unlocked_nodes.
-    ScFactoryModifyStt { nodes: vec![] }
+    // Send the updated node back. The client's
+    // `FacTechTreeSystem::_HandleFactorySync` (SC_FACTORY_MODIFY_STT)
+    // applies `state` + `values`/`flags` per node and fires the unlock
+    // UI event when the state changes, so the tree must reflect the new
+    // state or the player never sees the unlock.
+    let Some(data) =
+        ctx.player
+            .factory
+            .stt_node_sync(&ctx.assets.factory_sttree, &region_name, &req.node_id)
+    else {
+        warn!(node_id = %req.node_id, "STT unlock succeeded but node not found for sync");
+        return ScFactoryModifyStt { nodes: vec![] };
+    };
+
+    ScFactoryModifyStt {
+        nodes: vec![ScdFactorySttNode {
+            id: req.node_id,
+            state: data.state,
+            values: data.values,
+            flags: data.flags,
+        }],
+    }
 }
