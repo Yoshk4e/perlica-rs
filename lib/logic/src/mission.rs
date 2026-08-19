@@ -12,6 +12,12 @@ pub const PROLOGUE_MISSION_ID: &str = "mission_mai_e0m1";
 pub const PROLOGUE_FIRST_QUEST_ID: &str = "mission_mai_e0m1_q#2";
 const GUIDE_STATE_COMPLETED: i32 = 3;
 
+/// Missions that are always reported as completed, regardless of what
+/// is actually stored for the player. Every quest belonging to these
+/// missions is force-marked as completed (all objectives satisfied)
+/// whenever [`MissionManager::force_complete_hardcoded`] runs.
+pub const HARDCODED_COMPLETED_MISSIONS: &[&str] = &["mission_mai_e1m9", "mission_mai_e1m10"];
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct MissionProgress {
     mission_id: String,
@@ -286,6 +292,65 @@ impl MissionManager {
 
     pub fn has_mission(&self, mission_id: &str) -> bool {
         self.missions.contains_key(mission_id)
+    }
+
+    /// Force-marks every mission in [`HARDCODED_COMPLETED_MISSIONS`] as
+    /// completed, along with all of their quests and quest objectives.
+    /// This overrides whatever state was loaded from persistence, and
+    /// is idempotent (safe to call on every push).
+    pub fn force_complete_hardcoded(&mut self, mission_assets: &MissionAssets) {
+        for mission_id in HARDCODED_COMPLETED_MISSIONS {
+            self.force_complete_mission(mission_id, mission_assets);
+        }
+    }
+
+    /// Force-marks a single mission (and all of its quests/objectives)
+    /// as completed, regardless of prior state.
+    fn force_complete_mission(&mut self, mission_id: &str, mission_assets: &MissionAssets) {
+        self.missions.insert(
+            mission_id.to_string(),
+            MissionProgress {
+                mission_id: mission_id.to_string(),
+                mission_state: MissionState::Mscompleted,
+                succeed_id: 1,
+            },
+        );
+
+        let Some(mission_definition) = mission_assets.get(mission_id) else {
+            error!(
+                "Cannot force-complete mission '{}': definition not found in mission assets.",
+                mission_id
+            );
+            return;
+        };
+
+        for quest in &mission_definition.quests {
+            let objectives: BTreeMap<String, QuestObjective> = quest
+                .objective_keys
+                .iter()
+                .filter(|key| !key.trim().is_empty())
+                .map(|key| {
+                    (
+                        key.clone(),
+                        QuestObjective {
+                            condition_id: key.clone(),
+                            extra_details: HashMap::new(),
+                            is_complete: true,
+                            values: HashMap::from([(key.clone(), 1)]),
+                        },
+                    )
+                })
+                .collect();
+
+            self.current_quests.insert(
+                quest.quest_id.clone(),
+                QuestProgress {
+                    quest_id: quest.quest_id.clone(),
+                    quest_state: QuestState::Qscompleted,
+                    objectives,
+                },
+            );
+        }
     }
 
     pub fn update_track_mission(&mut self, mission_id: &str) {

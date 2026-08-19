@@ -10,6 +10,9 @@ use tracing::{debug, warn};
 
 pub async fn push_missions(ctx: &mut NetContext<'_>) -> bool {
     ctx.player.missions.ensure_bootstrap(&ctx.assets.missions);
+    ctx.player
+        .missions
+        .force_complete_hardcoded(&ctx.assets.missions);
     ctx.notify(ctx.player.missions.sync_packet()).await.is_ok()
 }
 
