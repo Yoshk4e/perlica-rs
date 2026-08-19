@@ -42,7 +42,9 @@ pub async fn execute(ctx: &mut NetContext<'_>, raw: &str) -> Result<GmOutcome, S
         "help" | "?" => GmOutcome::ok(help_text()),
         "heal" => heal_command(ctx, &parts[1..]).await,
         "setlevel" | "level" => set_level_command(ctx, &parts[1..]).await,
+        "pos" | "getpos" => pos_command(ctx),
         "teleport" | "tp" => teleport_command(ctx, &parts[1..]).await,
+        "tpr" | "tprel" => teleport_relative_command(ctx, &parts[1..]).await,
         "spawn" => spawn_command(ctx, &parts[1..]).await,
         "give" => give_command(ctx, &parts[1..]).await,
         "kick" => kick_command(&parts[1..]),
@@ -58,7 +60,9 @@ fn help_text() -> String {
         "  help",
         "  heal [all|team]",
         "  level <value>",
+        "  pos",
         "  tp <scene> <x> <y> <z> [rot_y]",
+        "  tpr <dx> <dy> <dz> [rot_y]",
         "  spawn <monster_template> [x y z] [level] [entity_type]",
         "  give weapon <weapon_template>",
         "  kick [reason]",
@@ -169,6 +173,18 @@ async fn set_level_command(ctx: &mut NetContext<'_>, args: &[&str]) -> Result<Gm
     GmOutcome::ok(format!("set live player level to {level}"))
 }
 
+fn pos_command(ctx: &mut NetContext<'_>) -> Result<GmOutcome, String> {
+    let movement = &ctx.player.movement;
+    GmOutcome::ok(format!(
+        "player is in {} at ({:.2}, {:.2}, {:.2}) facing rot_y={:.2}",
+        ctx.player.scene.current_scene,
+        movement.pos.get_x(),
+        movement.pos.get_y(),
+        movement.pos.get_z(),
+        movement.rot.get_y(),
+    ))
+}
+
 async fn teleport_command(ctx: &mut NetContext<'_>, args: &[&str]) -> Result<GmOutcome, String> {
     if args.len() < 4 {
         return Err("usage: tp <scene> <x> <y> <z> [rot_y]".to_string());
@@ -184,6 +200,42 @@ async fn teleport_command(ctx: &mut NetContext<'_>, args: &[&str]) -> Result<GmO
         .transpose()?
         .unwrap_or(*ctx.player.movement.rot.get_y());
 
+    do_teleport(ctx, scene_name, x, y, z, rot_y).await
+}
+
+async fn teleport_relative_command(
+    ctx: &mut NetContext<'_>,
+    args: &[&str],
+) -> Result<GmOutcome, String> {
+    if args.len() < 3 {
+        return Err("usage: tpr <dx> <dy> <dz> [rot_y]".to_string());
+    }
+
+    let dx = parse_f32(args[0], "dx")?;
+    let dy = parse_f32(args[1], "dy")?;
+    let dz = parse_f32(args[2], "dz")?;
+    let rot_y = args
+        .get(3)
+        .map(|v| parse_f32(v, "rot_y"))
+        .transpose()?
+        .unwrap_or(*ctx.player.movement.rot.get_y());
+
+    let scene_name = ctx.player.scene.current_scene.clone();
+    let x = ctx.player.movement.pos.get_x() + dx;
+    let y = ctx.player.movement.pos.get_y() + dy;
+    let z = ctx.player.movement.pos.get_z() + dz;
+
+    do_teleport(ctx, scene_name, x, y, z, rot_y).await
+}
+
+async fn do_teleport(
+    ctx: &mut NetContext<'_>,
+    scene_name: String,
+    x: f32,
+    y: f32,
+    z: f32,
+    rot_y: f32,
+) -> Result<GmOutcome, String> {
     let is_scene_change = ctx.player.scene.current_scene != scene_name;
 
     ctx.player.movement.update_position(x, y, z);
