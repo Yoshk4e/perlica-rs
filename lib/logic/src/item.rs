@@ -6,8 +6,9 @@ use config::item::{CraftShowingType, ItemDepotType, ItemKind};
 use config::tables::equip::AttrModifier;
 use perlica_proto::{
     EquipAttr, EquipData, GemData, ItemInst, ScItemBagSync, ScWeaponAddExp, ScWeaponAttachGem,
-    ScWeaponBreakthrough, ScWeaponDetachGem, ScWeaponPuton, ScdItemBag, ScdItemDepot,
-    ScdItemDepotModify, ScdItemGrid, ScdItemUseBlackboard, WeaponData, item_inst::InstImpl,
+    ScWeaponBreakthrough, ScWeaponDetachGem, ScWeaponPuton, ScdItemBag, ScdItemBagModify,
+    ScdItemDepot, ScdItemDepotModify, ScdItemGrid, ScdItemUseBlackboard, WeaponData,
+    item_inst::InstImpl,
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -1492,19 +1493,6 @@ impl StackableDepot {
         }
         out
     }
-
-    /// Build a `ScdItemDepotModify` reflecting a batch of consumed items.
-    /// `consumed` is a map of template_id -> count that was removed.
-    pub fn consumed_modify(consumed: &HashMap<String, u32>) -> ScdItemDepotModify {
-        ScdItemDepotModify {
-            items: consumed
-                .iter()
-                .map(|(k, &v)| (k.clone(), -(v as i64)))
-                .collect(),
-            inst_list: vec![],
-            del_inst_list: vec![],
-        }
-    }
 }
 
 impl From<&StackableDepot> for ScdItemDepot {
@@ -1518,6 +1506,101 @@ impl From<&StackableDepot> for ScdItemDepot {
             inst_list: Vec::new(),
         }
     }
+}
+
+/// A single occupied slot in the player's personal item bag (`ScdItemBag`).
+/// The factory depot only holds stackable items, so a bag slot carries no
+/// instance identity: the client keys these by `id` (`inst` is sent as
+/// `None`, matching how `_HandleInventoryModify` treats null-inst grids).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BagSlot {
+    pub id: String,
+    pub count: i64,
+}
+
+/// The player's personal bag: a fixed-size grid (`BAG_GRID_LIMIT` slots)
+/// indexed by `grid_index`, matching the client's `ItemBag` slot list.
+/// Empty trailing slots are implicit; a missing `Option` means empty.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct BagGrid {
+    slots: Vec<Option<BagSlot>>,
+}
+
+impl BagGrid {
+    #[inline]
+    pub fn slot(&self, index: i32) -> Option<&BagSlot> {
+        self.slots.get(index as usize).and_then(Option::as_ref)
+    }
+
+    pub fn slot_mut(&mut self, index: i32) -> Option<&mut BagSlot> {
+        self.slots.get_mut(index as usize).and_then(Option::as_mut)
+    }
+
+    pub fn len(&self) -> usize {
+        self.slots.iter().filter(|s| s.is_some()).count()
+    }
+
+    pub fn is_full(&self) -> bool {
+        self.len() >= BAG_GRID_LIMIT as usize
+    }
+
+    pub fn first_empty(&self) -> Option<i32> {
+        (0..BAG_GRID_LIMIT).find(|&i| self.slot(i).is_none())
+    }
+
+    pub fn remove(&mut self, index: i32) -> Option<BagSlot> {
+        if index < 0 || index >= BAG_GRID_LIMIT {
+            return None;
+        }
+        self.slots.get_mut(index as usize).and_then(Option::take)
+    }
+
+    pub fn set(&mut self, index: i32, slot: BagSlot) -> Result<()> {
+        if index < 0 || index >= BAG_GRID_LIMIT {
+            return Err(LogicError::InvalidOperation(format!(
+                "bag grid index out of range: {index}"
+            )));
+        }
+        let idx = index as usize;
+        if idx < self.slots.len() && self.slots[idx].is_some() {
+            return Err(LogicError::InvalidOperation(format!(
+                "bag grid slot {index} is already occupied"
+            )));
+        }
+        if idx >= self.slots.len() {
+            self.slots.resize(idx + 1, None);
+        }
+        self.slots[idx] = Some(slot);
+        Ok(())
+    }
+
+    pub fn to_sync(&self) -> ScdItemBag {
+        let mut grids: Vec<ScdItemGrid> = self
+            .slots
+            .iter()
+            .enumerate()
+            .filter_map(|(i, s)| {
+                s.as_ref().map(|slot| ScdItemGrid {
+                    grid_index: i as i32,
+                    id: slot.id.clone(),
+                    count: slot.count,
+                    inst: None,
+                })
+            })
+            .collect();
+        grids.sort_by_key(|g| g.grid_index);
+        ScdItemBag {
+            grid_limit: BAG_GRID_LIMIT,
+            grids,
+        }
+    }
+}
+
+/// Result of a bag <-> depot transfer: the exact `SC_ITEM_BAG_SYNC_MODIFY`
+/// payloads the server must push so the client applies the change.
+pub struct BagTransfer {
+    pub bag: ScdItemBagModify,
+    pub factory_depot: ScdItemDepotModify,
 }
 
 #[derive(Clone, Copy)]
@@ -1552,6 +1635,8 @@ pub struct ItemManager {
     pub special_items: StackableDepot,
     pub mission_items: StackableDepot,
     pub factory_items: StackableDepot,
+    #[serde(default)]
+    pub bag: BagGrid,
 }
 
 impl ItemManager {
@@ -1563,6 +1648,7 @@ impl ItemManager {
             special_items: StackableDepot::new(4),
             mission_items: StackableDepot::new(5),
             factory_items: StackableDepot::new(6),
+            bag: BagGrid::default(),
         }
     }
 
@@ -1696,10 +1782,7 @@ impl ItemManager {
         depot.insert(4, (&self.special_items).into());
         depot.insert(5, (&self.mission_items).into());
         let factory_depot = Some((&self.factory_items).into());
-        let bag = Some(ScdItemBag {
-            grid_limit: BAG_GRID_LIMIT,
-            grids: vec![],
-        });
+        let bag = Some(self.bag.to_sync());
 
         let cannot_destroy: HashMap<String, bool> = assets
             .items
@@ -1717,6 +1800,186 @@ impl ItemManager {
             cannot_destroy,
             use_blackboard,
         }
+    }
+
+    /// Move `count` of a stackable from the factory depot into the bag slot at
+    /// `grid_index` (`CS_ITEM_BAG_FACTORY_DEPOT_TO_BAG_GRID`). Atomic: either
+    /// the whole move succeeds or nothing changes.
+    pub fn move_factory_depot_to_bag_grid(
+        &mut self,
+        id: &str,
+        count: i64,
+        grid_index: i32,
+    ) -> Result<BagTransfer> {
+        if count <= 0 {
+            return Err(LogicError::InvalidOperation(format!(
+                "cannot move non-positive count {count} of {id}"
+            )));
+        }
+        if grid_index < 0 || grid_index >= BAG_GRID_LIMIT {
+            return Err(LogicError::InvalidOperation(format!(
+                "bag grid index out of range: {grid_index}"
+            )));
+        }
+        if self.bag.slot(grid_index).is_some() {
+            return Err(LogicError::InvalidOperation(format!(
+                "bag grid slot {grid_index} is already occupied"
+            )));
+        }
+        let need = count as u32;
+        let have = self.factory_items.count_of(id);
+        if have < need {
+            return Err(LogicError::Insufficient {
+                item_id: id.to_string(),
+                have,
+                need,
+            });
+        }
+        self.factory_items.consume(id, need)?;
+        let remaining = self.factory_items.count_of(id);
+        self.bag.set(
+            grid_index,
+            BagSlot {
+                id: id.to_string(),
+                count,
+            },
+        )?;
+        Ok(BagTransfer {
+            factory_depot: ScdItemDepotModify {
+                items: HashMap::from([(id.to_string(), remaining as i64)]),
+                inst_list: vec![],
+                del_inst_list: vec![],
+            },
+            bag: ScdItemBagModify {
+                grid_limit: BAG_GRID_LIMIT,
+                grids: vec![ScdItemGrid {
+                    grid_index,
+                    id: id.to_string(),
+                    count,
+                    inst: None,
+                }],
+                del_list: vec![],
+            },
+        })
+    }
+
+    /// Move a batch of stackables from the factory depot into the first empty
+    /// bag slots (`CS_ITEM_BAG_FACTORY_DEPOT_TO_BAG`). Validates the whole
+    /// batch first so a failure leaves the inventory untouched.
+    pub fn move_factory_depot_to_bag(
+        &mut self,
+        items: &HashMap<String, i64>,
+    ) -> Result<BagTransfer> {
+        if items.is_empty() {
+            return Ok(BagTransfer {
+                factory_depot: ScdItemDepotModify::default(),
+                bag: ScdItemBagModify {
+                    grid_limit: BAG_GRID_LIMIT,
+                    ..Default::default()
+                },
+            });
+        }
+        for (id, &count) in items {
+            if count <= 0 {
+                return Err(LogicError::InvalidOperation(format!(
+                    "cannot move non-positive count {count} of {id}"
+                )));
+            }
+            let have = self.factory_items.count_of(id);
+            if have < count as u32 {
+                return Err(LogicError::Insufficient {
+                    item_id: id.clone(),
+                    have,
+                    need: count as u32,
+                });
+            }
+        }
+        let free = self.bag.len();
+        let need_slots = items.len();
+        if free + need_slots > BAG_GRID_LIMIT as usize {
+            return Err(LogicError::InvalidOperation(format!(
+                "bag is full: {free}/{BAG_GRID_LIMIT} slots used, need {need_slots} more"
+            )));
+        }
+
+        let mut factory_items = HashMap::new();
+        let mut grids = Vec::with_capacity(items.len());
+        for (id, &count) in items {
+            let remaining = self.factory_items.consume(id, count as u32)?;
+            let grid_index = self.bag.first_empty().expect("slot count checked above");
+            self.bag.set(
+                grid_index,
+                BagSlot {
+                    id: id.clone(),
+                    count,
+                },
+            )?;
+            factory_items.insert(id.clone(), remaining as i64);
+            grids.push(ScdItemGrid {
+                grid_index,
+                id: id.clone(),
+                count,
+                inst: None,
+            });
+        }
+        Ok(BagTransfer {
+            factory_depot: ScdItemDepotModify {
+                items: factory_items,
+                inst_list: vec![],
+                del_inst_list: vec![],
+            },
+            bag: ScdItemBagModify {
+                grid_limit: BAG_GRID_LIMIT,
+                grids,
+                del_list: vec![],
+            },
+        })
+    }
+
+    /// Move the items occupying `grid_indices` from the bag back into the
+    /// factory depot (`CS_ITEM_BAG_BAG_TO_FACTORY_DEPOT`). Atomic across the
+    /// whole list of indices.
+    pub fn move_bag_to_factory_depot(&mut self, grid_indices: &[i32]) -> Result<BagTransfer> {
+        if grid_indices.is_empty() {
+            return Ok(BagTransfer {
+                factory_depot: ScdItemDepotModify::default(),
+                bag: ScdItemBagModify {
+                    grid_limit: BAG_GRID_LIMIT,
+                    ..Default::default()
+                },
+            });
+        }
+        for &index in grid_indices {
+            if self.bag.slot(index).is_none() {
+                return Err(LogicError::InvalidOperation(format!(
+                    "bag grid slot {index} is empty"
+                )));
+            }
+        }
+        let mut added = HashMap::new();
+        let mut del_list = Vec::with_capacity(grid_indices.len());
+        for &index in grid_indices {
+            let slot = self.bag.remove(index).expect("existence validated above");
+            *added.entry(slot.id).or_insert(0i64) += slot.count;
+            del_list.push(index);
+        }
+        let mut factory_items = HashMap::new();
+        for (id, &count) in &added {
+            let new_total = self.factory_items.add(id, count as u32);
+            factory_items.insert(id.clone(), new_total as i64);
+        }
+        Ok(BagTransfer {
+            factory_depot: ScdItemDepotModify {
+                items: factory_items,
+                inst_list: vec![],
+                del_inst_list: vec![],
+            },
+            bag: ScdItemBagModify {
+                grid_limit: BAG_GRID_LIMIT,
+                grids: vec![],
+                del_list,
+            },
+        })
     }
 
     pub fn sync_depot(&self, depot_type: ItemDepotType) -> Option<ScdItemDepot> {
@@ -1967,14 +2230,6 @@ mod tests {
             *depot_sync.stackable_items.get("item_iron_cmpt").unwrap(),
             9_999i64
         );
-    }
-
-    #[test]
-    fn consumed_modify_negative() {
-        let mut consumed = HashMap::new();
-        consumed.insert("item_expcard_2_1".to_string(), 5u32);
-        let modify = StackableDepot::consumed_modify(&consumed);
-        assert_eq!(*modify.items.get("item_expcard_2_1").unwrap(), -5i64);
     }
 
     #[test]

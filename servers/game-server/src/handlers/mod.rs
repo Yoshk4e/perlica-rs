@@ -5,6 +5,7 @@ pub mod equip;
 pub mod factory;
 pub mod gm;
 pub mod heartbeat;
+pub mod item_bag;
 pub mod login;
 pub mod mail;
 pub mod mission;

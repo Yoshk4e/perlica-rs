@@ -6,7 +6,8 @@
 //! Use `reply` when the handler returns a response; `no_reply` for fire-and-forget.
 
 use crate::handlers::{
-    bitset, character, equip, factory, heartbeat, login, mail, mission, movement, scene, weapon,
+    bitset, character, equip, factory, heartbeat, item_bag, login, mail, mission, movement, scene,
+    weapon,
 };
 use byteorder::{LittleEndian, ReadBytesExt};
 use perlica_proto::{CsHead, CsMergeMsg, prost::Message};
@@ -120,6 +121,8 @@ handlers! {
         CsEquipPutoff          => equip::on_cs_equip_putoff,
         // Item Tag Commands
         CsRemoveItemNewTags    => equip::on_cs_remove_item_new_tags,
+        // Item Bag Commands
+        CsItemBagBagToFactoryDepot => item_bag::on_cs_item_bag_bag_to_factory_depot,
         // Dialog or Story related commands
         CsFinishDialog                   => scene::on_cs_finish_dialog,
         // Factory Commands
@@ -178,6 +181,9 @@ handlers! {
         // Factory (no response -- fire-and-forget)
         CsFactoryProcessorMarkUnlockFormulaRead => factory::on_cs_factory_processor_mark_unlock_formula_read,
         CsFactoryStatisticSetBookmarkItemIds => factory::on_cs_factory_statistic_set_bookmark_item_ids,
+        // Item Bag (no response -- state is pushed via SC_ITEM_BAG_SYNC_MODIFY)
+        CsItemBagFactoryDepotToBag => item_bag::on_cs_item_bag_factory_depot_to_bag,
+        CsItemBagFactoryDepotToBagGrid => item_bag::on_cs_item_bag_factory_depot_to_bag_grid,
     }
 }
 
