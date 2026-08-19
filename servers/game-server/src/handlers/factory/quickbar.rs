@@ -35,9 +35,16 @@ fn serialize_quickbars(
 ) -> Vec<ScdFactorySyncQuickbar> {
     quickbars
         .iter()
-        .map(|q| ScdFactorySyncQuickbar {
-            r#type: q.quickbar_type.parse().unwrap_or(0),
-            list: q.items.clone(),
+        .map(|q| {
+            let mut list = q.items.clone();
+            // The client reads `SCD_FACTORY_SYNC_QUICKBAR.list` as a flat
+            // 4x8 grid (indices 0..=31) in `QuickBar::SyncData` and the
+            // context QuickBar constructor; any other length crashes it.
+            list.resize(perlica_logic::factory::QUICKBAR_SIZE, String::new());
+            ScdFactorySyncQuickbar {
+                r#type: q.quickbar_type,
+                list,
+            }
         })
         .collect()
 }

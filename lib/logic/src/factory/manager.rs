@@ -62,10 +62,27 @@ pub struct FactoryManager {
 
 impl FactoryManager {
     pub fn new() -> Self {
-        Self {
+        let mut manager = Self {
             current_region: "test01".to_string(),
             ..Default::default()
-        }
+        };
+        manager.bootstrap_quickbars();
+        manager
+    }
+
+    /// Pre-seed both quickbar pages (`FCQuickBarType` Inner=0, Outer=1)
+    /// with 32 empty slots. The client's `ModifyFactoryQuickbar` handler
+    /// looks up each incoming quickbar in its local `quickBars` dict via
+    /// `TryGetValue(type)` and silently *skips* any type that is missing,
+    /// so a page must already be present in the initial
+    /// `SC_FACTORY_SYNC_CONTEXT` for set/move responses to be applied.
+    fn bootstrap_quickbars(&mut self) {
+        self.quickbars = (0..2)
+            .map(|quickbar_type| super::QuickbarState {
+                quickbar_type,
+                items: vec![String::new(); super::QUICKBAR_SIZE],
+            })
+            .collect();
     }
 
     /// Borrow the current region (the one the client thinks is active).

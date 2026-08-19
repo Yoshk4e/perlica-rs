@@ -1,14 +1,17 @@
 //! Quickbar business logic.
 //!
-//! The quickbar holds 7 types of item shortcuts. `set_one` assigns an
-//! item to a slot, `move_one` swaps two slots within the same type.
+//! The quickbar holds 2 pages of item shortcuts (`FCQuickBarType`:
+//! `Inner`=0, `Outer`=1), each a flat 4x8 grid of 32 slots (row-major:
+//! `index = barIndex * 8 + slotIndex`). `set_one` assigns an item to a
+//! slot, `move_one` swaps two slots within the same page.
 
 impl crate::factory::FactoryManager {
-    /// Set a single quickbar slot. `qb_type` is the quickbar type ID,
-    /// `index` is the slot, `item_id` is the template to assign.
-    /// An empty `item_id` clears the slot.
+    /// Set a single quickbar slot. `qb_type` is the `FCQuickBarType`
+    /// (`Inner`=0, `Outer`=1), `index` is the flat slot (0..=31),
+    /// `item_id` is the template to assign. An empty `item_id` clears
+    /// the slot.
     pub fn quickbar_set_one(&mut self, qb_type: i32, index: i32, item_id: &str) -> bool {
-        if index < 0 {
+        if !(0..crate::factory::QUICKBAR_SIZE as i32).contains(&index) {
             return false;
         }
         let idx = index as usize;
@@ -17,20 +20,15 @@ impl crate::factory::FactoryManager {
         let qb = self
             .quickbars
             .iter_mut()
-            .find(|q| q.quickbar_type == qb_type.to_string());
+            .find(|q| q.quickbar_type == qb_type);
 
         if let Some(qb) = qb {
-            // Grow the list if needed.
-            if idx >= qb.items.len() {
-                qb.items.resize(idx + 1, String::new());
-            }
             qb.items[idx] = item_id.to_string();
         } else {
-            // Create a new quickbar entry.
-            let mut items = vec![String::new(); idx];
-            items.push(item_id.to_string());
+            let mut items = vec![String::new(); crate::factory::QUICKBAR_SIZE];
+            items[idx] = item_id.to_string();
             self.quickbars.push(crate::factory::QuickbarState {
-                quickbar_type: qb_type.to_string(),
+                quickbar_type: qb_type,
                 items,
             });
         }
@@ -39,9 +37,11 @@ impl crate::factory::FactoryManager {
     }
 
     /// Move an item from one slot to another within the same quickbar
-    /// type. Swaps the two slots.
+    /// page.
     pub fn quickbar_move_one(&mut self, qb_type: i32, from_index: i32, to_index: i32) -> bool {
-        if from_index < 0 || to_index < 0 {
+        if !(0..crate::factory::QUICKBAR_SIZE as i32).contains(&from_index)
+            || !(0..crate::factory::QUICKBAR_SIZE as i32).contains(&to_index)
+        {
             return false;
         }
         let from = from_index as usize;
@@ -50,16 +50,10 @@ impl crate::factory::FactoryManager {
         let Some(qb) = self
             .quickbars
             .iter_mut()
-            .find(|q| q.quickbar_type == qb_type.to_string())
+            .find(|q| q.quickbar_type == qb_type)
         else {
             return false;
         };
-
-        if from >= qb.items.len() || to >= qb.items.len() {
-            // Grow to accommodate the larger index.
-            let max = from.max(to);
-            qb.items.resize(max + 1, String::new());
-        }
 
         qb.items.swap(from, to);
         true

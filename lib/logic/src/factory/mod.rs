@@ -57,7 +57,9 @@
 //! - **Clause 13** (`soil.rs`): seed -> doodad -> harvest.
 //! - **Clause 14** (`character_work.rs`): 18 factory skills -> modifier.
 //! - **Clause 15** (`manual_work.rs`): Queue length = 5, 16 manual work recipes.
-//! - **Clause 16** (`quickbar.rs`): 7 quickbar types, with set and move operations.
+//! - **Clause 16** (`quickbar.rs`): 2 quickbar pages (`FCQuickBarType`
+//!   Inner=0 / Outer=1), each a flat 32-slot (4x8) grid, with set and move
+//!   operations.
 //! - **Clause 17** (`stt.rs`): 31 nodes + condition evaluator (see Appendix B).
 //! - **Clause 19** (`repair.rs` / `depot.rs`): 7 repair buildings + depot bridge messages.
 //! - **DB** (`db/migrations/0003_factory.sql`, `db/src/subsystems/f
@@ -254,11 +256,19 @@ pub struct CharacterWorkState {
 }
 
 /// Clause 16, quickbar state.
+///
+/// The wire `type` is the `FCQuickBarType` enum (Inner=0, Outer=1).
+/// `items` is a flat 4 rows x 8 columns grid (32 slots, row-major), and the
+/// wire `SCD_FACTORY_SYNC_QUICKBAR.list` must always carry exactly
+/// [`QUICKBAR_SIZE`] entries.
 #[derive(Debug, Clone)]
 pub struct QuickbarState {
-    pub quickbar_type: String,
+    pub quickbar_type: i32,
     pub items: Vec<String>,
 }
+
+/// Number of slots in one quickbar page: 4 bars x 8 slots.
+pub const QUICKBAR_SIZE: usize = 32;
 
 /// Clause 17, STT tech tree state.
 #[derive(Debug, Clone, Default)]

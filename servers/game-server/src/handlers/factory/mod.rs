@@ -445,9 +445,14 @@ pub async fn push_factory(ctx: &mut NetContext<'_>) -> bool {
         .factory
         .quickbars
         .iter()
-        .map(|q| ScdFactorySyncQuickbar {
-            r#type: q.quickbar_type.parse().unwrap_or(0),
-            list: q.items.clone(),
+        .map(|q| {
+            let mut list = q.items.clone();
+            // Flat 4x8 grid on the wire; the client indexes 0..=31.
+            list.resize(perlica_logic::factory::QUICKBAR_SIZE, String::new());
+            ScdFactorySyncQuickbar {
+                r#type: q.quickbar_type,
+                list,
+            }
         })
         .collect();
 
