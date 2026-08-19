@@ -9,7 +9,6 @@
 use config::factory_table::FTableAssets;
 use config::repair_table::RepairAssets;
 
-use crate::enums::FCNodeType;
 use crate::factory::{FactoryComponent, FactoryManager, FactoryNode};
 
 impl FactoryManager {
@@ -54,7 +53,7 @@ impl FactoryManager {
             return None;
         };
 
-        let node_type = node_type_from_i32(building.building_type);
+        let node_type = crate::enums::building_node_type_from_i32(building.building_type);
         let Some(node_type) = node_type else {
             return None;
         };
@@ -116,32 +115,6 @@ impl FactoryManager {
 
         Some(node_id)
     }
-}
-
-fn node_type_from_i32(t: i32) -> Option<FCNodeType> {
-    Some(match t {
-        1 => FCNodeType::Inventory,
-        2 => FCNodeType::Bus,
-        3 => FCNodeType::Hub,
-        4 => FCNodeType::Collector,
-        5 => FCNodeType::Producer,
-        6 => FCNodeType::BoxConveyor,
-        7 => FCNodeType::BoxRouterM1,
-        8 => FCNodeType::BusUnloader,
-        9 => FCNodeType::BusLoader,
-        10 => FCNodeType::BurnPower,
-        11 => FCNodeType::PowerPole,
-        12 => FCNodeType::PowerSave,
-        13 => FCNodeType::DepositBox,
-        14 => FCNodeType::HealTower,
-        15 => FCNodeType::TravelPole,
-        16 => FCNodeType::BoxBridge,
-        17 => FCNodeType::Special,
-        18 => FCNodeType::PowerTerminal,
-        19 => FCNodeType::PowerPort,
-        20 => FCNodeType::PowerGate,
-        _ => return None,
-    })
 }
 
 fn try_consume_from_inv(

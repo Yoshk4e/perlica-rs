@@ -205,22 +205,25 @@ impl FactoryManager {
 
         let hub_mesh = Mesh {
             mesh_type: FCMeshType::Rect,
+            // Client contract: points[0]/points[1] are opposite corners, so
+            // the BR corner is (x+w-1, y+h-1) to keep the model centered
+            // on the footprint (see rect_mesh_points in ops.rs).
             points: vec![
                 GridPos {
                     x: hub_range.x,
                     y: hub_range.y,
                 },
                 GridPos {
-                    x: hub_range.x + hub_range.w as i32,
+                    x: hub_range.x + hub_range.w as i32 - 1,
+                    y: hub_range.y + hub_range.h as i32 - 1,
+                },
+                GridPos {
+                    x: hub_range.x + hub_range.w as i32 - 1,
                     y: hub_range.y,
                 },
                 GridPos {
-                    x: hub_range.x + hub_range.w as i32,
-                    y: hub_range.y + hub_range.h as i32,
-                },
-                GridPos {
                     x: hub_range.x,
-                    y: hub_range.y + hub_range.h as i32,
+                    y: hub_range.y + hub_range.h as i32 - 1,
                 },
             ],
         };

@@ -2,7 +2,7 @@ use crate::net::NetContext;
 use perlica_logic::factory::ops;
 use perlica_proto::{CsdFactoryOpDismantle, FactoryOpRetCode, FactoryOpType, ScFactoryOpRet};
 
-use super::super::response;
+use super::super::{notify, response};
 
 pub async fn handle(
     ctx: &mut NetContext<'_>,
@@ -15,7 +15,16 @@ pub async fn handle(
         .factory
         .dismantle(&ctx.assets.factory_table, &region_name, req.node_id)
     {
-        Ok(_) => response::ok(index, FactoryOpType::Dismantle),
+        Ok(_) => {
+            // Mirror the Place flow: the client's _OpRetHandler_Dismantle
+            // lambda expects the dismantled node to be gone from its
+            // local cache by the time the OpRet arrives. We push a
+            // remove_nodes notification first so the client doesn't try
+            // to dereference a half-removed NodeHandler.
+            let modify = notify::remove_nodes(&region_name, &[req.node_id]);
+            let _ = ctx.notify(modify).await;
+            response::ok(index, FactoryOpType::Dismantle)
+        }
         Err(ops::DismantleError::RegionNotFound) => response::fail(
             index,
             FactoryOpType::Dismantle,

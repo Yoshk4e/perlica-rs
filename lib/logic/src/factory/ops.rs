@@ -12,7 +12,9 @@ use std::collections::HashMap;
 use config::factory_map::FRegionAssets;
 use config::factory_table::FTableAssets;
 
-use crate::enums::{FCConnectionPortType, FCConnectionType, FCDirection, FCNodeType};
+use crate::enums::{
+    FCComponentPos, FCConnectionPortType, FCConnectionType, FCDirection, FCNodeType, FCPropertyKey,
+};
 use crate::factory::component_factory::create_components_from_template;
 use crate::factory::grid::{is_in_bounds, range_within, ranges_overlap};
 use crate::factory::tick::elapsed_since;
@@ -137,18 +139,116 @@ impl FactoryManager {
         position: GridPos,
         direction: i32,
     ) -> Result<u32, PlaceError> {
-        let building = assets
-            .get_building(template_id)
-            .ok_or(PlaceError::NoBuildingEntry)?;
-        let node_type =
-            node_type_from_i32(building.building_type).ok_or(PlaceError::InvalidNodeType)?;
-
-        let footprint = GridRange {
-            x: position.x,
-            y: position.y,
-            w: building.range.width,
-            h: building.range.height,
-        };
+        // Connectors / routers / belts are grid-logistic templates that live
+        // in `gridConnecterData` / `gridRouterData`, not `buildingData`, so
+        // resolve the placement shape (node type, footprint, ports, component
+        // layout) from whichever sub-table the id belongs to.
+        let (node_type, footprint, bc_port_in, bc_port_out, components, component_pos) =
+            // Power poles live in `powerPoleData` (their `buildingData` entry
+            // is `type=2`/Bus, which the client rejects), so resolve them from
+            // their own sub-table like connectors/routers. A pole is a single
+            // PowerPole component with no ports; its grid footprint comes from
+            // the matching `buildingData` range (fallback 1x1) so the client
+            // mesh lines up.
+            if assets.get_power_pole(template_id).is_some() {
+                let (w, h) = assets
+                    .get_building(template_id)
+                    .map(|b| (b.range.width, b.range.height))
+                    .unwrap_or((1, 1));
+                (
+                    crate::enums::FCNodeType::PowerPole,
+                    GridRange {
+                        x: position.x,
+                        y: position.y,
+                        w,
+                        h,
+                    },
+                    None,
+                    None,
+                    vec![(
+                        1,
+                        FactoryComponent::PowerPole(
+                            crate::factory::component::PowerPoleState { in_power: false },
+                        ),
+                    )],
+                    HashMap::from([(FCComponentPos::PowerPole, 1u32)]),
+                )
+            } else if let Some(building) = assets.get_building(template_id) {
+                let node_type = crate::enums::building_node_type_from_i32(building.building_type)
+                    .ok_or(PlaceError::InvalidNodeType)?;
+                let footprint = GridRange {
+                    x: position.x,
+                    y: position.y,
+                    w: building.range.width,
+                    h: building.range.height,
+                };
+                let bc_port_in = building
+                    .input_ports
+                    .first()
+                    .map(|p| crate::factory::SubPort {
+                        position: GridPos {
+                            x: p.point.x,
+                            y: p.point.y,
+                        },
+                        direction: p.side,
+                    });
+                let bc_port_out = building
+                    .output_ports
+                    .first()
+                    .map(|p| crate::factory::SubPort {
+                        position: GridPos {
+                            x: p.point.x,
+                            y: p.point.y,
+                        },
+                        direction: p.side,
+                    });
+                let built = create_components_from_template(template_id, assets)
+                    .ok_or(PlaceError::NoComponentLayout)?;
+                (
+                    node_type,
+                    footprint,
+                    bc_port_in,
+                    bc_port_out,
+                    built.components,
+                    built.component_pos,
+                )
+            } else if let Some(logistic) = assets
+                .get_connector(template_id)
+                .or_else(|| assets.get_router(template_id))
+            {
+                let bc_port_in = logistic.input_ports.first().map(|p| crate::factory::SubPort {
+                    position: GridPos {
+                        x: p.point.x,
+                        y: p.point.y,
+                    },
+                    direction: p.side,
+                });
+                let bc_port_out = logistic
+                    .output_ports
+                    .first()
+                    .map(|p| crate::factory::SubPort {
+                        position: GridPos {
+                            x: p.point.x,
+                            y: p.point.y,
+                        },
+                        direction: p.side,
+                    });
+                (
+                    crate::enums::FCNodeType::BoxRouterM1,
+                    GridRange {
+                        x: position.x,
+                        y: position.y,
+                        w: 1,
+                        h: 1,
+                    },
+                    bc_port_in,
+                    bc_port_out,
+                    vec![(1, FactoryComponent::BoxRouterM1)],
+                    HashMap::from([(FCComponentPos::BoxRouter, 1u32)]),
+                )
+            } else {
+                return Err(PlaceError::NoBuildingEntry);
+            };
 
         let scene_name = {
             let region = self
@@ -186,32 +286,6 @@ impl FactoryManager {
             region.scene_name.clone()
         };
 
-        let built = create_components_from_template(template_id, assets)
-            .ok_or(PlaceError::NoComponentLayout)?;
-
-        // Extract port layout from the building entry so the client
-        // knows where belt I/O points are.
-        let bc_port_in = building
-            .input_ports
-            .first()
-            .map(|p| crate::factory::SubPort {
-                position: GridPos {
-                    x: p.point.x,
-                    y: p.point.y,
-                },
-                direction: p.side,
-            });
-        let bc_port_out = building
-            .output_ports
-            .first()
-            .map(|p| crate::factory::SubPort {
-                position: GridPos {
-                    x: p.point.x,
-                    y: p.point.y,
-                },
-                direction: p.side,
-            });
-
         let node_id = {
             let region = self.region_mut(region_name).unwrap();
             let node_id = region.allocate_node_id();
@@ -219,6 +293,7 @@ impl FactoryManager {
                 mesh_type: crate::enums::FCMeshType::Rect,
                 points: rect_mesh_points(footprint),
             };
+            let inst_key = format!("{scene_name}_{template_id}");
             let node = FactoryNode {
                 node_id,
                 node_type,
@@ -234,12 +309,12 @@ impl FactoryManager {
                     bc_port_out,
                 },
                 is_deactive: false,
-                // Assign a sequential interactive_object ID so the client
-                // can route clicks. IDs 1 and 2 are reserved by the hub.
                 interactive_object: Some(crate::factory::InteractiveObject { object_id: node_id }),
-                dynamic_property: HashMap::new(),
-                component_pos: built.component_pos,
-                components: built.components,
+                // Set InstKey so the client can look up the 3D prefab
+                // for this building. Format: "{scene_name}_{template_id}".
+                dynamic_property: HashMap::from([(FCPropertyKey::InstKey, inst_key)]),
+                component_pos,
+                components,
             };
             region.nodes.insert(node_id, node);
             node_id
@@ -648,15 +723,20 @@ impl FactoryManager {
         factory_map: &FRegionAssets,
         region_name: &str,
         template_id: &str,
+        direction_in: i32,
         direction_out: i32,
         points: &[GridPos],
     ) -> Result<Vec<u32>, ConveyorError> {
         if points.is_empty() {
             return Err(ConveyorError::NoFromTo);
         }
-        let building = assets
-            .get_building(template_id)
-            .ok_or(ConveyorError::NoBuildingEntry)?;
+        // Grid-logistic templates (belt / connector / router) live in their
+        // own sub-tables, not `buildingData`, so accept any known grid
+        // template. A belt's footprint is the 1x1 tile of each path point
+        // rather than a building range.
+        if !assets.is_grid_template(template_id) {
+            return Err(ConveyorError::NoBuildingEntry);
+        }
 
         {
             let region = self
@@ -702,54 +782,66 @@ impl FactoryManager {
             }
         }
 
-        let mut node_ids = Vec::with_capacity(points.len());
+        let mut node_ids = Vec::with_capacity(1);
         {
             let region = self.region_mut(region_name).unwrap();
             let scene_name = region.scene_name.clone();
+            // One node per whole belt: the client reconstructs the belt's
+            // grid path from the mesh polyline + the two sub-port directions
+            // (GridUtil::InOutDirAndPointsToStartFaceAndGridPath), so the
+            // node must carry all three on its transform.
+            let node_id = region.allocate_node_id();
+            let first = points[0];
+            let last = *points.last().expect("points checked non-empty");
+            // Dedupe consecutive points like the official server's GetMesh()
+            let mut mesh_points: Vec<GridPos> = Vec::with_capacity(points.len());
             for p in points {
-                let node_id = region.allocate_node_id();
-                let node = FactoryNode {
-                    node_id,
-                    node_type: FCNodeType::BoxConveyor,
-                    template_id: template_id.to_string(),
-                    transform: NodeTransform {
-                        position: Some(*p),
-                        direction: FCDirection::Up,
-                        mesh: Some(Mesh {
-                            mesh_type: crate::enums::FCMeshType::Rect,
-                            points: rect_mesh_points(GridRange {
-                                x: p.x,
-                                y: p.y,
-                                w: 1,
-                                h: 1,
-                            }),
-                        }),
-                        scene_name: scene_name.clone(),
-                        world_position: None,
-                        world_rotation: None,
-                        bc_port_in: None,
-                        bc_port_out: None,
-                    },
-                    is_deactive: false,
-                    interactive_object: Some(crate::factory::InteractiveObject {
-                        object_id: node_id,
-                    }),
-                    dynamic_property: HashMap::new(),
-                    component_pos: HashMap::new(),
-                    components: vec![(
-                        1,
-                        FactoryComponent::BoxConveyor(crate::factory::BoxConveyorState {
-                            items: vec![],
-                            direction: direction_out,
-                        }),
-                    )],
-                };
-                region.nodes.insert(node_id, node);
-                node_ids.push(node_id);
+                if mesh_points.last() != Some(p) {
+                    mesh_points.push(*p);
+                }
             }
+            let node = FactoryNode {
+                node_id,
+                node_type: FCNodeType::BoxConveyor,
+                template_id: template_id.to_string(),
+                transform: NodeTransform {
+                    position: Some(first),
+                    direction: FCDirection::Up,
+                    mesh: Some(Mesh {
+                        mesh_type: crate::enums::FCMeshType::Line,
+                        points: mesh_points,
+                    }),
+                    scene_name: scene_name.clone(),
+                    world_position: None,
+                    world_rotation: None,
+                    bc_port_in: Some(crate::factory::SubPort {
+                        position: first,
+                        direction: direction_in,
+                    }),
+                    bc_port_out: Some(crate::factory::SubPort {
+                        position: last,
+                        direction: direction_out,
+                    }),
+                },
+                is_deactive: false,
+                interactive_object: None,
+                dynamic_property: HashMap::from([(
+                    FCPropertyKey::InstKey,
+                    format!("{scene_name}_{template_id}"),
+                )]),
+                component_pos: HashMap::from([(FCComponentPos::BoxConveyor, 1u32)]),
+                components: vec![(
+                    1,
+                    FactoryComponent::BoxConveyor(crate::factory::BoxConveyorState {
+                        items: vec![],
+                        direction: direction_out,
+                    }),
+                )],
+            };
+            region.nodes.insert(node_id, node);
+            node_ids.push(node_id);
         }
 
-        let _ = building;
         Ok(node_ids)
     }
 
@@ -772,7 +864,12 @@ impl FactoryManager {
             .nodes
             .values()
             .filter(|n| n.node_type == FCNodeType::BoxConveyor)
-            .filter(|n| n.transform.position.is_some_and(|p| is_in_bounds(p, bbox)))
+            .filter(|n| {
+                n.transform
+                    .mesh
+                    .as_ref()
+                    .is_some_and(|m| m.points.iter().any(|p| is_in_bounds(*p, bbox)))
+            })
             .map(|n| n.node_id)
             .collect();
         for id in &to_remove {
@@ -1137,7 +1234,11 @@ impl FactoryManager {
             if let Some(slot) = node.component_mut(component_id)
                 && let FactoryComponent::Cache(state) = slot
             {
-                if let Some(existing) = state.items.iter_mut().find(|s| s.item_id == item.item_id && s.inst_id == item.inst_id) {
+                if let Some(existing) = state
+                    .items
+                    .iter_mut()
+                    .find(|s| s.item_id == item.item_id && s.inst_id == item.inst_id)
+                {
                     existing.count += item.count;
                 } else {
                     state.items.push(item);
@@ -1230,7 +1331,11 @@ impl FactoryManager {
             if let Some(slot) = node.component_mut(component_id)
                 && let FactoryComponent::Cache(state) = slot
             {
-                if let Some(existing) = state.items.iter_mut().find(|s| s.item_id == item.item_id && s.inst_id == item.inst_id) {
+                if let Some(existing) = state
+                    .items
+                    .iter_mut()
+                    .find(|s| s.item_id == item.item_id && s.inst_id == item.inst_id)
+                {
                     existing.count += item.count;
                 } else {
                     state.items.push(item);
@@ -1493,19 +1598,26 @@ fn move_item_into_cache(dest: &mut Vec<ItemSlot>, item_id: &str, source: Vec<Ite
 }
 
 fn rect_mesh_points(r: GridRange) -> Vec<GridPos> {
+    // Client contract (RemoteFactoryPredictor::_FillBuildingInfo +
+    // _SpawnBuildingEntity): a building rect is defined by mesh.points[0]
+    // and mesh.points[1] as OPPOSITE corners; only points 0 and 1 are read.
+    // The model is placed at ((p0+p1+1)/2, 0, (p0.y+p1.y+1)/2) and the
+    // range via TwoPointToRect = (min, min, |dx|+1, |dy|+1). Using
+    // (x+w-1, y+h-1) as the opposite corner keeps both the range exactly
+    // w x h and the model centered on the footprint.
     vec![
         GridPos { x: r.x, y: r.y },
         GridPos {
-            x: r.x + r.w as i32,
+            x: r.x + r.w as i32 - 1,
+            y: r.y + r.h as i32 - 1,
+        },
+        GridPos {
+            x: r.x + r.w as i32 - 1,
             y: r.y,
         },
         GridPos {
-            x: r.x + r.w as i32,
-            y: r.y + r.h as i32,
-        },
-        GridPos {
             x: r.x,
-            y: r.y + r.h as i32,
+            y: r.y + r.h as i32 - 1,
         },
     ]
 }
@@ -1518,30 +1630,4 @@ fn direction_from_i32(d: i32) -> FCDirection {
         3 => FCDirection::Left,
         _ => FCDirection::Up,
     }
-}
-
-fn node_type_from_i32(t: i32) -> Option<FCNodeType> {
-    Some(match t {
-        1 => FCNodeType::Inventory,
-        2 => FCNodeType::Bus,
-        3 => FCNodeType::Hub,
-        4 => FCNodeType::Collector,
-        5 => FCNodeType::Producer,
-        6 => FCNodeType::BoxConveyor,
-        7 => FCNodeType::BoxRouterM1,
-        8 => FCNodeType::BusUnloader,
-        9 => FCNodeType::BusLoader,
-        10 => FCNodeType::BurnPower,
-        11 => FCNodeType::PowerPole,
-        12 => FCNodeType::PowerSave,
-        13 => FCNodeType::DepositBox,
-        14 => FCNodeType::HealTower,
-        15 => FCNodeType::TravelPole,
-        16 => FCNodeType::BoxBridge,
-        17 => FCNodeType::Special,
-        18 => FCNodeType::PowerTerminal,
-        19 => FCNodeType::PowerPort,
-        20 => FCNodeType::PowerGate,
-        _ => return None,
-    })
 }

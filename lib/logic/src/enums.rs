@@ -350,6 +350,42 @@ pub enum FCNodeType {
     PowerGate = 20,
 }
 
+/// Map a `buildingData.type` (`FacBuildingType`) value to the `FCNodeType`
+/// the node for that building should be created as.
+///
+/// `FacBuildingType` is a *building category* (Hub, PowerPole, MachineCrafter,
+/// ...) and is NOT the same numbering as `FCNodeType` (the runtime node
+/// kind) -- e.g. `MachineCrafter = 6` collides with `FCNodeType::BoxConveyor
+/// = 6`. Deriving the node type from the category keeps the node and its
+/// components consistent with what the client's factory logic expects: a
+/// MachineCrafter is a Producer node, a PowerStation is a BurnPower node,
+/// and so on.
+pub fn building_node_type_from_i32(t: i32) -> Option<FCNodeType> {
+    Some(match t {
+        1 => FCNodeType::Hub,            // FacBuildingType::Hub
+        2 => FCNodeType::PowerPole,      // FacBuildingType::PowerPole
+        3 => FCNodeType::BurnPower,      // FacBuildingType::PowerStation
+        4 => FCNodeType::DepositBox,     // FacBuildingType::Storager
+        5 => FCNodeType::Producer,       // FacBuildingType::Crafter
+        6 => FCNodeType::Producer,       // FacBuildingType::MachineCrafter
+        7 => FCNodeType::Producer,       // FacBuildingType::Workshop
+        8 => FCNodeType::Collector,      // FacBuildingType::Miner
+        9 => FCNodeType::BusUnloader,    // FacBuildingType::Trader
+        10 => FCNodeType::BusLoader,     // FacBuildingType::Loader
+        11 => FCNodeType::BusUnloader,   // FacBuildingType::Unloader
+        12 => FCNodeType::Producer,      // FacBuildingType::Recycler
+        13 => FCNodeType::Producer,      // FacBuildingType::Manufact
+        14 => FCNodeType::HealTower,     // FacBuildingType::Medic
+        15 => FCNodeType::DepositBox,    // FacBuildingType::Soil
+        16 => FCNodeType::TravelPole,    // FacBuildingType::TravelPole
+        17 => FCNodeType::PowerTerminal, // FacBuildingType::PowerTerminal
+        18 => FCNodeType::PowerPort,     // FacBuildingType::PowerPort
+        19 => FCNodeType::PowerGate,     // FacBuildingType::PowerGate
+        20 => FCNodeType::Producer,      // FacBuildingType::Processor
+        _ => return None,
+    })
+}
+
 /// `Beyond.GEnums.FCComponentType`
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(i32)]
@@ -435,7 +471,7 @@ pub enum FCComponentPos {
 }
 
 /// `Beyond.GEnums.FCPropertyKey`, keys for the `dynamic_property.values` map on a node.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(i32)]
 pub enum FCPropertyKey {
     None = 0,

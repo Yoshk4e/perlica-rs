@@ -212,10 +212,21 @@ pub async fn push_factory(ctx: &mut NetContext<'_>) -> bool {
 
     //  Mesh points
     //
-    // point[0] = TL = (top_left_x,           top_left_y          )
-    // point[1] = TR = (top_left_x + hub_w,   top_left_y          )
-    // point[2] = BR = (top_left_x + hub_w,   top_left_y + hub_h  )
-    // point[3] = BL = (top_left_x,           top_left_y + hub_h  )
+    // Client contract (RemoteFactoryPredictor::_FillBuildingInfo + _SpawnBuildingEntity):
+    // a building rect is defined by mesh.points[0] and mesh.points[1] as OPPOSITE
+    // corners; only points 0 and 1 are read. The model is placed at
+    // ((p0+p1+1)/2, 0, (p0.y+p1.y+1)/2) and the node range via
+    // TwoPointToRect = (min, min, |dx|+1, |dy|+1). To get BOTH the range to be
+    // exactly hub_size and the model centered on the footprint, the opposite
+    // corner must be (x0+w-1, y0+h-1):
+    //   p1 = (39,-14)  ->  center (35.5,-17.5), range (31,-22,9,9)
+    // Sending (x0+w, y0+h) = (40,-13) instead shifts the model 0.5 cell in each
+    // axis and inflates the range to 10x10.
+    //
+    // point[0] = TL = (top_left_x,                    top_left_y          )
+    // point[1] = BR = (top_left_x + hub_w - 1,        top_left_y + hub_h - 1)
+    // point[2] = TR = (top_left_x + hub_w - 1,        top_left_y          )
+    // point[3] = BL = (top_left_x,                    top_left_y + hub_h - 1)
     let hub_mesh = ScdFactorySyncMesh {
         mesh_type: FCMeshType::Rect as i32,
         points: vec![
@@ -224,30 +235,18 @@ pub async fn push_factory(ctx: &mut NetContext<'_>) -> bool {
                 y: top_left_y,
             },
             ScdFactoryVector2Int {
-                x: top_left_x + hub_w,
+                x: top_left_x + hub_w - 1,
+                y: top_left_y + hub_h - 1,
+            },
+            ScdFactoryVector2Int {
+                x: top_left_x + hub_w - 1,
                 y: top_left_y,
             },
             ScdFactoryVector2Int {
-                x: top_left_x + hub_w,
-                y: top_left_y + hub_h,
-            },
-            ScdFactoryVector2Int {
                 x: top_left_x,
-                y: top_left_y + hub_h,
+                y: top_left_y + hub_h - 1,
             },
         ],
-    };
-
-    // There is no table source for this; the values come from scene geometry. so they're gotten manually ahaha.
-    let world_pos = Vector {
-        x: 302.0,
-        y: 115.0,
-        z: 370.0,
-    };
-    let world_rot = Vector {
-        x: 0.0,
-        y: 60.0,
-        z: 0.0,
     };
 
     let inventory_node = ScdFactorySyncNode {
@@ -298,8 +297,11 @@ pub async fn push_factory(ctx: &mut NetContext<'_>) -> bool {
             direction: FCDirection::Up as i32,
             mesh: Some(hub_mesh),
             scene_name: scene_name.clone(),
-            world_position: Some(world_pos),
-            world_rotation: Some(world_rot),
+            // Diagnostics: world_position/world_rotation removed so the client
+            // Lua falls back to grid-derived model placement instead of using
+            // our (possibly top-left, not center) baked world position.
+            world_position: None,
+            world_rotation: None,
             bc_port_in,
             bc_port_out,
         }),

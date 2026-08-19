@@ -104,6 +104,60 @@ pub struct BuildingEntry {
     pub can_delete: bool,
 }
 
+/// One entry from `gridBeltData` (a conveyor belt template).
+#[derive(Debug, Clone, Deserialize)]
+pub struct BeltEntry {
+    pub id: String,
+    #[serde(default)]
+    pub belt_data: BeltData,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BeltData {
+    #[serde(default)]
+    pub speed: i64,
+    #[serde(default)]
+    pub item_id: String,
+    #[serde(default)]
+    pub name: Option<LocalizedText>,
+    #[serde(default)]
+    pub icon_on_panel: String,
+}
+
+/// Shared payload shape for belt/connector/router unit data
+/// (`beltData` / `gridUnitData`): speed + the item that builds it.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GridUnitData {
+    #[serde(default)]
+    pub speed: i64,
+    #[serde(default)]
+    pub item_id: String,
+    #[serde(default)]
+    pub name: Option<LocalizedText>,
+    #[serde(default)]
+    pub icon_on_panel: String,
+}
+
+/// One entry from `gridConnecterData` or `gridRouterData`
+/// (a connector / splitter / converger template).
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GridLogisticEntry {
+    pub id: String,
+    #[serde(default)]
+    pub range_w: i32,
+    #[serde(default)]
+    pub range_h: i32,
+    #[serde(default)]
+    pub input_ports: Vec<BuildingPort>,
+    #[serde(default)]
+    pub output_ports: Vec<BuildingPort>,
+    #[serde(default)]
+    pub grid_unit_data: GridUnitData,
+}
+
 fn default_true() -> bool {
     true
 }
@@ -222,7 +276,7 @@ pub struct ProcessorCraftEntry {
     #[serde(default)]
     pub can_refine: bool,
     #[serde(default)]
-    pub visible_by_level: u32,
+    pub visible_by_level: i32,
     #[serde(default)]
     pub group_id: String,
     #[serde(default)]
@@ -609,11 +663,11 @@ pub struct FactoryTable {
     #[serde(default)]
     pub special_craft_group_data: HashMap<String, serde_json::Value>,
     #[serde(default)]
-    pub grid_belt_data: HashMap<String, serde_json::Value>,
+    pub grid_belt_data: HashMap<String, BeltEntry>,
     #[serde(default)]
-    pub grid_connecter_data: HashMap<String, serde_json::Value>,
+    pub grid_connecter_data: HashMap<String, GridLogisticEntry>,
     #[serde(default)]
-    pub grid_router_data: HashMap<String, serde_json::Value>,
+    pub grid_router_data: HashMap<String, GridLogisticEntry>,
     #[serde(default)]
     pub ingredient_tag_data: HashMap<String, serde_json::Value>,
     #[serde(default)]

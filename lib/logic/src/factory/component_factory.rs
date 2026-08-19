@@ -37,7 +37,7 @@ pub fn create_components_from_template(
     assets: &FTableAssets,
 ) -> Option<BuiltComponents> {
     let building = assets.get_building(template_id)?;
-    let node_type = node_type_from_i32(building.building_type)?;
+    let node_type = crate::enums::building_node_type_from_i32(building.building_type)?;
 
     let mut components = Vec::new();
     let mut component_pos = HashMap::new();
@@ -184,6 +184,16 @@ pub fn create_components_from_template(
                 &mut component_pos,
                 &mut next_id,
             );
+            // FormulaMan exposes the formula list/selection on the node so the
+            // client's crafting panel can drive the Producer. Unlocked/visible
+            // formula lists are synced separately via SC_FACTORY_MODIFY_FORMULA_MAN.
+            add(
+                FCComponentPos::FormulaMan,
+                FactoryComponent::FormulaMan,
+                &mut components,
+                &mut component_pos,
+                &mut next_id,
+            );
             add(
                 FCComponentPos::PowerPole,
                 FactoryComponent::PowerPole(PowerPoleState { in_power: false }),
@@ -266,48 +276,15 @@ pub fn create_components_from_template(
             );
         }
 
-        // For types we don't have a layout for yet, just add a PowerPole
-        // so the node at least exists on the wire. TODO: add proper layouts.
-        _ => {
-            add(
-                FCComponentPos::PowerPole,
-                FactoryComponent::PowerPole(PowerPoleState { in_power: false }),
-                &mut components,
-                &mut component_pos,
-                &mut next_id,
-            );
-        }
+        // Types without a real layout must FAIL LOUDLY instead of shipping a
+        // fabricated placeholder the client can't render. The caller maps a
+        // `None` to `PlaceError::NoComponentLayout`, and `place()` logs the
+        // template + error so unsupported buildings stop vanishing silently.
+        _ => return None,
     }
 
     Some(BuiltComponents {
         components,
         component_pos,
-    })
-}
-
-fn node_type_from_i32(t: i32) -> Option<crate::enums::FCNodeType> {
-    use crate::enums::FCNodeType;
-    Some(match t {
-        1 => FCNodeType::Inventory,
-        2 => FCNodeType::Bus,
-        3 => FCNodeType::Hub,
-        4 => FCNodeType::Collector,
-        5 => FCNodeType::Producer,
-        6 => FCNodeType::BoxConveyor,
-        7 => FCNodeType::BoxRouterM1,
-        8 => FCNodeType::BusUnloader,
-        9 => FCNodeType::BusLoader,
-        10 => FCNodeType::BurnPower,
-        11 => FCNodeType::PowerPole,
-        12 => FCNodeType::PowerSave,
-        13 => FCNodeType::DepositBox,
-        14 => FCNodeType::HealTower,
-        15 => FCNodeType::TravelPole,
-        16 => FCNodeType::BoxBridge,
-        17 => FCNodeType::Special,
-        18 => FCNodeType::PowerTerminal,
-        19 => FCNodeType::PowerPort,
-        20 => FCNodeType::PowerGate,
-        _ => return None,
     })
 }

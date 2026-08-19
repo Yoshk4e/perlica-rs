@@ -5,8 +5,6 @@
 //! `FactoryNode::to_proto()` and `FactoryComponent::to_proto()` methods
 //! to serialize real state into the notification proto.
 
-#![allow(dead_code)]
-
 use perlica_logic::factory::FactoryManager;
 use perlica_proto::{
     ScFactoryModifyRegionComponents, ScFactoryModifyRegionNodes, ScFactoryModifyRegionScene,
@@ -51,6 +49,7 @@ pub fn remove_nodes(region_name: &str, node_ids: &[u32]) -> ScFactoryModifyRegio
 /// "These components changed state on their existing nodes". Looks up
 /// each `(node_id, component_id)` pair in the region and serializes the
 /// component via `to_proto()`.
+#[allow(dead_code)]
 pub fn modify_components(
     manager: &FactoryManager,
     region_name: &str,
@@ -77,6 +76,7 @@ pub fn modify_components(
 /// "Scene-level change" -- mesh grew (region upgraded), connections
 /// added/removed, or bandwidth changed. Only `op::connection` and the
 /// region-upgrade path use this today.
+#[allow(dead_code)]
 pub fn modify_scene(region_name: &str) -> ScFactoryModifyRegionScene {
     ScFactoryModifyRegionScene {
         tms: perlica_logic::factory::current_tick() as i64,

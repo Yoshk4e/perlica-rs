@@ -4,7 +4,7 @@ use perlica_proto::{
     CsdFactoryOpMoveNode, FactoryOpRetCode, FactoryOpType, ScFactoryOpRet, ScdFactoryVector2Int,
 };
 
-use super::super::response;
+use super::super::{notify, response};
 
 pub async fn handle(
     ctx: &mut NetContext<'_>,
@@ -29,7 +29,14 @@ pub async fn handle(
         pos,
         req.direction,
     ) {
-        Ok(()) => response::ok(index, FactoryOpType::MoveNode),
+        Ok(()) => {
+            // The moved node's transform changed; push the updated
+            // snapshot to the client before the OpRet so any UI that
+            // reads position/direction post-callback sees the new state.
+            let modify = notify::modify_nodes(&ctx.player.factory, &region_name, &[req.node_id]);
+            let _ = ctx.notify(modify).await;
+            response::ok(index, FactoryOpType::MoveNode)
+        }
         Err(e) => response::fail(
             index,
             FactoryOpType::MoveNode,

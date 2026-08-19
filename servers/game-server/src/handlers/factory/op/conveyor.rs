@@ -5,7 +5,7 @@ use perlica_proto::{
     FactoryOpType, ScFactoryOpRet, ScdFactoryVector2Int,
 };
 
-use super::super::response;
+use super::super::{notify, response};
 
 pub async fn handle_place(
     ctx: &mut NetContext<'_>,
@@ -25,15 +25,35 @@ pub async fn handle_place(
     let points: Vec<perlica_logic::factory::GridPos> =
         req.points.iter().map(|p| grid_pos(*p)).collect();
 
+    tracing::debug!(
+        uid = %ctx.player.uid,
+        region = %region_name,
+        template = %req.template_id,
+        direction_in = req.direction_in,
+        direction_out = req.direction_out,
+        ?points,
+        "PlaceBoxConveyor grid coords (client grid space)"
+    );
+
     match ctx.player.factory.place_box_conveyor(
         &ctx.assets.factory_table,
         &ctx.assets.factory_map,
         &region_name,
         &req.template_id,
+        req.direction_in,
         req.direction_out,
         &points,
     ) {
-        Ok(node_ids) => response::ok_with_place_box_conveyor(index, node_ids),
+        Ok(node_ids) => {
+            // Client's _OpRetHandler_PlaceBoxConveyor does NOT dereference
+            // the returned node_ids (it only logs them + sets the conveyor
+            // dirty flag + fires cb(true)); the RET handler needs no prior
+            // notify. Push the new nodes anyway so the client's node cache
+            // has them for later queries/rendering (get_node_handler etc.).
+            let modify = notify::modify_nodes(&ctx.player.factory, &region_name, &node_ids);
+            let _ = ctx.notify(modify).await;
+            response::ok_with_place_box_conveyor(index, node_ids)
+        }
         Err(e) => response::fail(
             index,
             FactoryOpType::PlaceBoxConveyor,
@@ -79,7 +99,16 @@ pub async fn handle_dismantle(
         .factory
         .dismantle_box_conveyor(&region_name, from, to)
     {
-        Ok(_) => response::ok(index, FactoryOpType::DismantleBoxConveyor),
+        Ok(removed_ids) => {
+            // dismantle_box_conveyor returns the IDs of conveyor nodes
+            // it removed; push them as remove_nodes so the client doesn't
+            // try to render destroyed conveyors.
+            if !removed_ids.is_empty() {
+                let modify = notify::remove_nodes(&region_name, &removed_ids);
+                let _ = ctx.notify(modify).await;
+            }
+            response::ok(index, FactoryOpType::DismantleBoxConveyor)
+        }
         Err(e) => response::fail(
             index,
             FactoryOpType::DismantleBoxConveyor,

@@ -6,12 +6,12 @@
 
 use crate::error::{ConfigError, Result};
 use crate::tables::factory_table::{
-    BuildingEntry, BuildingItemEntry, BuildingPanelUnlockEntry, FactoryTable, FuelItemEntry,
-    HubEntry, LevelRegionEntry, MachineCraftEntry, MachineCrafterEntry, ManualCraftEntry,
-    ManufactCraftEntry, MedicEntry, MinerEntry, OrderEntry, PowerPoleEntry, PowerStationEntry,
-    ProcessorCraftEntry, QuickBarTypeEntry, RecyclerMaterialEntry, RecyclerProductEntry,
-    RegionEntry, SeedItemEntry, SkillEntry, SoilEntry, SpecialBuildingEntry, SpecialPowerPoleEntry,
-    StoragerEntry, TraderEntry, WorkshopCraftEntry,
+    BeltEntry, BuildingEntry, BuildingItemEntry, BuildingPanelUnlockEntry, FactoryTable,
+    FuelItemEntry, GridLogisticEntry, HubEntry, LevelRegionEntry, MachineCraftEntry,
+    MachineCrafterEntry, ManualCraftEntry, ManufactCraftEntry, MedicEntry, MinerEntry, OrderEntry,
+    PowerPoleEntry, PowerStationEntry, ProcessorCraftEntry, QuickBarTypeEntry,
+    RecyclerMaterialEntry, RecyclerProductEntry, RegionEntry, SeedItemEntry, SkillEntry, SoilEntry,
+    SpecialBuildingEntry, SpecialPowerPoleEntry, StoragerEntry, TraderEntry, WorkshopCraftEntry,
 };
 use std::path::Path;
 
@@ -43,6 +43,31 @@ impl FTableAssets {
     /// Grid dimensions and port layout.
     pub fn get_building(&self, building_id: &str) -> Option<&BuildingEntry> {
         self.data.building_data.get(building_id)
+    }
+
+    /// A conveyor belt template from `gridBeltData`.
+    pub fn get_belt(&self, belt_id: &str) -> Option<&BeltEntry> {
+        self.data.grid_belt_data.get(belt_id)
+    }
+
+    /// A connector template from `gridConnecterData`.
+    pub fn get_connector(&self, id: &str) -> Option<&GridLogisticEntry> {
+        self.data.grid_connecter_data.get(id)
+    }
+
+    /// A router (splitter/converger) template from `gridRouterData`.
+    pub fn get_router(&self, id: &str) -> Option<&GridLogisticEntry> {
+        self.data.grid_router_data.get(id)
+    }
+
+    /// True if the id is a known grid template: a regular building, a
+    /// conveyor belt, a connector, or a router. These are the template ids
+    /// the client may send in grid-place ops.
+    pub fn is_grid_template(&self, id: &str) -> bool {
+        self.data.building_data.contains_key(id)
+            || self.data.grid_belt_data.contains_key(id)
+            || self.data.grid_connecter_data.contains_key(id)
+            || self.data.grid_router_data.contains_key(id)
     }
 
     pub fn region_for_level(&self, level_id: &str) -> Option<&str> {

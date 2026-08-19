@@ -169,18 +169,29 @@ pub fn ok_with_use_heal_tower(index: impl Into<String>, used_count: u32) -> ScFa
 }
 
 /// Failure with a specific code. We don't carry a payload on failure --
-/// the client just reads `err_message` and bails.
+/// the client just reads `err_message` and bails. Logs every failure so
+/// silently-rejected ops (missing building entries, layout gaps, etc.) are
+/// visible in the server console instead of vanishing client-side.
 pub fn fail(
     index: impl Into<String>,
     op_type: FactoryOpType,
     code: FactoryOpRetCode,
     message: impl Into<String>,
 ) -> ScFactoryOpRet {
+    let index = index.into();
+    let message = message.into();
+    tracing::warn!(
+        %index,
+        op_type = ?op_type,
+        ret_code = code as i32,
+        %message,
+        "factory op failed"
+    );
     ScFactoryOpRet {
-        index: index.into(),
+        index,
         ret_code: code as i32,
         op_type: op_type as i32,
-        err_message: message.into(),
+        err_message: message,
         op_payload: None,
     }
 }
