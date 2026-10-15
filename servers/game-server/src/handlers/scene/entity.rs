@@ -126,7 +126,9 @@ pub async fn on_cs_scene_destroy_entity(ctx: &mut NetContext<'_>, req: CsSceneDe
             // Only enemies record a respawn cooldown.  Interactives /
             // NPCs just need their interest entry cleared.
             if removed.is_enemy() {
-                ctx.player.scene.on_entity_killed(removed.level_logic_id);
+                ctx.player
+                    .scene
+                    .on_entity_killed(removed.level_logic_id, ctx.now_ms);
             } else {
                 // Non-enemy: skip the dead_entities cooldown but still
                 // flush the interest entry so the cap stays accurate.

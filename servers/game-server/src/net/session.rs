@@ -11,7 +11,7 @@ use crate::net::{
 use crate::player::Player;
 use config::BeyondAssets;
 use perlica_db::{Persistable, PlayerDb};
-use perlica_logic::traits::SyncWriteBack;
+use perlica_logic::traits::{Positioned3D, SyncWriteBack};
 use perlica_muip::GmResponse;
 use std::time::Duration;
 use tokio::{
@@ -23,6 +23,37 @@ use tokio::{
 use tracing::{debug, error, info, warn};
 
 const PERSIST_INTERVAL: Duration = Duration::from_secs(30);
+
+/// Session-local monotonic clock shared by timers and handlers.
+struct SessionClock {
+    anchor: Instant,
+    anchor_ms: u64,
+}
+
+impl SessionClock {
+    fn new() -> Self {
+        Self {
+            anchor: Instant::now(),
+            anchor_ms: common::time::now_ms(),
+        }
+    }
+
+    fn now_ms(&self) -> u64 {
+        self.anchor_ms + self.anchor.elapsed().as_millis() as u64
+    }
+
+    /// Deadline as a tokio `Instant`. Past deadlines resolve immediately.
+    fn instant_at_ms(&self, ms: u64) -> Instant {
+        self.anchor + Duration::from_millis(ms.saturating_sub(self.anchor_ms))
+    }
+}
+
+async fn sleep_until_deadline(deadline: Option<Instant>) {
+    match deadline {
+        Some(deadline) => tokio::time::sleep_until(deadline).await,
+        None => std::future::pending::<()>().await,
+    }
+}
 
 pub struct SessionContext {
     pub assets: &'static BeyondAssets,
@@ -112,6 +143,7 @@ async fn logic_loop(
     let mut registered = false;
     let mut in_cipher = CipherState::new();
     let mut reader = PacketReader::new(reader);
+    let clock = SessionClock::new();
     // Set when a newer connection for this UID asks us to step aside. Held
     // until after this session has fully flushed and unregistered, so the
     // reply only goes out once it's actually safe for the new connection to
@@ -124,6 +156,12 @@ async fn logic_loop(
     persist_timer.set_missed_tick_behavior(MissedTickBehavior::Delay);
 
     let result = loop {
+        let interest_deadline = if player.scene.is_in_scene() {
+            Some(clock.instant_at_ms(player.scene.interest_deadline_ms()))
+        } else {
+            None
+        };
+
         tokio::select! {
             result = reader.read_packet(&mut in_cipher) => {
                 match result {
@@ -134,6 +172,7 @@ async fn logic_loop(
                             ctx.assets,
                             &outbound_tx,
                             client_seq_id,
+                            clock.now_ms(),
                             &mut server_seq_id,
                             ctx.registry,
                         );
@@ -184,6 +223,7 @@ async fn logic_loop(
                             ctx.assets,
                             &outbound_tx,
                             0,
+                            clock.now_ms(),
                             &mut server_seq_id,
                             ctx.registry,
                         );
@@ -206,6 +246,31 @@ async fn logic_loop(
                             player.uid
                         );
                     }
+            }
+
+            _ = sleep_until_deadline(interest_deadline) => {
+                let now = clock.now_ms();
+                let pos = player.movement.position();
+                let (enter_view, leave_view) = player
+                    .scene
+                    .update_visible_entities(pos, now, ctx.assets, &mut player.entities);
+
+                let mut net_ctx = NetContext::new(
+                    &mut player,
+                    ctx.db,
+                    ctx.assets,
+                    &outbound_tx,
+                    0,
+                    now,
+                    &mut server_seq_id,
+                    ctx.registry,
+                );
+                if let Some(msg) = enter_view {
+                    let _ = net_ctx.notify(msg).await;
+                }
+                if let Some(msg) = leave_view {
+                    let _ = net_ctx.notify(msg).await;
+                }
             }
         }
     };

@@ -38,7 +38,9 @@ pub async fn on_cs_scene_kill_monster(ctx: &mut NetContext<'_>, req: CsSceneKill
         .remove(req.id)
         .filter(perlica_logic::traits::Classified::is_enemy)
     {
-        ctx.player.scene.on_entity_killed(entity.level_logic_id);
+        ctx.player
+            .scene
+            .on_entity_killed(entity.level_logic_id, ctx.now_ms);
     }
 
     let msg = ctx

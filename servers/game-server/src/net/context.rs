@@ -1,6 +1,5 @@
 //! Per-request context threaded through every handler.
 
-use crate::net::crypto::CipherState;
 use crate::net::registry::SessionRegistry;
 use crate::player::Player;
 use chacha20::ChaCha20;
@@ -49,6 +48,8 @@ pub struct NetContext<'a> {
     pub player: &'a mut Player,
     pub db: &'static PlayerDb,
     pub client_seq_id: u64,
+    /// Sampled once per loop turn and shared by every handler it dispatches.
+    pub now_ms: u64,
     pub assets: &'static BeyondAssets,
     pub registry: &'static SessionRegistry,
     outbound: &'a OutboundTx,
@@ -72,6 +73,7 @@ impl<'a> NetContext<'a> {
         assets: &'static BeyondAssets,
         outbound: &'a OutboundTx,
         client_seq_id: u64,
+        now_ms: u64,
         server_seq_id: &'a mut u64,
         registry: &'static SessionRegistry,
     ) -> Self {
@@ -79,6 +81,7 @@ impl<'a> NetContext<'a> {
             player,
             db,
             client_seq_id,
+            now_ms,
             assets,
             registry,
             outbound,

@@ -99,21 +99,6 @@ pub async fn on_cs_move_object_move(
                 }
 
                 ctx.player.movement.write_back_into(&mut ctx.player.world);
-
-                let pos = ctx.player.movement.position();
-                let (enter_view, leave_view) = ctx.player.scene.update_visible_entities(
-                    pos,
-                    ctx.assets,
-                    &mut ctx.player.entities,
-                );
-
-                if let Some(msg) = enter_view {
-                    let _ = ctx.notify(msg).await;
-                }
-
-                if let Some(msg) = leave_view {
-                    let _ = ctx.notify(msg).await;
-                }
             }
             break;
         }

@@ -42,15 +42,18 @@ pub async fn on_scene_load_finish(
         &ctx.player.movement,
         ctx.assets,
         &mut ctx.player.entities,
+        ctx.now_ms,
     );
 
     let _ = ctx.notify(enter_view).await;
 
     let pos = ctx.player.movement.position();
-    let (initial_enter, _) =
-        ctx.player
-            .scene
-            .update_visible_entities(pos, ctx.assets, &mut ctx.player.entities);
+    let (initial_enter, _) = ctx.player.scene.update_visible_entities(
+        pos,
+        ctx.now_ms,
+        ctx.assets,
+        &mut ctx.player.entities,
+    );
 
     if let Some(msg) = initial_enter {
         let _ = ctx.notify(msg).await;
