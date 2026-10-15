@@ -36,6 +36,21 @@ pub struct FactoryRegion {
     /// Sequential allocator for `FactoryNode::node_id`. Starts at 3 because
     /// 1 (inventory) and 2 (hub) are reserved by `bootstrap_region`.
     pub next_node_id: u32,
+    /// Sequential allocator for component ids, which must be unique across the
+    /// **whole region**, not per node.
+    ///
+    /// The client resolves a component from its id through one flat dictionary
+    /// (`CSFactoryUtil.GetComponentHandlerByComponentId`), and its
+    /// `component_pos` lookups go through that dictionary — so two nodes each
+    /// numbering their components from 1 make the later one's handler shadow
+    /// the earlier one's. `FacStateInSceneCtrl._UpdateBlockInfo` then reads
+    /// `msg.Cache`/`msg.Selector`/`msg.BusLoader` off the wrong component and
+    /// crashes on nil, and `FactoryUtils.getBuildingStateType` silently reads
+    /// power and block state off the wrong component too.
+    ///
+    /// Starts at 9: `bootstrap_region` consumes 1 for the inventory node and
+    /// 2..=8 for the hub's seven components.
+    pub next_component_id: u32,
     pub blackboard: PowerBlackboard,
     pub nodes: HashMap<u32, FactoryNode>,
     pub connections: Vec<FactoryConnection>,
@@ -57,6 +72,7 @@ impl FactoryRegion {
             scene_name: scene_name.into(),
             level,
             next_node_id: 3,
+            next_component_id: 9,
             blackboard: PowerBlackboard::default(),
             nodes: HashMap::new(),
             connections: Vec::new(),
@@ -67,6 +83,15 @@ impl FactoryRegion {
     pub fn allocate_node_id(&mut self) -> u32 {
         let id = self.next_node_id;
         self.next_node_id += 1;
+        id
+    }
+
+    /// Reserve the next region-unique component id. See
+    /// [`next_component_id`](Self::next_component_id) for why the scope is the
+    /// region and not the node.
+    pub fn allocate_component_id(&mut self) -> u32 {
+        let id = self.next_component_id;
+        self.next_component_id += 1;
         id
     }
 

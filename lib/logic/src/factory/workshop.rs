@@ -10,7 +10,9 @@
 
 use config::factory_table::FTableAssets;
 
-use crate::factory::{FactoryComponent, FactoryManager, ItemSlot};
+use crate::factory::{
+    FactoryComponent, FactoryManager, ItemSlot, push_item_to_bag, take_bill_from_inv,
+};
 
 impl FactoryManager {
     /// Craft an item via the workshop. Consumes ingredients from the
@@ -38,6 +40,15 @@ impl FactoryManager {
 
         let multi = multi.max(1);
 
+        // The whole bill for all `multi` crafts, priced before the bag is
+        // touched. The old per-ingredient loop returned on the first shortfall
+        // having already consumed the ingredients ahead of it.
+        let bill: Vec<(&str, u32)> = recipe
+            .ingredients
+            .iter()
+            .map(|ing| (ing.id.as_str(), ing.count.saturating_mul(multi)))
+            .collect();
+
         // Consume ingredients from the bag (inventory node_id=1).
         let region = self
             .region_mut(region_name)
@@ -51,12 +62,8 @@ impl FactoryManager {
             return Err(WorkshopError::InventoryMissing);
         };
 
-        // Check + consume each ingredient.
-        for ingredient in &recipe.ingredients {
-            let needed = ingredient.count.saturating_mul(multi);
-            if !try_consume_from_inventory(bag_inv, &ingredient.id, needed) {
-                return Err(WorkshopError::InsufficientIngredients);
-            }
+        if !take_bill_from_inv(bag_inv, &bill) {
+            return Err(WorkshopError::InsufficientIngredients);
         }
 
         // Produce outcomes into the bag.
@@ -70,15 +77,11 @@ impl FactoryManager {
             });
         }
 
-        // Push outcomes into the bag.
+        // Push outcomes into the bag. The old loop only ever looked at slot 0
+        // and then `insert(0, ..)`'d on a mismatch, overwriting whatever item
+        // happened to be sitting in that slot.
         for item in &produced {
-            if let Some(existing) = bag_inv.items.get_mut(&0)
-                && existing.item_id == item.item_id
-            {
-                existing.count += item.count;
-                continue;
-            }
-            bag_inv.items.insert(0, item.clone());
+            push_item_to_bag(bag_inv, &item.item_id, item.count, item.inst_id);
         }
 
         Ok(produced)
@@ -92,33 +95,4 @@ pub enum WorkshopError {
     RegionNotFound,
     InventoryMissing,
     InsufficientIngredients,
-}
-
-fn try_consume_from_inventory(
-    inv: &mut crate::factory::InventoryState,
-    item_id: &str,
-    needed: u32,
-) -> bool {
-    let mut remaining = needed;
-    let mut to_remove = vec![];
-
-    for (&inst_id, slot) in &mut inv.items {
-        if slot.item_id == item_id && slot.count > 0 {
-            let take = slot.count.min(remaining);
-            slot.count -= take;
-            remaining -= take;
-            if slot.count == 0 {
-                to_remove.push(inst_id);
-            }
-            if remaining == 0 {
-                break;
-            }
-        }
-    }
-
-    for inst_id in to_remove {
-        inv.items.remove(&inst_id);
-    }
-
-    remaining == 0
 }

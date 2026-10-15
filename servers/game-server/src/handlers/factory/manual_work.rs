@@ -6,39 +6,17 @@ use perlica_logic::factory::current_tick;
 use perlica_proto::{
     CsFactoryManuallyWorkAppend, CsFactoryManuallyWorkCancel, CsFactoryManuallyWorkPause,
     CsFactoryManuallyWorkResume, ScFactoryManuallyWorkCancel, ScFactoryModifyManuallyWork,
-    ScdFactorySyncManuallyWorkUnit,
 };
 
 fn serialize_queue(
     manager: &perlica_logic::factory::FactoryManager,
 ) -> ScFactoryModifyManuallyWork {
-    let queue: Vec<ScdFactorySyncManuallyWorkUnit> = manager
-        .manual_work_state
-        .queue
-        .iter()
-        .map(|unit| ScdFactorySyncManuallyWorkUnit {
-            id: unit.recipe_id.clone(),
-            count: 1,
-        })
-        .collect();
-
-    let head_start_tms = manager
-        .manual_work_state
-        .queue
-        .first()
-        .map_or(0, |u| u.start_tick as i64);
-
-    let pause_tms = if manager.manual_work_state.is_paused {
-        current_tick() as i64
-    } else {
-        0
-    };
-
+    let sync = manager.sync_manual_work(current_tick());
     ScFactoryModifyManuallyWork {
-        queue,
-        in_block: manager.manual_work_state.is_paused,
-        head_start_tms,
-        pause_tms,
+        queue: sync.queue,
+        in_block: sync.in_block,
+        head_start_tms: sync.head_start_tms,
+        pause_tms: sync.pause_tms,
     }
 }
 
@@ -47,6 +25,12 @@ pub async fn on_cs_factory_manually_work_append(
     req: CsFactoryManuallyWorkAppend,
 ) -> ScFactoryModifyManuallyWork {
     let region_name = ctx.player.factory.current_region.clone();
+
+
+    ctx.player
+        .factory
+        .tick_manual_work(&ctx.assets.factory_table, &region_name);
+
     let _ = ctx.player.factory.manual_work_append(
         &ctx.assets.factory_table,
         &region_name,
@@ -62,6 +46,11 @@ pub async fn on_cs_factory_manually_work_cancel(
     _req: CsFactoryManuallyWorkCancel,
 ) -> ScFactoryManuallyWorkCancel {
     let region_name = ctx.player.factory.current_region.clone();
+
+    ctx.player
+        .factory
+        .tick_manual_work(&ctx.assets.factory_table, &region_name);
+
     let (back_items, break_items) = ctx
         .player
         .factory
@@ -77,6 +66,13 @@ pub async fn on_cs_factory_manually_work_pause(
     ctx: &mut NetContext<'_>,
     _req: CsFactoryManuallyWorkPause,
 ) -> ScFactoryModifyManuallyWork {
+    let region_name = ctx.player.factory.current_region.clone();
+
+
+    ctx.player
+        .factory
+        .tick_manual_work(&ctx.assets.factory_table, &region_name);
+
     ctx.player.factory.manual_work_pause();
     serialize_queue(&ctx.player.factory)
 }

@@ -17,7 +17,7 @@ use config::factory_processor_const::FProcessorConstAssets;
 use config::factory_table::FTableAssets;
 
 use crate::factory::{
-    FactoryComponent, FactoryManager, InventoryState, ItemSlot, ProcessorMachine, Tick,
+    FactoryComponent, FactoryManager, InventoryState, ItemSlot, MachineKey, ProcessorMachine, Tick,
     current_tick,
 };
 
@@ -41,12 +41,18 @@ pub fn make_item(
     manager: &mut FactoryManager,
     assets: &FTableAssets,
     region_name: &str,
+    node_id: u32,
     formula_id: &str,
     count: u32,
 ) -> CraftResult {
     let Some(recipe) = assets.get_processor_craft(formula_id).cloned() else {
         return CraftResult { new_items: vec![] };
     };
+
+    // A craft is only legal at a placed processor node.
+    if manager.machine_id_of(region_name, node_id).is_none() {
+        return CraftResult { new_items: vec![] };
+    }
 
     if !consume_ingredients(manager, region_name, &recipe.ingredients, count) {
         return CraftResult { new_items: vec![] };
@@ -70,6 +76,7 @@ pub fn make_equip(
     assets: &FTableAssets,
     proc_const: &FProcessorConstAssets,
     region_name: &str,
+    node_id: u32,
     formula_id: &str,
     count: u32,
     use_refine_point: bool,
@@ -78,7 +85,7 @@ pub fn make_equip(
         return CraftResult { new_items: vec![] };
     };
 
-    let proc_level = get_processor_level(manager, region_name);
+    let proc_level = get_processor_level(manager, region_name, node_id);
 
     if use_refine_point {
         let weapon_refine_level = proc_const.data.building_level_weapon_refine;
@@ -88,7 +95,7 @@ pub fn make_equip(
 
         let recover_time = proc_const.data.refine_point_recover_time;
         let max_points = proc_const.data.refine_point_max;
-        let Some(proc) = get_or_create_processor(manager, region_name, max_points) else {
+        let Some(proc) = get_or_create_processor(manager, region_name, node_id, max_points) else {
             return CraftResult { new_items: vec![] };
         };
         recover_refine_points(proc, recover_time, max_points);
@@ -118,6 +125,7 @@ pub fn make_gem(
     manager: &mut FactoryManager,
     assets: &FTableAssets,
     region_name: &str,
+    node_id: u32,
     formula_id: &str,
     count: u32,
     cost_gem_inst_ids: &[u64],
@@ -125,6 +133,10 @@ pub fn make_gem(
     let Some(recipe) = assets.get_processor_craft(formula_id).cloned() else {
         return CraftResult { new_items: vec![] };
     };
+
+    if manager.machine_id_of(region_name, node_id).is_none() {
+        return CraftResult { new_items: vec![] };
+    }
 
     // Verify all gem inst_ids exist before removing any.
     if !verify_gems_exist(manager, region_name, cost_gem_inst_ids) {
@@ -150,11 +162,12 @@ pub fn recast_gem(
     assets: &FTableAssets,
     proc_const: &FProcessorConstAssets,
     region_name: &str,
+    node_id: u32,
     formula_id: &str,
     count: u32,
     cost_gem_inst_ids: &[u64],
 ) -> CraftResult {
-    let proc_level = get_processor_level(manager, region_name);
+    let proc_level = get_processor_level(manager, region_name, node_id);
     let gem_recast_level = proc_const.data.building_level_gem_recast;
     if proc_level < gem_recast_level {
         return CraftResult { new_items: vec![] };
@@ -164,6 +177,7 @@ pub fn recast_gem(
         manager,
         assets,
         region_name,
+        node_id,
         formula_id,
         count,
         cost_gem_inst_ids,
@@ -259,28 +273,36 @@ fn remove_gems_from_bag(manager: &mut FactoryManager, region_name: &str, inst_id
     }
 }
 
-/// Get the building level of the processor in a region. Returns 0 if
+/// Get the building level of the processor at a node. Returns 0 if
 /// no processor state exists.
-fn get_processor_level(manager: &FactoryManager, region_name: &str) -> u32 {
+fn get_processor_level(manager: &FactoryManager, region_name: &str, node_id: u32) -> u32 {
     manager
         .processor_state
-        .get(region_name)
+        .get(&MachineKey::new(region_name, node_id))
         .map_or(0, |p| p.building_level)
 }
 
-/// Get or create processor state for a region. New state starts with
+/// Get or create processor state for a node. New state starts with
 /// full refine points.
+///
+/// Returns `None` when the node is not placed in the region: the node's
+/// `template_id` is the wire `machine_id`, so a processor cannot be
+/// conjured for a node that does not exist.
 fn get_or_create_processor<'a>(
     manager: &'a mut FactoryManager,
     region_name: &str,
+    node_id: u32,
     max_points: u32,
 ) -> Option<&'a mut ProcessorMachine> {
     let now: Tick = current_tick();
+    let machine_id = manager.machine_id_of(region_name, node_id)?.to_string();
     let proc = manager
         .processor_state
-        .entry(region_name.to_string())
+        .entry(MachineKey::new(region_name, node_id))
         .or_insert(ProcessorMachine {
             region_name: region_name.to_string(),
+            node_id,
+            machine_id,
             building_level: 1,
             refine_points: max_points,
             last_recovery_tick: now,

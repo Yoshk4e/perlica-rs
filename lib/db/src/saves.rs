@@ -1,4 +1,4 @@
-use crate::error::{DbError, Result};
+﻿use crate::error::{DbError, Result};
 use crate::persistable::Persistable;
 use crate::subsystems::{bitsets, char_bag, guides, mail, missions, player_root, scene, wallet};
 use perlica_logic::bitset::BitsetManager;
@@ -370,7 +370,7 @@ impl Persistable for WalletState {
 }
 
 /// `SceneManager` has lots of *runtime* state (entity caches, spatial
-/// grids, …) that has no business being saved. Wrapping just the two
+/// grids, â€¦) that has no business being saved. Wrapping just the two
 /// persisted fields in a tiny holder gives handlers a clean
 /// `SceneSaveState { ... }.persist(uid, db).await?` call site without
 /// dragging the whole manager into the DB crate.

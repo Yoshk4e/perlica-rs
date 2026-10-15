@@ -9,9 +9,17 @@
 use config::factory_manufact_const::FManufactConstAssets;
 use config::factory_table::FTableAssets;
 
+use crate::factory::character_work::SKILL_TYPE_CRAFT_COST;
 use crate::factory::{
-    ActiveRecipe, InventoryState, ItemSlot, ManufactureMachine, current_tick, elapsed_since,
+    ActiveRecipe, ItemSlot, MachineKey, ManufactureMachine, Tick, current_tick, take_bill_from_inv,
 };
+
+/// Progress per tick for a manufacture recipe.
+///
+/// A recipe's `totalProgress` is its duration in ticks at speed 1. Named so a
+/// building-level or skill speed-up has one place to land, and so the wire's
+/// `current_speed` reports something real rather than a literal.
+const MANUFACTURE_SPEED: u64 = 1;
 
 impl crate::factory::FactoryManager {
     /// Start a manufacture recipe. Consumes ingredients from the bag,
@@ -21,7 +29,7 @@ impl crate::factory::FactoryManager {
         &mut self,
         assets: &FTableAssets,
         region_name: &str,
-        _node_id: u32,
+        node_id: u32,
         formula_id: &str,
         count: u32,
     ) -> Result<ManufactureStartResult, ManufactureError> {
@@ -33,7 +41,30 @@ impl crate::factory::FactoryManager {
         let max_sets = assets_factory_manufact_max_sets(assets);
         let set_count = count.min(max_sets);
 
-        // Consume ingredients from the bag.
+        // The node's template id is the wire `machine_id`. Resolve it before
+        // consuming anything, so a start against an unplaced node fails
+        // without eating the player's ingredients.
+        let machine_id = self
+            .machine_id_of(region_name, node_id)
+            .ok_or(ManufactureError::MachineNotFound)?
+            .to_string();
+
+        // The rate this round is charged at, resolved before the bag is
+        // touched. Banked on the machine so the client's "current round" scale
+        // stays the one the player actually paid, even if the roster changes
+        // mid-round.
+        let round_cost_delta_scale =
+            self.skill_cost_scale(assets, region_name, &machine_id, SKILL_TYPE_CRAFT_COST);
+
+        // Price the whole bill before touching the bag: the old per-ingredient
+        // loop bailed out mid-way on a short bag, having already eaten the
+        // ingredients it managed to find.
+        let bill: Vec<(&str, u32)> = recipe
+            .ingredients
+            .iter()
+            .map(|ing| (ing.id.as_str(), ing.count.saturating_mul(set_count)))
+            .collect();
+
         let Some(region) = self.region_mut(region_name) else {
             return Err(ManufactureError::MachineNotFound);
         };
@@ -46,47 +77,37 @@ impl crate::factory::FactoryManager {
         let crate::factory::FactoryComponent::Inventory(bag_inv) = bag_comp else {
             return Err(ManufactureError::MachineNotFound);
         };
-        for ingredient in &recipe.ingredients {
-            let needed = ingredient.count.saturating_mul(set_count);
-            if !try_consume_from_inv(bag_inv, &ingredient.id, needed) {
-                return Err(ManufactureError::MachineNotFound);
-            }
+        if !take_bill_from_inv(bag_inv, &bill) {
+            return Err(ManufactureError::InsufficientIngredients);
         }
         // bag_inv borrow ends here
 
         let machine = self
             .manufacture_state
-            .entry(region_name.to_string())
+            .entry(MachineKey::new(region_name, node_id))
             .or_insert(ManufactureMachine {
                 region_name: region_name.to_string(),
+                node_id,
+                machine_id,
                 building_level: 1,
                 active_recipe: None,
                 outcome_buffer: vec![],
                 set_count: 0,
+                round_cost_delta_scale: 1.0,
             });
 
         let old = machine.active_recipe.take();
+        let old_sets = machine.set_count;
+        let now = current_tick();
 
-        // Compute how many sets were completed from the old recipe.
-        let (old_formula, old_got, old_least_multi) = if let Some(ref old_recipe) = old {
-            let old_recipe_entry = assets.get_manufact_craft(&old_recipe.recipe_id);
-            let completed = if let Some(entry) = old_recipe_entry {
-                let elapsed = elapsed_since(old_recipe.start_tick);
-                u32::try_from(elapsed / entry.total_progress.max(1)).unwrap_or(0)
-            } else {
-                0
-            };
-            let round_count = old_recipe_entry.map_or(1, |e| e.round_count as i32);
-            (old_recipe.recipe_id.clone(), completed as i32, round_count)
-        } else {
-            (String::new(), 0, 0)
-        };
+        // What the outgoing recipe had already finished, for the client's
+        // "here is what you lost" notice.
+        let (old_formula, old_got, old_least_multi) =
+            describe_discarded(assets, old.as_ref(), old_sets, now);
 
-        machine.active_recipe = Some(ActiveRecipe {
-            recipe_id: formula_id.to_string(),
-            start_tick: current_tick(),
-        });
+        machine.active_recipe = Some(ActiveRecipe::start_at(now, formula_id, MANUFACTURE_SPEED));
         machine.set_count = set_count;
+        machine.round_cost_delta_scale = round_cost_delta_scale;
 
         Ok(ManufactureStartResult {
             old_formula,
@@ -101,29 +122,19 @@ impl crate::factory::FactoryManager {
         &mut self,
         assets: &FTableAssets,
         region_name: &str,
-        _node_id: u32,
+        node_id: u32,
     ) -> Result<ManufactureCancelResult, ManufactureError> {
         let machine = self
             .manufacture_state
-            .get_mut(region_name)
+            .get_mut(&MachineKey::new(region_name, node_id))
             .ok_or(ManufactureError::MachineNotFound)?;
 
         let old = machine.active_recipe.take();
+        let old_sets = machine.set_count;
         machine.set_count = 0;
 
-        let (old_formula, old_got, old_least_multi) = if let Some(ref old_recipe) = old {
-            let old_recipe_entry = assets.get_manufact_craft(&old_recipe.recipe_id);
-            let completed = if let Some(entry) = old_recipe_entry {
-                let elapsed = elapsed_since(old_recipe.start_tick);
-                u32::try_from(elapsed / entry.total_progress.max(1)).unwrap_or(0)
-            } else {
-                0
-            };
-            let round_count = old_recipe_entry.map_or(1, |e| e.round_count as i32);
-            (old_recipe.recipe_id.clone(), completed as i32, round_count)
-        } else {
-            (String::new(), 0, 0)
-        };
+        let (old_formula, old_got, old_least_multi) =
+            describe_discarded(assets, old.as_ref(), old_sets, current_tick());
 
         Ok(ManufactureCancelResult {
             old_formula,
@@ -141,11 +152,11 @@ impl crate::factory::FactoryManager {
         assets: &FTableAssets,
         manufact_const: &FManufactConstAssets,
         region_name: &str,
-        _node_id: u32,
+        node_id: u32,
     ) -> Result<ManufactureSettleResult, ManufactureError> {
         let machine = self
             .manufacture_state
-            .get_mut(region_name)
+            .get_mut(&MachineKey::new(region_name, node_id))
             .ok_or(ManufactureError::MachineNotFound)?;
 
         let Some(recipe_ref) = machine.active_recipe.as_ref() else {
@@ -156,16 +167,18 @@ impl crate::factory::FactoryManager {
         };
 
         let recipe_id = recipe_ref.recipe_id.clone();
-        let start_tick = recipe_ref.start_tick;
 
         let recipe = assets
             .get_manufact_craft(&recipe_id)
             .ok_or(ManufactureError::RecipeNotFound)?;
 
-        let elapsed = elapsed_since(start_tick);
-        let completed_sets = u32::try_from(elapsed / recipe.total_progress.max(1)).unwrap_or(0);
+        let now = current_tick();
+        let queued = u64::from(machine.set_count);
+        let completed_sets = machine.active_recipe.as_ref().map_or(0, |r| {
+            r.timing.completed_rounds_at(now, recipe.total_progress)
+        });
 
-        let available_sets = completed_sets.min(machine.set_count);
+        let available_sets = u32::try_from(completed_sets.min(queued)).unwrap_or(u32::MAX);
         if available_sets == 0 {
             return Ok(ManufactureSettleResult {
                 settle_count: 0,
@@ -204,18 +217,20 @@ impl crate::factory::FactoryManager {
             }
         }
 
+        // Charge the clock only for what actually landed in the buffer. Sets
+        // that ran but had nowhere to go stay banked in the timing, so a full
+        // buffer defers the player's output instead of destroying it.
+        if let Some(active_recipe) = machine.active_recipe.as_mut() {
+            active_recipe.timing.take_completed_rounds_capped_at(
+                now,
+                recipe.total_progress,
+                u64::from(settled),
+            );
+        }
+
         machine.set_count = machine.set_count.saturating_sub(settled);
         if machine.set_count == 0 {
             machine.active_recipe = None;
-        } else if settled > 0 {
-            // Adjust start_tick so uncredited sets keep their progress.
-            // The remaining sets already "completed" during the elapsed
-            // window; push start_tick forward by settled * total_progress
-            // so they re-complete without waiting the full duration again.
-            if let Some(active_recipe) = machine.active_recipe.as_mut() {
-                let credit_ticks = settled as u64 * recipe.total_progress;
-                active_recipe.start_tick = active_recipe.start_tick.saturating_add(credit_ticks);
-            }
         }
 
         Ok(ManufactureSettleResult {
@@ -229,6 +244,7 @@ impl crate::factory::FactoryManager {
 pub enum ManufactureError {
     RecipeNotFound,
     MachineNotFound,
+    InsufficientIngredients,
 }
 
 #[derive(Debug)]
@@ -256,27 +272,32 @@ fn assets_factory_manufact_max_sets(_assets: &FTableAssets) -> u32 {
     4
 }
 
-fn try_consume_from_inv(inv: &mut InventoryState, item_id: &str, needed: u32) -> bool {
-    let mut remaining = needed;
-    let mut to_remove = vec![];
+/// Describe a recipe being thrown away: `(formula_id, sets_finished,
+/// round_count)`, matching the wire's `old_formula` / `old_got` /
+/// `old_least_multi` trio.
+///
+/// Read-only — the recipe is gone, so there is nothing to bank. `queued_sets`
+/// caps the count because a recipe can only ever have finished as many sets as
+/// the player paid ingredients for, however long it sat there.
+fn describe_discarded(
+    assets: &FTableAssets,
+    old: Option<&ActiveRecipe>,
+    queued_sets: u32,
+    now: Tick,
+) -> (String, i32, i32) {
+    let Some(old) = old else {
+        return (String::new(), 0, 0);
+    };
 
-    for (&inst_id, slot) in &mut inv.items {
-        if slot.item_id == item_id && slot.count > 0 {
-            let take = slot.count.min(remaining);
-            slot.count -= take;
-            remaining -= take;
-            if slot.count == 0 {
-                to_remove.push(inst_id);
-            }
-            if remaining == 0 {
-                break;
-            }
-        }
-    }
+    let entry = assets.get_manufact_craft(&old.recipe_id);
+    let completed = entry.map_or(0, |e| {
+        let rounds = old
+            .timing
+            .completed_rounds_at(now, e.total_progress)
+            .min(u64::from(queued_sets));
+        i32::try_from(rounds).unwrap_or(i32::MAX)
+    });
+    let round_count = entry.map_or(1, |e| e.round_count as i32);
 
-    for inst_id in to_remove {
-        inv.items.remove(&inst_id);
-    }
-
-    remaining == 0
+    (old.recipe_id.clone(), completed, round_count)
 }

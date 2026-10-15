@@ -12,7 +12,9 @@ use config::factory_table::FTableAssets;
 use config::tables::factory_sttree::FacSttConditionEntry;
 use std::collections::HashMap;
 
-use crate::factory::{FactoryComponent, FactoryManager, FactoryRegion, ItemSlot};
+use crate::factory::{
+    FactoryComponent, FactoryManager, FactoryRegion, push_item_to_bag, take_bill_from_inv,
+};
 
 /// Client-facing snapshot of an STT node. `state` is 0 = locked,
 /// non-zero = unlocked. `values`/`flags` are keyed by condition id and
@@ -61,6 +63,12 @@ impl FactoryManager {
             }
         }
 
+        let cost: Vec<(&str, u32)> = node
+            .cost_items
+            .iter()
+            .map(|c| (c.id.as_str(), c.count))
+            .collect();
+
         // Deduct cost items from the bag.
         let Some(region) = self.region_mut(region_name) else {
             return false;
@@ -75,33 +83,13 @@ impl FactoryManager {
             return false;
         };
 
-        // Verify + consume cost items.
-        for cost in &node.cost_items {
-            if !try_consume_from_inv(bag_inv, &cost.id, cost.count) {
-                return false;
-            }
+        if !take_bill_from_inv(bag_inv, &cost) {
+            return false;
         }
 
         // Grant unlock rewards.
         for reward in &node.unlock_reward {
-            let mut stacked = false;
-            for slot in bag_inv.items.values_mut() {
-                if slot.item_id == reward.item_id {
-                    slot.count += reward.count;
-                    stacked = true;
-                    break;
-                }
-            }
-            if !stacked {
-                bag_inv.items.insert(
-                    0,
-                    ItemSlot {
-                        item_id: reward.item_id.clone(),
-                        count: reward.count,
-                        inst_id: 0,
-                    },
-                );
-            }
+            push_item_to_bag(bag_inv, &reward.item_id, reward.count, 0);
         }
 
         // Fire the node's action (type 501 = give blueprint items).
@@ -259,53 +247,7 @@ fn execute_action(
             .unwrap_or(1) as u32;
 
         if !item_id.is_empty() {
-            let mut stacked = false;
-            for slot in inv.items.values_mut() {
-                if slot.item_id == item_id {
-                    slot.count += count;
-                    stacked = true;
-                    break;
-                }
-            }
-            if !stacked {
-                inv.items.insert(
-                    0,
-                    ItemSlot {
-                        item_id,
-                        count,
-                        inst_id: 0,
-                    },
-                );
-            }
+            push_item_to_bag(inv, &item_id, count, 0);
         }
     }
-}
-
-fn try_consume_from_inv(
-    inv: &mut crate::factory::InventoryState,
-    item_id: &str,
-    needed: u32,
-) -> bool {
-    let mut remaining = needed;
-    let mut to_remove = vec![];
-
-    for (&inst_id, slot) in &mut inv.items {
-        if slot.item_id == item_id && slot.count > 0 {
-            let take = slot.count.min(remaining);
-            slot.count -= take;
-            remaining -= take;
-            if slot.count == 0 {
-                to_remove.push(inst_id);
-            }
-            if remaining == 0 {
-                break;
-            }
-        }
-    }
-
-    for inst_id in to_remove {
-        inv.items.remove(&inst_id);
-    }
-
-    remaining == 0
 }

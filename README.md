@@ -9,7 +9,7 @@
 ## Features
 
 ### Core Systems
-- Full phased login sequence (BaseData -> Wallet -> ItemBag -> CharBag -> Unlocks -> Guides -> Missions -> CharAttrs -> CharStatus -> Factory -> Bitsets -> EnterScene)
+- Full phased login sequence (BaseData -> Wallet -> ItemBag -> CharBag -> Unlocks -> Guides -> Missions -> CharAttrs -> CharStatus -> Factory -> FactorySync -> Bitsets -> EnterScene)
 - Character bag with multiple teams, team switching, skill levels, attributes, and normal/ultimate skills
 - Character progression: level up via exp items, ascension / break stage, and skill level advancement.
 - Complete weapon system: exp feeding from fodder weapons and stackable items , breakthrough levels, gem socket/unsocket, equip/unequip.
@@ -36,14 +36,16 @@
 ### Inventory & Economy
 - Item bag sync on login and after modifications, depots 1 (weapons), 2 (gems), 3 (equips), 4 (special items), 5 (mission items); factory depot pushed separately
 - Wallet: gold and diamond pushed unconditionally on every login (9,999,999 each)
-- Factory context stub pushed on login and after every scene load (required for the client factory UI to initialise)
+- Factory context stub pushed on login and after every scene load (required for the client factory UI to initialise); the full subsystem state follows as a separate `SC_FACTORY_SYNC` push, projected from `FactoryManager` by `perlica_logic::factory::sync`
 
 ### Bitset & Unlock
 - Bitset system covering all `BitsetType` values (FoundItem, Wiki, GotItem, AreaFirstView, LevelHaveBeen, and more), full sync on login
 - All unlock systems pushed as fully unlocked on every login
 
 ### Persistence
-- Bincode-based player saves (atomic write via tmp -> rename) storing: `CharBag`, `WorldState`, `BitsetManager`, checkpoint, revival mode, `MissionManager`, `GuideManager`
+- SQLite via sqlx at `saves/perlica.sqlite` (WAL, foreign keys on), with embedded numbered migrations applied on open: `0001_initial_schema.sql`, `0002_wallet.sql`, `0003_factory.sql`
+- Fully normalized columns, no JSON blob columns. Persisted: `CharBag`, `WorldState`, `BitsetManager`, checkpoint, revival mode, `MissionManager`, `GuideManager`, `MailManager`, `WalletState`
+- `0003_factory.sql` adds the 32-table factory schema (region topology, per-node components and their slots/ports/scalars, one table per machine subsystem, and the player-scoped manual-work / character-work / quickbar / tech-tree state) plus `current_region` on the player row. The load and write paths are clause 20.7 and not yet wired, so `FactoryManager` is not persisted at runtime.
 - Automatic data validation after load, repairs mismatched weapon references and orphaned equip entries
 
 ### Administration

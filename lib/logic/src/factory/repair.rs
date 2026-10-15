@@ -9,7 +9,7 @@
 use config::factory_table::FTableAssets;
 use config::repair_table::RepairAssets;
 
-use crate::factory::{FactoryComponent, FactoryManager, FactoryNode};
+use crate::factory::{FactoryComponent, FactoryManager, FactoryNode, take_bill_from_inv};
 
 impl FactoryManager {
     /// Repair a pre-placed broken building. Looks up the repair entry,
@@ -26,6 +26,15 @@ impl FactoryManager {
             return None;
         };
 
+        // The whole cost, priced before the bag is touched. The old
+        // per-item loop returned on the first shortfall having already
+        // eaten everything ahead of it -- and the repair still failed.
+        let cost: Vec<(&str, u32)> = entry
+            .cost_items
+            .iter()
+            .map(|c| (c.id.as_str(), c.count))
+            .collect();
+
         // Deduct cost items from the bag.
         let Some(region) = self.region_mut(region_name) else {
             return None;
@@ -40,11 +49,8 @@ impl FactoryManager {
             return None;
         };
 
-        // Verify + consume cost items.
-        for cost in &entry.cost_items {
-            if !try_consume_from_inv(bag_inv, &cost.id, cost.count) {
-                return None;
-            }
+        if !take_bill_from_inv(bag_inv, &cost) {
+            return None;
         }
 
         // Activate the building by placing it as a node.
@@ -59,7 +65,7 @@ impl FactoryManager {
         };
 
         // Build components from the building template.
-        let built = crate::factory::component_factory::create_components_from_template(
+        let mut built = crate::factory::component_factory::create_components_from_template(
             building_id,
             factory_assets,
         )
@@ -67,6 +73,9 @@ impl FactoryManager {
             components: vec![],
             component_pos: std::collections::HashMap::new(),
         });
+        // Region-unique ids before the layout is attached; see
+        // `BuiltComponents::rebase_ids`.
+        built.rebase_ids(&mut region.next_component_id);
 
         let node_id = region.allocate_node_id();
         let node = FactoryNode {
@@ -113,35 +122,14 @@ impl FactoryManager {
         // Power graph may have changed (new producer/pole/consumer).
         crate::factory::power::recompute_blackboard(region);
 
+        // Remember which repair unlocked this node. `SCD_FACTORY_REPAIR.buildings`
+        // is a list of `(repair_id, node_id)`, so without this the association is
+        // lost the moment the op returns and the sync has nothing to report.
+        self.repair_state.insert(
+            crate::factory::MachineKey::new(region_name, node_id),
+            repair_id.to_string(),
+        );
+
         Some(node_id)
     }
-}
-
-fn try_consume_from_inv(
-    inv: &mut crate::factory::InventoryState,
-    item_id: &str,
-    needed: u32,
-) -> bool {
-    let mut remaining = needed;
-    let mut to_remove = vec![];
-
-    for (&inst_id, slot) in &mut inv.items {
-        if slot.item_id == item_id && slot.count > 0 {
-            let take = slot.count.min(remaining);
-            slot.count -= take;
-            remaining -= take;
-            if slot.count == 0 {
-                to_remove.push(inst_id);
-            }
-            if remaining == 0 {
-                break;
-            }
-        }
-    }
-
-    for inst_id in to_remove {
-        inv.items.remove(&inst_id);
-    }
-
-    remaining == 0
 }

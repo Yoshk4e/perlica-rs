@@ -14,7 +14,23 @@
 use config::contract_table::ContractAssets;
 use config::factory_table::FTableAssets;
 
-use crate::factory::{FactoryManager, ItemSlot, TradeOrder, current_tick};
+use crate::factory::character_work::SKILL_TYPE_TRADE_COST;
+use crate::factory::{
+    FactoryManager, ItemSlot, MachineKey, TradeOrder, current_tick, push_item_to_bag, take_from_inv,
+};
+
+/// Progress per tick for the order clock.
+///
+/// The generation interval (`tradeOrderGenSpeed`) is a duration in ticks, so
+/// the clock accrues 1:1 and one *round* of `TRADE_ORDER_GEN_INTERVAL`
+/// progress is one order slot.
+const TRADE_GEN_SPEED: u64 = 1;
+
+/// `tradeOrderGenSpeed` from `FactoryConst`: ticks per generated order.
+const TRADE_ORDER_GEN_INTERVAL: u64 = 360;
+
+/// `traderData.maxOrderCount`: how many orders may be pending at once.
+const TRADE_MAX_ORDERS: usize = 10;
 
 impl FactoryManager {
     /// Set the active contract for a trader. Replaces any previously
@@ -23,26 +39,39 @@ impl FactoryManager {
         &mut self,
         contracts: &ContractAssets,
         region_name: &str,
-        _node_id: u32,
+        node_id: u32,
         contract_id: &str,
     ) -> bool {
         if contracts.get_contract(contract_id).is_none() {
             return false;
         }
 
-        let trade = self.trade_state.entry(region_name.to_string()).or_insert(
-            crate::factory::TradeMachine {
+        // The node's template id is the wire `machine_id`; resolve it before
+        // the mutable borrow, and reject ops against an unplaced node.
+        let Some(machine_id) = self.machine_id_of(region_name, node_id).map(str::to_string) else {
+            return false;
+        };
+
+        let now = current_tick();
+        let trade = self
+            .trade_state
+            .entry(MachineKey::new(region_name, node_id))
+            .or_insert(crate::factory::TradeMachine {
                 region_name: region_name.to_string(),
+                node_id,
+                machine_id,
                 building_level: 1,
                 active_contract: None,
                 orders: vec![],
-                last_gen_tick: current_tick(),
-            },
-        );
+                order_timing: crate::factory::MachineTiming::start_at(now, TRADE_GEN_SPEED),
+            });
 
         trade.active_contract = Some(contract_id.to_string());
         trade.orders.clear();
-        trade.last_gen_tick = current_tick();
+        // A new contract starts its order clock fresh: the orders it would have
+        // generated are the old contract's, and they were just cleared.
+        trade.order_timing.restart_at(now);
+        trade.order_timing.resume_at(now);
         true
     }
 
@@ -55,29 +84,24 @@ impl FactoryManager {
         assets: &FTableAssets,
         contracts: &ContractAssets,
         region_name: &str,
-        _node_id: u32,
+        node_id: u32,
         inst_id: u64,
         items: &std::collections::HashMap<String, i64>,
     ) -> bool {
+        let key = MachineKey::new(region_name, node_id);
+
         // First, generate any pending orders (lazy tick).
-        self.trade_generate_orders(assets, contracts, region_name);
+        self.trade_generate_orders(assets, contracts, region_name, node_id);
 
         // Look up contract + order index without holding a region borrow.
         let (contract_min_value, contract_item_values) = {
-            let Some(trade) = self.trade_state.get(region_name) else {
+            let Some(trade) = self.trade_state.get(&key) else {
                 return false;
             };
             let Some(contract_id) = &trade.active_contract else {
                 return false;
             };
             let Some(contract) = contracts.get_contract(contract_id) else {
-                return false;
-            };
-            let Some(_idx) = trade
-                .orders
-                .iter()
-                .position(|o| o.inst_id == inst_id as u32)
-            else {
                 return false;
             };
             // Collect the values we need so we don't hold the borrow.
@@ -89,17 +113,11 @@ impl FactoryManager {
             (contract.min_value, values)
         };
 
-        // We need idx again -- find it after the immutable borrow is done.
-        let idx = {
-            let Some(trade) = self.trade_state.get(region_name) else {
-                return false;
-            };
-            trade
-                .orders
-                .iter()
-                .position(|o| o.inst_id == inst_id as u32)
-        };
-        let Some(idx) = idx else {
+        let Some(idx) = self
+            .trade_state
+            .get(&key)
+            .and_then(|trade| trade.orders.iter().position(|o| o.inst_id == inst_id))
+        else {
             return false;
         };
 
@@ -133,7 +151,10 @@ impl FactoryManager {
                 continue;
             }
 
-            if try_consume_from_inv(bag_inv, item_id, count as u32) {
+            // Each entry commits on its own: an order can be part-filled from
+            // whatever the bag actually holds. The take is still all-or-nothing
+            // per item, so a stack is never eaten without crediting its value.
+            if take_from_inv(bag_inv, item_id, count as u32) {
                 consumed.push((item_id.clone(), count as u32, value_per * count as u64));
             }
         }
@@ -146,7 +167,7 @@ impl FactoryManager {
         }
 
         // Now update the order with the consumed items.
-        let Some(trade) = self.trade_state.get_mut(region_name) else {
+        let Some(trade) = self.trade_state.get_mut(&key) else {
             return false;
         };
         let Some(order) = trade.orders.get_mut(idx) else {
@@ -170,7 +191,7 @@ impl FactoryManager {
 
         // Check if the order is now filled.
         let filled = {
-            let Some(trade) = self.trade_state.get(region_name) else {
+            let Some(trade) = self.trade_state.get(&key) else {
                 return false;
             };
             trade
@@ -183,7 +204,7 @@ impl FactoryManager {
             // Grant rewards from the contract's reward_items to the bag.
             // reward_items is a Vec<String> of item IDs, each granting 1 count.
             let reward_ids: Vec<String> = {
-                let Some(trade) = self.trade_state.get(region_name) else {
+                let Some(trade) = self.trade_state.get(&key) else {
                     return false;
                 };
                 let Some(contract_id) = &trade.active_contract else {
@@ -203,29 +224,11 @@ impl FactoryManager {
                 && let crate::factory::FactoryComponent::Inventory(inv_state) = slot
             {
                 for reward_id in &reward_ids {
-                    // Stack with existing same-item slots.
-                    let mut stacked = false;
-                    for existing in inv_state.items.values_mut() {
-                        if existing.item_id == *reward_id {
-                            existing.count += 1;
-                            stacked = true;
-                            break;
-                        }
-                    }
-                    if !stacked {
-                        inv_state.items.insert(
-                            0,
-                            ItemSlot {
-                                item_id: reward_id.clone(),
-                                count: 1,
-                                inst_id: 0,
-                            },
-                        );
-                    }
+                    push_item_to_bag(inv_state, reward_id, 1, 0);
                 }
             }
 
-            let Some(trade) = self.trade_state.get_mut(region_name) else {
+            let Some(trade) = self.trade_state.get_mut(&key) else {
                 return false;
             };
             trade.orders.remove(idx);
@@ -235,30 +238,42 @@ impl FactoryManager {
     }
 
     /// Cancel (delete) a trade order by inst_id.
-    pub fn trade_delete_order(&mut self, region_name: &str, _node_id: u32, inst_id: u64) -> bool {
-        let Some(trade) = self.trade_state.get_mut(region_name) else {
+    pub fn trade_delete_order(&mut self, region_name: &str, node_id: u32, inst_id: u64) -> bool {
+        let Some(trade) = self
+            .trade_state
+            .get_mut(&MachineKey::new(region_name, node_id))
+        else {
             return false;
         };
         let before = trade.orders.len();
-        trade.orders.retain(|o| o.inst_id != inst_id as u32);
+        trade.orders.retain(|o| o.inst_id != inst_id);
         trade.orders.len() < before
     }
 
     /// Lazy order generation -- called before cash_order so orders are
-    /// up to date. Generates new orders based on elapsed time since
-    /// `last_gen_tick`, using weighted-random selection from the
+    /// up to date. Generates new orders based on time accrued in
+    /// `order_timing`, using weighted-random selection from the
     /// contract's `orderIdGroup` + `orderWeight`.
     pub fn trade_generate_orders(
         &mut self,
         assets: &FTableAssets,
         contracts: &ContractAssets,
         region_name: &str,
+        node_id: u32,
     ) {
         let now = current_tick();
-        let gen_speed = 360u64; // tradeOrderGenSpeed from FactoryConst
-        let max_orders = 10usize; // from traderData.maxOrderCount
 
-        let Some(trade) = self.trade_state.get_mut(region_name) else {
+        // Price the orders about to be generated at the loadout that is punched
+        // in *now*, before the mutable borrow. Each order banks its own scale,
+        // so a roster change later does not silently reprice work in flight.
+        let cost_scale = self.machine_id_of(region_name, node_id).map_or(1.0, |id| {
+            self.skill_cost_scale(assets, region_name, id, SKILL_TYPE_TRADE_COST)
+        });
+
+        let Some(trade) = self
+            .trade_state
+            .get_mut(&MachineKey::new(region_name, node_id))
+        else {
             return;
         };
 
@@ -269,19 +284,24 @@ impl FactoryManager {
             return;
         };
 
-        let elapsed = now.saturating_sub(trade.last_gen_tick);
-        let new_slots = (elapsed / gen_speed) as usize;
-        if new_slots == 0 {
+        // Read the elapsed slots without consuming them: a slot is only paid
+        // for once an order is actually pushed. The old code assigned
+        // `last_gen_tick = now` unconditionally, which discarded both the
+        // sub-interval remainder and every slot that overflowed `max_orders`.
+        let available = TRADE_MAX_ORDERS.saturating_sub(trade.orders.len()) as u64;
+        let pending = trade
+            .order_timing
+            .completed_rounds_at(now, TRADE_ORDER_GEN_INTERVAL)
+            .min(available);
+        if pending == 0 {
             return;
         }
-
-        let available = max_orders.saturating_sub(trade.orders.len());
-        let to_generate = new_slots.min(available);
 
         // Generate a unique inst_id for each new order.
         let mut next_inst = trade.orders.iter().map(|o| o.inst_id).max().unwrap_or(0) + 1;
 
-        for _ in 0..to_generate {
+        let mut generated = 0u64;
+        for _ in 0..pending {
             // Weighted-random selection from orderIdGroup using orderWeight.
             let order_id = weighted_random(&contract.order_id_group, &contract.order_weight);
             if order_id.is_empty() {
@@ -297,12 +317,22 @@ impl FactoryManager {
                 order_id,
                 accumulated_value: 0,
                 items_committed: vec![],
+                contract_id: contract_id.clone(),
+                cost_value_delta: cost_scale,
                 inst_id: next_inst,
             });
             next_inst += 1;
+            generated += 1;
         }
 
-        trade.last_gen_tick = now;
+        // Charge only for the orders that materialised. A contract pointing at
+        // ids missing from `orderData` is a config fault; burning the player's
+        // accrued time over it would hide the fault and cost them orders.
+        trade.order_timing.take_completed_rounds_capped_at(
+            now,
+            TRADE_ORDER_GEN_INTERVAL,
+            generated,
+        );
     }
 }
 
@@ -331,33 +361,4 @@ fn weighted_random(ids: &[String], weights: &[u32]) -> String {
     }
 
     ids.last().cloned().unwrap_or_default()
-}
-
-fn try_consume_from_inv(
-    inv: &mut crate::factory::InventoryState,
-    item_id: &str,
-    needed: u32,
-) -> bool {
-    let mut remaining = needed;
-    let mut to_remove = vec![];
-
-    for (&inst_id, slot) in &mut inv.items {
-        if slot.item_id == item_id && slot.count > 0 {
-            let take = slot.count.min(remaining);
-            slot.count -= take;
-            remaining -= take;
-            if slot.count == 0 {
-                to_remove.push(inst_id);
-            }
-            if remaining == 0 {
-                break;
-            }
-        }
-    }
-
-    for inst_id in to_remove {
-        inv.items.remove(&inst_id);
-    }
-
-    remaining == 0
 }

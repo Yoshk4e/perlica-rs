@@ -1,4 +1,4 @@
-//! Factory op business logic, implemented as methods on `FactoryManager`.
+﻿//! Factory op business logic, implemented as methods on `FactoryManager`.
 //!
 //! The manager owns all the state these ops need -- regions, nodes,
 //! connections, machine tables. Config assets are passed as parameters
@@ -143,7 +143,7 @@ impl FactoryManager {
         // in `gridConnecterData` / `gridRouterData`, not `buildingData`, so
         // resolve the placement shape (node type, footprint, ports, component
         // layout) from whichever sub-table the id belongs to.
-        let (node_type, footprint, bc_port_in, bc_port_out, components, component_pos) =
+        let (node_type, footprint, bc_port_in, bc_port_out, mut components, mut component_pos) =
             // Power poles live in `powerPoleData` (their `buildingData` entry
             // is `type=2`/Bus, which the client rejects), so resolve them from
             // their own sub-table like connectors/routers. A pole is a single
@@ -289,10 +289,15 @@ impl FactoryManager {
         let node_id = {
             let region = self.region_mut(region_name).unwrap();
             let node_id = region.allocate_node_id();
-            let mesh = Mesh {
-                mesh_type: crate::enums::FCMeshType::Rect,
-                points: rect_mesh_points(footprint),
-            };
+            // Node-local ids 1..n become region-unique here, before the layout
+            // is attached: the client's component dictionary is per region, so
+            // two nodes numbering from 1 shadow each other.
+            crate::factory::component_factory::rebase_component_ids(
+                &mut components,
+                &mut component_pos,
+                &mut region.next_component_id,
+            );
+            let mesh = Mesh::rect(footprint);
             let inst_key = format!("{scene_name}_{template_id}");
             let node = FactoryNode {
                 node_id,
@@ -438,15 +443,12 @@ impl FactoryManager {
             let node = region.node_mut(node_id).unwrap();
             node.transform.position = Some(position);
             node.transform.direction = direction_from_i32(direction);
-            node.transform.mesh = Some(Mesh {
-                mesh_type: crate::enums::FCMeshType::Rect,
-                points: rect_mesh_points(GridRange {
-                    x: footprint.x,
-                    y: footprint.y,
-                    w: building_w,
-                    h: building_h,
-                }),
-            });
+            node.transform.mesh = Some(Mesh::rect(GridRange {
+                x: footprint.x,
+                y: footprint.y,
+                w: building_w,
+                h: building_h,
+            }));
         }
 
         Ok(())
@@ -791,15 +793,12 @@ impl FactoryManager {
             // (GridUtil::InOutDirAndPointsToStartFaceAndGridPath), so the
             // node must carry all three on its transform.
             let node_id = region.allocate_node_id();
+            // Every belt needs its own component id. This was a hardcoded `1`,
+            // so a second belt -- or any other node -- silently took over the
+            // client's handler for the first.
+            let conveyor_cpt_id = region.allocate_component_id();
             let first = points[0];
             let last = *points.last().expect("points checked non-empty");
-            // Dedupe consecutive points like the official server's GetMesh()
-            let mut mesh_points: Vec<GridPos> = Vec::with_capacity(points.len());
-            for p in points {
-                if mesh_points.last() != Some(p) {
-                    mesh_points.push(*p);
-                }
-            }
             let node = FactoryNode {
                 node_id,
                 node_type: FCNodeType::BoxConveyor,
@@ -807,10 +806,7 @@ impl FactoryManager {
                 transform: NodeTransform {
                     position: Some(first),
                     direction: FCDirection::Up,
-                    mesh: Some(Mesh {
-                        mesh_type: crate::enums::FCMeshType::Line,
-                        points: mesh_points,
-                    }),
+                    mesh: Some(Mesh::line(points)),
                     scene_name: scene_name.clone(),
                     world_position: None,
                     world_rotation: None,
@@ -829,9 +825,9 @@ impl FactoryManager {
                     FCPropertyKey::InstKey,
                     format!("{scene_name}_{template_id}"),
                 )]),
-                component_pos: HashMap::from([(FCComponentPos::BoxConveyor, 1u32)]),
+                component_pos: HashMap::from([(FCComponentPos::BoxConveyor, conveyor_cpt_id)]),
                 components: vec![(
-                    1,
+                    conveyor_cpt_id,
                     FactoryComponent::BoxConveyor(crate::factory::BoxConveyorState {
                         items: vec![],
                         direction: direction_out,
@@ -1595,31 +1591,6 @@ fn move_item_into_cache(dest: &mut Vec<ItemSlot>, item_id: &str, source: Vec<Ite
             dest.push(src_slot);
         }
     }
-}
-
-fn rect_mesh_points(r: GridRange) -> Vec<GridPos> {
-    // Client contract (RemoteFactoryPredictor::_FillBuildingInfo +
-    // _SpawnBuildingEntity): a building rect is defined by mesh.points[0]
-    // and mesh.points[1] as OPPOSITE corners; only points 0 and 1 are read.
-    // The model is placed at ((p0+p1+1)/2, 0, (p0.y+p1.y+1)/2) and the
-    // range via TwoPointToRect = (min, min, |dx|+1, |dy|+1). Using
-    // (x+w-1, y+h-1) as the opposite corner keeps both the range exactly
-    // w x h and the model centered on the footprint.
-    vec![
-        GridPos { x: r.x, y: r.y },
-        GridPos {
-            x: r.x + r.w as i32 - 1,
-            y: r.y + r.h as i32 - 1,
-        },
-        GridPos {
-            x: r.x + r.w as i32 - 1,
-            y: r.y,
-        },
-        GridPos {
-            x: r.x,
-            y: r.y + r.h as i32 - 1,
-        },
-    ]
 }
 
 fn direction_from_i32(d: i32) -> FCDirection {

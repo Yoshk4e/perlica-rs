@@ -25,6 +25,48 @@ pub struct BuiltComponents {
     pub component_pos: HashMap<FCComponentPos, u32>,
 }
 
+impl BuiltComponents {
+    /// Renumber onto a region's component-id allocator.
+    ///
+    /// **Call this before attaching a layout to a region.** The ids this
+    /// factory hands out are node-local (1, 2, 3, ...), but the client keys
+    /// components off one flat per-region dictionary
+    /// (`CSFactoryUtil.GetComponentHandlerByComponentId`). Attaching two nodes
+    /// that both numbered from 1 makes the second one's handler shadow the
+    /// first, after which `FacStateInSceneCtrl._UpdateBlockInfo` indexes
+    /// `msg.Cache`/`msg.Selector`/`msg.BusLoader` on a component that has no
+    /// such payload and dies on nil — the hub's `BusLoader` (id 3) losing to a
+    /// freshly placed producer's `PowerPole` (also id 3) is the common case.
+    /// `FactoryUtils.getBuildingStateType` reads power and block flags through
+    /// the same dictionary, so it goes quietly wrong rather than crashing.
+    pub fn rebase_ids(&mut self, next_id: &mut u32) {
+        rebase_component_ids(&mut self.components, &mut self.component_pos, next_id);
+    }
+}
+
+/// Renumber a hand-built `(components, component_pos)` pair, for the node types
+/// that assemble their one component inline instead of going through
+/// [`create_components_from_template`]. Same contract as
+/// [`BuiltComponents::rebase_ids`].
+pub fn rebase_component_ids(
+    components: &mut [(u32, FactoryComponent)],
+    component_pos: &mut HashMap<FCComponentPos, u32>,
+    next_id: &mut u32,
+) {
+    let mut remap: HashMap<u32, u32> = HashMap::with_capacity(components.len());
+    for (id, _) in components.iter_mut() {
+        let fresh = *next_id;
+        *next_id += 1;
+        remap.insert(*id, fresh);
+        *id = fresh;
+    }
+    for id in component_pos.values_mut() {
+        if let Some(fresh) = remap.get(id) {
+            *id = *fresh;
+        }
+    }
+}
+
 /// Build components for `template_id` by looking up the building entry
 /// and dispatching on its `FCNodeType`. Returns `None` if the template
 /// isn't in `buildingData` or has an unknown type.

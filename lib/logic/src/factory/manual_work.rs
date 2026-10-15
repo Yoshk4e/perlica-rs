@@ -1,75 +1,86 @@
 //! Manual work business logic.
 //!
-//! Manual crafting is a player-driven queue (max 5 items, each craft
-//! takes `totalProgress = 120` ticks at speed 1 = 2 minutes). The
-//! queue processes automatically when not paused. Pause/resume/cancel
-//! control the queue state.
+//! Manual crafting is a player-driven queue of at most
+//! `manualCraftQueueLength = 5` stacks, each folding up to 10 identical crafts
+//! (`ManualWorkUnit.count`). A craft takes `totalProgress = 120` ticks at speed
+//! 1 (2 minutes). Only the head stack's current craft accrues progress, and the
+//! queue drains lazily -- there is no tick loop.
 //!
 //! Four ops: `append` (add to queue), `cancel` (clear + return
 //! ingredients), `pause`, `resume`.
 
 use config::factory_table::FTableAssets;
 
-use crate::factory::{FactoryManager, ItemSlot, ManualWorkUnit, current_tick, elapsed_since};
+use crate::factory::{FactoryManager, Tick, current_tick, push_item_to_bag, take_bill_from_inv};
+
+/// Progress per tick for a manual craft.
+///
+/// Manual crafting has no speed modifier — a recipe's `totalProgress` is its
+/// duration in ticks directly. Named rather than inlined so the day a skill or
+/// building level speeds it up, there is one place to change.
+const MANUAL_WORK_SPEED: u64 = 1;
 
 impl FactoryManager {
-    /// Append a manual craft to the queue. Consumes ingredients from
-    /// the bag. Capped at `manualCraftQueueLength = 5`.
+    /// Append manual crafts to the queue, folding into the tail stack where
+    /// possible. Consumes ingredients for the crafts that were admitted.
+    ///
+    /// Returns how many crafts were queued: `0` if the recipe is unknown, the
+    /// queue is full, or the bag cannot pay. A partially-fitting request is
+    /// clamped rather than rejected, and only the admitted crafts are charged —
+    /// the old code checked the queue cap *before* pushing `count` units, so
+    /// appending 5 onto a queue of 4 produced 9.
     pub fn manual_work_append(
         &mut self,
         assets: &FTableAssets,
         region_name: &str,
         formula_id: &str,
         count: i32,
-    ) -> bool {
+    ) -> u32 {
         let Some(recipe) = assets.get_manual_craft(formula_id) else {
-            return false;
+            return 0;
         };
 
-        // Check queue cap.
-        let max_queue = 5usize;
-        if self.manual_work_state.queue.len() >= max_queue {
-            return false;
+        let want = count.max(1) as u32;
+        let admitted = want.min(self.manual_work_state.room_for(formula_id));
+        if admitted == 0 {
+            return 0;
         }
 
-        let count = count.max(1) as u32;
+        // The whole bill, priced for the admitted crafts. Built before the bag
+        // borrow so a short bag costs the player nothing.
+        let bill: Vec<(&str, u32)> = recipe
+            .ingredients
+            .iter()
+            .map(|ing| (ing.id.as_str(), ing.count.saturating_mul(admitted)))
+            .collect();
 
-        // Consume ingredients from the bag.
         let Some(region) = self.region_mut(region_name) else {
-            return false;
+            return 0;
         };
         let Some(bag_node) = region.node_mut(1) else {
-            return false;
+            return 0;
         };
         let Some(bag_comp) = bag_node.component_mut(1) else {
-            return false;
+            return 0;
         };
         let crate::factory::FactoryComponent::Inventory(bag_inv) = bag_comp else {
-            return false;
+            return 0;
         };
 
-        for ingredient in &recipe.ingredients {
-            let needed = ingredient.count.saturating_mul(count);
-            if !try_consume_from_inv(bag_inv, &ingredient.id, needed) {
-                return false;
-            }
+        if !take_bill_from_inv(bag_inv, &bill) {
+            return 0;
         }
 
-        // Add to queue. Each unit starts ticking from now.
-        let now = current_tick();
-        for _ in 0..count {
-            self.manual_work_state.queue.push(ManualWorkUnit {
-                recipe_id: formula_id.to_string(),
-                start_tick: now,
-                progress: 0,
-            });
-        }
-
-        true
+        self.manual_work_state
+            .append_at(current_tick(), formula_id, admitted, MANUAL_WORK_SPEED)
     }
 
     /// Cancel the manual work queue. Returns the ingredients to refund
     /// and the items that would have broken (lost).
+    ///
+    /// The in-flight craft is refunded in full rather than pro-rated: the
+    /// player gets their materials back, which is the forgiving reading and the
+    /// one that cannot lose items to rounding.
     pub fn manual_work_cancel(
         &mut self,
         assets: &FTableAssets,
@@ -82,12 +93,13 @@ impl FactoryManager {
             std::collections::HashMap::new();
         let break_items: std::collections::HashMap<String, i32> = std::collections::HashMap::new();
 
-        // For each queued unit, refund its ingredients.
+        // Refund every queued craft, not just one per stack.
         for unit in &self.manual_work_state.queue {
             if let Some(recipe) = assets.get_manual_craft(&unit.recipe_id) {
                 for ingredient in &recipe.ingredients {
+                    let refund = ingredient.count.saturating_mul(unit.count);
                     *back_items.entry(ingredient.id.clone()).or_insert(0) +=
-                        ingredient.count as i32;
+                        i32::try_from(refund).unwrap_or(i32::MAX);
                 }
             }
         }
@@ -99,162 +111,150 @@ impl FactoryManager {
             && let crate::factory::FactoryComponent::Inventory(inv_state) = bag_comp
         {
             for (item_id, count) in &back_items {
-                let mut stacked = false;
-                for slot in inv_state.items.values_mut() {
-                    if slot.item_id == *item_id {
-                        slot.count += *count as u32;
-                        stacked = true;
-                        break;
-                    }
-                }
-                if !stacked {
-                    inv_state.items.insert(
-                        0,
-                        ItemSlot {
-                            item_id: item_id.clone(),
-                            count: *count as u32,
-                            inst_id: 0,
-                        },
-                    );
-                }
+                push_item_to_bag(inv_state, item_id, (*count).max(0) as u32, 0);
             }
         }
 
         self.manual_work_state.queue.clear();
-        self.manual_work_state.is_paused = false;
+        self.manual_work_state.paused_at = None;
 
         (back_items, break_items)
     }
 
-    /// Pause the manual work queue. Snapshots the head unit's elapsed
-    /// progress into `progress` so it can be restored on resume.
+    /// Pause the manual work queue, freezing the head unit's progress.
     pub fn manual_work_pause(&mut self) {
-        if let Some(head) = self.manual_work_state.queue.first_mut() {
-            let elapsed = elapsed_since(head.start_tick);
-            head.progress = head.progress.saturating_add(elapsed);
-        }
-        self.manual_work_state.is_paused = true;
+        self.manual_work_state.pause_at(current_tick());
     }
 
-    /// Resume the manual work queue. Resets `start_tick` to now so the
-    /// head unit continues from its snapshotted `progress`.
+    /// Resume the manual work queue; the head continues from where it froze.
     pub fn manual_work_resume(&mut self) {
-        if self.manual_work_state.is_paused {
-            if let Some(head) = self.manual_work_state.queue.first_mut() {
-                head.start_tick = current_tick();
-            }
-            self.manual_work_state.is_paused = false;
-        }
+        self.manual_work_state.resume_at(current_tick());
     }
 
-    /// Tick the manual work queue. Completes units whose
-    /// `elapsed >= totalProgress` and produces outcomes into the bag.
-    /// Called by the server tick loop.
+    /// Whether the queue is halted rather than working. This is the wire's
+    /// `in_block`.
+    ///
+    /// It deliberately reports the player pause too: `in_block` was the only
+    /// halt signal the client had before `pause_tms` existed, so narrowing it
+    /// to non-pause stalls would silently un-halt the UI. `pause_tms` is what
+    /// distinguishes "player paused" from "cannot progress".
+    pub fn manual_work_in_block(&self) -> bool {
+        if self.manual_work_state.is_paused() {
+            return true;
+        }
+        self.manual_work_state
+            .queue
+            .first()
+            .is_some_and(|head| head.timing.speed == 0)
+    }
+
+    /// Settle the manual work queue: complete every craft whose progress has
+    /// reached its recipe's `totalProgress` and push the outcomes to the bag.
+    ///
+    /// Lazy catch-up, like the rest of the factory: there is no per-second
+    /// tick loop, so this drains however many crafts the elapsed time covers.
+    /// Each completion chains the next craft from the *previous* craft's real
+    /// completion instant, not from now — otherwise a queue left overnight
+    /// would finish only its head.
+    ///
+    /// Returns the number of crafts completed.
     pub fn tick_manual_work(&mut self, assets: &FTableAssets, region_name: &str) -> usize {
-        if self.manual_work_state.is_paused || self.manual_work_state.queue.is_empty() {
+        if self.manual_work_state.is_paused() {
             return 0;
         }
 
-        let mut completed = 0;
+        /// What to do with the stack currently at the head of the queue.
+        enum Step {
+            /// A craft finished at this tick; grant outcomes and chain the next.
+            Settle { recipe_id: String, done_at: Tick },
+            /// Its recipe is gone from config; discard the whole stack.
+            Discard,
+            /// Still in flight (or frozen): stop settling.
+            Wait,
+        }
+
         let now = current_tick();
+        let mut completed = 0;
 
-        // Check the head unit.
-        let (recipe_id, total_progress, is_done) = {
-            let head = &self.manual_work_state.queue[0];
-            let Some(recipe) = assets.get_manual_craft(&head.recipe_id) else {
-                // Recipe vanished from config -- actually drop the unit.
-                self.manual_work_state.queue.remove(0);
-                return 0;
-            };
-            let elapsed = elapsed_since(head.start_tick);
-            (
-                head.recipe_id.clone(),
-                recipe.total_progress,
-                elapsed >= total_progress_for(recipe),
-            )
-        };
-
-        let _ = total_progress;
-
-        if is_done {
-            // Produce outcomes into the bag.
-            let Some(recipe) = assets.get_manual_craft(&recipe_id) else {
-                return 0;
-            };
-
-            let Some(region) = self.region_mut(region_name) else {
-                return 0;
-            };
-            if let Some(bag_node) = region.node_mut(1)
-                && let Some(bag_comp) = bag_node.component_mut(1)
-                && let crate::factory::FactoryComponent::Inventory(inv_state) = bag_comp
-            {
-                for outcome in &recipe.outcomes {
-                    let mut stacked = false;
-                    for slot in inv_state.items.values_mut() {
-                        if slot.item_id == outcome.id {
-                            slot.count += outcome.count;
-                            stacked = true;
-                            break;
-                        }
-                    }
-                    if !stacked {
-                        inv_state.items.insert(
-                            0,
-                            ItemSlot {
-                                item_id: outcome.id.clone(),
-                                count: outcome.count,
-                                inst_id: 0,
-                            },
-                        );
-                    }
+        loop {
+            let step = {
+                let Some(head) = self.manual_work_state.queue.first() else {
+                    break;
+                };
+                match assets.get_manual_craft(&head.recipe_id) {
+                    None => Step::Discard,
+                    // `scheduled_completion` is the historical instant, so it
+                    // is also the tick the next craft starts from.
+                    Some(recipe) => match head.timing.scheduled_completion(recipe.total_progress) {
+                        Some(done_at) if done_at <= now => Step::Settle {
+                            recipe_id: head.recipe_id.clone(),
+                            done_at,
+                        },
+                        _ => Step::Wait,
+                    },
                 }
+            };
+
+            let (done_at, drop_stack) = match step {
+                Step::Wait => break,
+                // The recipe vanished from config: nothing in this stack can
+                // ever be made, so the whole stack goes.
+                Step::Discard => (now, true),
+                Step::Settle { recipe_id, done_at } => {
+                    self.grant_manual_outcomes(assets, region_name, &recipe_id);
+                    completed += 1;
+
+                    // One craft off the head stack; the stack itself only
+                    // leaves the queue once it is empty.
+                    let emptied = match self.manual_work_state.queue.first_mut() {
+                        Some(head) => {
+                            head.count = head.count.saturating_sub(1);
+                            head.count == 0
+                        }
+                        None => true,
+                    };
+                    (done_at, emptied)
+                }
+            };
+
+            if drop_stack {
+                self.manual_work_state.queue.remove(0);
             }
-
-            // Remove the completed unit.
-            self.manual_work_state.queue.remove(0);
-
-            // Start the next unit if any.
-            if let Some(next) = self.manual_work_state.queue.first_mut() {
-                next.start_tick = now;
+            // Whether the head is a new stack or the next craft of the same
+            // one, it starts from the previous craft's real completion instant.
+            if let Some(head) = self.manual_work_state.queue.first_mut() {
+                head.timing.restart_at(done_at);
             }
-
-            completed += 1;
+            self.manual_work_state.sync_head_at(done_at);
         }
 
         completed
     }
-}
 
-fn total_progress_for(recipe: &config::tables::factory_table::ManualCraftEntry) -> u64 {
-    recipe.total_progress
-}
-
-fn try_consume_from_inv(
-    inv: &mut crate::factory::InventoryState,
-    item_id: &str,
-    needed: u32,
-) -> bool {
-    let mut remaining = needed;
-    let mut to_remove = vec![];
-
-    for (&inst_id, slot) in &mut inv.items {
-        if slot.item_id == item_id && slot.count > 0 {
-            let take = slot.count.min(remaining);
-            slot.count -= take;
-            remaining -= take;
-            if slot.count == 0 {
-                to_remove.push(inst_id);
-            }
-            if remaining == 0 {
-                break;
+    /// Push one manual recipe's outcomes into the factory bag.
+    fn grant_manual_outcomes(&mut self, assets: &FTableAssets, region_name: &str, recipe_id: &str) {
+        let Some(recipe) = assets.get_manual_craft(recipe_id) else {
+            return;
+        };
+        let Some(region) = self.region_mut(region_name) else {
+            return;
+        };
+        if let Some(bag_node) = region.node_mut(1)
+            && let Some(bag_comp) = bag_node.component_mut(1)
+            && let crate::factory::FactoryComponent::Inventory(inv_state) = bag_comp
+        {
+            for outcome in &recipe.outcomes {
+                push_item_to_bag(inv_state, &outcome.id, outcome.count, 0);
             }
         }
     }
 
-    for inst_id in to_remove {
-        inv.items.remove(&inst_id);
+    /// Virtual start of the head craft as of `now`, for the wire's
+    /// `head_start_tms`: the instant a client can extrapolate progress from.
+    pub fn manual_work_head_start(&self, now: Tick) -> Tick {
+        self.manual_work_state
+            .queue
+            .first()
+            .map_or(0, |unit| unit.timing.effective_start_at(now))
     }
-
-    remaining == 0
 }

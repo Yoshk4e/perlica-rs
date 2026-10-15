@@ -37,12 +37,12 @@ use config::factory_table::FTableAssets;
 
 use super::{
     BusLoaderState, CharacterWorkState, FactoryComponent, FactoryNode, FactoryRegion, GridPos,
-    GridRange, InteractiveObject, InventoryState, ManualWorkQueue, ManufactureMachine, Mesh,
-    NodeTransform, PowerBlackboard, PowerPoleState, PowerSaveState, ProcessorMachine,
+    GridRange, InteractiveObject, InventoryState, MachineKey, ManualWorkQueue, ManufactureMachine,
+    Mesh, NodeTransform, PowerBlackboard, PowerPoleState, PowerSaveState, ProcessorMachine,
     RecyclerMachine, SelectorState, SoilMachine, StablePowerState, SttState, TradeMachine,
     WorkshopMachine,
 };
-use crate::enums::{FCComponentPos, FCDirection, FCMeshType, FCNodeType};
+use crate::enums::{FCComponentPos, FCDirection, FCNodeType};
 
 #[derive(Debug, Clone, Default)]
 pub struct FactoryManager {
@@ -50,14 +50,83 @@ pub struct FactoryManager {
     pub regions: HashMap<String, FactoryRegion>,
     pub quickbars: Vec<super::QuickbarState>,
     pub stt_state: SttState,
-    pub manufacture_state: HashMap<String, ManufactureMachine>,
-    pub processor_state: HashMap<String, ProcessorMachine>,
-    pub recycler_state: HashMap<String, RecyclerMachine>,
-    pub trade_state: HashMap<String, TradeMachine>,
-    pub workshop_state: HashMap<String, WorkshopMachine>,
-    pub soil_state: HashMap<String, SoilMachine>,
+    pub manufacture_state: HashMap<MachineKey, ManufactureMachine>,
+    pub processor_state: HashMap<MachineKey, ProcessorMachine>,
+    pub recycler_state: HashMap<MachineKey, RecyclerMachine>,
+    pub trade_state: HashMap<MachineKey, TradeMachine>,
+    pub workshop_state: HashMap<MachineKey, WorkshopMachine>,
+    pub soil_state: HashMap<MachineKey, SoilMachine>,
+    /// `MachineKey -> repair_id` for buildings unlocked via `repair_building`.
+    ///
+    /// `SCD_FACTORY_REPAIR.buildings` is a list of `(repair_id, node_id)`, so
+    /// the association has to survive the repair op; Clause 19 dropped it.
+    pub repair_state: HashMap<MachineKey, String>,
     pub manual_work_state: ManualWorkQueue,
     pub character_work_state: CharacterWorkState,
+}
+
+impl FactoryManager {
+    /// Every machine of one type in `region`, ordered by node id so the wire
+    /// output is stable across syncs (`HashMap` iteration order is not).
+    fn machines_in<'a, T>(
+        table: &'a HashMap<MachineKey, T>,
+        region: &str,
+    ) -> Vec<(&'a MachineKey, &'a T)> {
+        let mut found: Vec<_> = table
+            .iter()
+            .filter(|(key, _)| key.region == region)
+            .collect();
+        found.sort_by_key(|(key, _)| key.node_id);
+        found
+    }
+
+    pub fn manufacture_in(&self, region: &str) -> Vec<(&MachineKey, &ManufactureMachine)> {
+        Self::machines_in(&self.manufacture_state, region)
+    }
+
+    pub fn processor_in(&self, region: &str) -> Vec<(&MachineKey, &ProcessorMachine)> {
+        Self::machines_in(&self.processor_state, region)
+    }
+
+    pub fn recycler_in(&self, region: &str) -> Vec<(&MachineKey, &RecyclerMachine)> {
+        Self::machines_in(&self.recycler_state, region)
+    }
+
+    pub fn trade_in(&self, region: &str) -> Vec<(&MachineKey, &TradeMachine)> {
+        Self::machines_in(&self.trade_state, region)
+    }
+
+    pub fn workshop_in(&self, region: &str) -> Vec<(&MachineKey, &WorkshopMachine)> {
+        Self::machines_in(&self.workshop_state, region)
+    }
+
+    pub fn soil_in(&self, region: &str) -> Vec<(&MachineKey, &SoilMachine)> {
+        Self::machines_in(&self.soil_state, region)
+    }
+
+    /// `(repair_id, node_id)` pairs for `region`, ordered by node id.
+    pub fn repaired_buildings_in(&self, region: &str) -> Vec<(&str, u32)> {
+        let mut found: Vec<_> = self
+            .repair_state
+            .iter()
+            .filter(|(key, _)| key.region == region)
+            .map(|(key, repair_id)| (repair_id.as_str(), key.node_id))
+            .collect();
+        found.sort_by_key(|&(_, node_id)| node_id);
+        found
+    }
+
+    /// The `template_id` of a placed node, which the wire calls `machine_id`.
+    pub fn machine_id_of(&self, region: &str, node_id: u32) -> Option<&str> {
+        Some(
+            self.regions
+                .get(region)?
+                .nodes
+                .get(&node_id)?
+                .template_id
+                .as_str(),
+        )
+    }
 }
 
 impl FactoryManager {
@@ -203,30 +272,7 @@ impl FactoryManager {
             components: vec![(1, FactoryComponent::Inventory(InventoryState::default()))],
         };
 
-        let hub_mesh = Mesh {
-            mesh_type: FCMeshType::Rect,
-            // Client contract: points[0]/points[1] are opposite corners, so
-            // the BR corner is (x+w-1, y+h-1) to keep the model centered
-            // on the footprint (see rect_mesh_points in ops.rs).
-            points: vec![
-                GridPos {
-                    x: hub_range.x,
-                    y: hub_range.y,
-                },
-                GridPos {
-                    x: hub_range.x + hub_range.w as i32 - 1,
-                    y: hub_range.y + hub_range.h as i32 - 1,
-                },
-                GridPos {
-                    x: hub_range.x + hub_range.w as i32 - 1,
-                    y: hub_range.y,
-                },
-                GridPos {
-                    x: hub_range.x,
-                    y: hub_range.y + hub_range.h as i32 - 1,
-                },
-            ],
-        };
+        let hub_mesh = Mesh::rect(hub_range);
 
         let hub_node = FactoryNode {
             node_id: 2,

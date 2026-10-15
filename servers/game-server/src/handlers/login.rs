@@ -139,6 +139,7 @@ enum LoginPhase {
     CharAttrs,
     CharStatus,
     Factory,
+    FactorySync,
     Bitsets,
     Mail,
     RoleSceneInfo,
@@ -158,7 +159,8 @@ impl LoginPhase {
             Self::Missions => Self::CharAttrs,
             Self::CharAttrs => Self::CharStatus,
             Self::CharStatus => Self::Factory,
-            Self::Factory => Self::Bitsets,
+            Self::Factory => Self::FactorySync,
+            Self::FactorySync => Self::Bitsets,
             Self::Bitsets => Self::Mail,
             Self::Mail => Self::RoleSceneInfo,
             Self::RoleSceneInfo => Self::EnterScene,
@@ -207,6 +209,7 @@ pub(crate) async fn run_login_sequence(ctx: &mut NetContext<'_>) {
             LoginPhase::CharAttrs => char_bag::push_char_attrs(ctx).await,
             LoginPhase::CharStatus => char_bag::push_char_status(ctx).await,
             LoginPhase::Factory => factory::push_factory(ctx).await,
+            LoginPhase::FactorySync => factory::push_factory_sync(ctx).await,
             LoginPhase::Bitsets => bitset::push_bitsets(ctx).await,
             LoginPhase::Mail => {
                 let sync_ok = mail::push_mail_sync(ctx).await;

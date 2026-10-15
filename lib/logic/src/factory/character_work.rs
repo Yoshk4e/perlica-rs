@@ -86,6 +86,16 @@ impl FactoryManager {
         region_name: &str,
         template_id: &str,
     ) -> Vec<f64> {
+        self.skill_modifiers_of_type(assets, region_name, template_id, SKILL_TYPE_SPEED)
+    }
+
+    pub fn skill_modifiers_of_type(
+        &self,
+        assets: &FTableAssets,
+        region_name: &str,
+        template_id: &str,
+        kind: i32,
+    ) -> Vec<f64> {
         let mut modifiers = vec![];
         for worker in &self.character_work_state.workers {
             if worker.region_name != region_name {
@@ -99,10 +109,8 @@ impl FactoryManager {
                     if !affects {
                         continue;
                     }
-                    // Type 1 = speed modifier. param_list[i] is the
-                    // fractional bonus (e.g. -0.2 for 20% faster).
                     for (i, &ty) in skill.type_list.iter().enumerate() {
-                        if ty == 1
+                        if ty == kind
                             && let Some(&param) = skill.param_list.get(i)
                         {
                             modifiers.push(param);
@@ -113,4 +121,31 @@ impl FactoryManager {
         }
         modifiers
     }
+
+    pub fn skill_cost_scale(
+        &self,
+        assets: &FTableAssets,
+        region_name: &str,
+        template_id: &str,
+        kind: i32,
+    ) -> f64 {
+        let delta: f64 = self
+            .skill_modifiers_of_type(assets, region_name, template_id, kind)
+            .iter()
+            .sum();
+        (1.0 + delta).max(0.0)
+    }
 }
+
+/// `skillData[].type` discriminants, named after the skill ids that carry
+/// them (`facskill_all_nor_power1_1` is type 1, `facskill_trd_order_cost1_1`
+/// is type 4, `facskill_mfg_exp_cost1_1` and `facskill_proc_equip_cost1_1`
+/// are type 5).
+///
+/// Speed here is what `power.rs::effective_speed` has always consumed; the
+/// cost kinds are read by the sync projection.
+pub const SKILL_TYPE_SPEED: i32 = 1;
+/// Trade order cost delta (`facskill_trd_order_cost*`).
+pub const SKILL_TYPE_TRADE_COST: i32 = 4;
+/// Craft ingredient cost delta (`facskill_mfg_*_cost*`, `facskill_proc_*_cost*`).
+pub const SKILL_TYPE_CRAFT_COST: i32 = 5;

@@ -8,7 +8,7 @@
 
 use std::collections::HashMap;
 
-use super::GridPos;
+use super::{GridPos, GridRange};
 use crate::enums::{FCComponentPos, FCDirection, FCMeshType, FCNodeType, FCPropertyKey};
 use crate::factory::component::FactoryComponent;
 
@@ -21,10 +21,71 @@ pub struct Vector3 {
 
 /// A rect or line mesh on the grid. `points` is the corner list for `Rect`
 /// (4 points, clockwise from top-left) or the endpoint list for `Line`.
+///
+/// Build these through [`Mesh::rect`] / [`Mesh::line`] rather than by hand.
+/// The corner convention is a client contract that is easy to get subtly
+/// wrong, and it was previously open-coded at four call sites.
 #[derive(Debug, Clone)]
 pub struct Mesh {
     pub mesh_type: FCMeshType,
     pub points: Vec<GridPos>,
+}
+
+impl Mesh {
+    /// A building footprint as the client reads it.
+    ///
+    /// Client contract (`RemoteFactoryPredictor::_FillBuildingInfo` +
+    /// `_SpawnBuildingEntity`): a rect is defined by `points[0]` and
+    /// `points[1]` as **opposite** corners, and only those two are read. The
+    /// model is placed at `((p0 + p1 + 1) / 2)` and the range comes from
+    /// `TwoPointToRect = (min, min, |dx| + 1, |dy| + 1)`.
+    ///
+    /// So the far corner is the *inclusive* bottom-right, `(x + w - 1, y + h - 1)`.
+    /// Passing `(x + w, y + h)` inflates a 9x9 footprint to 10x10 and shifts the
+    /// model half a cell on both axes. `points[2]`/`points[3]` carry the
+    /// remaining corners for completeness.
+    pub fn rect(r: GridRange) -> Self {
+        let right = r.x + r.w as i32 - 1;
+        let bottom = r.y + r.h as i32 - 1;
+        Self {
+            mesh_type: FCMeshType::Rect,
+            points: vec![
+                GridPos { x: r.x, y: r.y },     // top-left
+                GridPos { x: right, y: bottom }, // bottom-right (inclusive)
+                GridPos { x: right, y: r.y },   // top-right
+                GridPos { x: r.x, y: bottom },  // bottom-left
+            ],
+        }
+    }
+
+    /// A belt run through `points`, in order.
+    ///
+    /// Consecutive duplicates are dropped, matching the official server's
+    /// `GetMesh()`: a run that doubles back on a cell would otherwise emit a
+    /// zero-length segment the client renders as a degenerate belt piece.
+    pub fn line(points: &[GridPos]) -> Self {
+        let mut deduped: Vec<GridPos> = Vec::with_capacity(points.len());
+        for p in points {
+            if deduped.last() != Some(p) {
+                deduped.push(*p);
+            }
+        }
+        Self {
+            mesh_type: FCMeshType::Line,
+            points: deduped,
+        }
+    }
+
+    pub fn to_proto(&self) -> perlica_proto::ScdFactorySyncMesh {
+        perlica_proto::ScdFactorySyncMesh {
+            mesh_type: self.mesh_type as i32,
+            points: self
+                .points
+                .iter()
+                .map(|p| perlica_proto::ScdFactoryVector2Int { x: p.x, y: p.y })
+                .collect(),
+        }
+    }
 }
 
 /// A sub-port on a node, input or output slot for a conveyor / belt.
@@ -102,8 +163,8 @@ impl FactoryNode {
     /// and dynamic properties into the matching `ScdFactorySyncNode`.
     pub fn to_proto(&self) -> perlica_proto::ScdFactorySyncNode {
         use perlica_proto::{
-            ScdFactorySyncDynamicProperty, ScdFactorySyncInteractiveObject, ScdFactorySyncMesh,
-            ScdFactorySyncNode, ScdFactorySyncTransform, ScdFactoryVector2Int,
+            ScdFactorySyncDynamicProperty, ScdFactorySyncInteractiveObject, ScdFactorySyncNode,
+            ScdFactorySyncTransform, ScdFactoryVector2Int,
         };
 
         let transform = Some(ScdFactorySyncTransform {
@@ -112,14 +173,7 @@ impl FactoryNode {
                 .position
                 .map(|p| ScdFactoryVector2Int { x: p.x, y: p.y }),
             direction: self.transform.direction as i32,
-            mesh: self.transform.mesh.as_ref().map(|m| ScdFactorySyncMesh {
-                mesh_type: m.mesh_type as i32,
-                points: m
-                    .points
-                    .iter()
-                    .map(|p| ScdFactoryVector2Int { x: p.x, y: p.y })
-                    .collect(),
-            }),
+            mesh: self.transform.mesh.as_ref().map(Mesh::to_proto),
             scene_name: self.transform.scene_name.clone(),
             world_position: self
                 .transform
