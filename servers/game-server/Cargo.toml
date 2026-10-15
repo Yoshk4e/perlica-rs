@@ -26,5 +26,8 @@ chacha20 = "0.9"
 rsa = { version = "0.9", features = ["pem"] }
 rand = "0.8"
 
+[dev-dependencies]
+tokio = { workspace = true, features = ["test-util"] }
+
 [lints]
 workspace = true

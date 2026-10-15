@@ -15,6 +15,7 @@
 
 pub mod context;
 pub mod crypto;
+mod framing;
 pub mod notify;
 pub mod registry;
 pub mod router;

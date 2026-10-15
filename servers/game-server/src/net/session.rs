@@ -1,6 +1,7 @@
 use crate::error::ServerError;
 use crate::handlers::gm;
 use crate::net::crypto::CipherState;
+use crate::net::framing::{InboundPacket, PacketReader};
 use crate::net::{
     context::{NetContext, OutboundFrame, OutboundTx},
     notify::{MuipResult, Notification, PlayerHandle},
@@ -12,10 +13,9 @@ use config::BeyondAssets;
 use perlica_db::{Persistable, PlayerDb};
 use perlica_logic::traits::SyncWriteBack;
 use perlica_muip::GmResponse;
-use perlica_proto::{CsHead, prost::Message};
 use std::time::Duration;
 use tokio::{
-    io::{AsyncReadExt, AsyncWriteExt},
+    io::AsyncWriteExt,
     net::TcpStream,
     sync::mpsc,
     time::{Instant, MissedTickBehavior, interval_at},
@@ -101,7 +101,7 @@ async fn write_loop(
 /// Per-connection event loop: routes incoming commands and server notifications,
 /// saves player data to DB on clean exit.
 async fn logic_loop(
-    mut reader: tokio::net::tcp::OwnedReadHalf,
+    reader: tokio::net::tcp::OwnedReadHalf,
     outbound_tx: OutboundTx,
     mut notify_rx: mpsc::Receiver<Notification>,
     handle: PlayerHandle,
@@ -111,6 +111,7 @@ async fn logic_loop(
     let mut server_seq_id = 0u64;
     let mut registered = false;
     let mut in_cipher = CipherState::new();
+    let mut reader = PacketReader::new(reader);
     // Set when a newer connection for this UID asks us to step aside. Held
     // until after this session has fully flushed and unregistered, so the
     // reply only goes out once it's actually safe for the new connection to
@@ -124,9 +125,9 @@ async fn logic_loop(
 
     let result = loop {
         tokio::select! {
-            result = read_packet(&mut reader, &mut in_cipher) => {
+            result = reader.read_packet(&mut in_cipher) => {
                 match result {
-                    Ok((cmd_id, body, client_seq_id)) => {
+                    Ok(Some(InboundPacket { cmd_id, body, client_seq_id })) => {
                         let mut net_ctx = NetContext::new(
                             &mut player,
                             ctx.db,
@@ -154,8 +155,12 @@ async fn logic_loop(
                             registered = true;
                         }
                     }
-                    Err(e) if is_clean_disconnect(&e) => {
+                    Ok(None) => {
                         debug!("Client disconnected cleanly");
+                        break Ok(());
+                    }
+                    Err(e) if is_clean_disconnect(&e) => {
+                        debug!("Client connection closed: {e}");
                         break Ok(());
                     }
                     Err(e) => break Err(e.into()),
@@ -251,38 +256,10 @@ async fn logic_loop(
     result
 }
 
-/// Reads one framed packet from `reader`, decrypting `head‖body` in place if the
-/// inbound cipher is active. The 3-byte size prefix is always read plaintext.
-async fn read_packet(
-    reader: &mut tokio::net::tcp::OwnedReadHalf,
-    in_cipher: &mut CipherState,
-) -> std::io::Result<(i32, Vec<u8>, u64)> {
-    let head_size = reader.read_u8().await?;
-    let body_size = reader.read_u16_le().await?;
-
-    let mut head_buf = vec![0u8; head_size as usize];
-    reader.read_exact(&mut head_buf).await?;
-
-    let mut body_buf = vec![0u8; body_size as usize];
-    reader.read_exact(&mut body_buf).await?;
-
-    // Once encryption is active, the peer XORed head then body over a single
-    // continuous keystream. Decrypt in the same order so counters line up.
-    in_cipher.apply(&mut head_buf);
-    in_cipher.apply(&mut body_buf);
-
-    let head = CsHead::decode(&head_buf[..])
-        .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e))?;
-
-    Ok((head.msgid, body_buf, head.up_seqid))
-}
-
 fn is_clean_disconnect(e: &std::io::Error) -> bool {
     matches!(
         e.kind(),
-        std::io::ErrorKind::UnexpectedEof
-            | std::io::ErrorKind::ConnectionReset
-            | std::io::ErrorKind::BrokenPipe
+        std::io::ErrorKind::ConnectionReset | std::io::ErrorKind::BrokenPipe
     )
 }
 
