@@ -8,3 +8,5 @@ assets/config/level_data/script/*
 !assets/config/level_data/map01_lv001_lv_data_sub01.json
 .cargo
 docs/
+tools/
+AGENTS.md
