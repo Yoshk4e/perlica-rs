@@ -530,6 +530,7 @@ impl SceneManager {
         movement: &MovementManager,
         assets: &BeyondAssets,
         entities: &mut EntityManager,
+        now: u64,
     ) -> (ScObjectEnterView, ScSelfSceneInfo) {
         self.loading_state = SceneLoadingState::Active;
 
@@ -561,7 +562,7 @@ impl SceneManager {
         // Mirror the residents into the EntityManager + InterestManager
         // so subsequent ghost-out passes (and the streamer's
         // touch_or_classify check) recognise them as already present.
-        self.install_resident_interactives(&interactive_list, assets, entities);
+        self.install_resident_interactives(&interactive_list, assets, entities, now);
 
         tracing::info!(
             "Scene '{}' loaded: {} chars, {} resident interactives \
@@ -1097,6 +1098,7 @@ impl SceneManager {
         residents: &[SceneInteractive],
         assets: &BeyondAssets,
         entities: &mut EntityManager,
+        now: u64,
     ) {
         if residents.is_empty() {
             return;
@@ -1105,7 +1107,6 @@ impl SceneManager {
         // `SceneInteractive` proto wraps it but going through our own
         // assets path is cheaper than re-parsing common_info).
         let spawns = assets.level_data.interactives(&self.current_scene);
-        let now = common::time::now_ms();
 
         for r in residents {
             let Some(common) = &r.common_info else {
@@ -1145,8 +1146,7 @@ impl SceneManager {
     // kill, wasting concurrent-cap slots on phantom entries and
     // occasionally producing something like monster disappearing mid combat
     // symptom when the cap rejects the next ghost-in refresh.
-    pub fn on_entity_killed(&mut self, level_logic_id: u64) {
-        let now = common::time::now_ms();
+    pub fn on_entity_killed(&mut self, level_logic_id: u64, now: u64) {
         self.dead_entities.insert(level_logic_id, now);
         self.interest.ghost_out(level_logic_id);
     }
@@ -1158,8 +1158,8 @@ impl SceneManager {
         self.interest.ghost_out(level_logic_id);
     }
 
-    /// Per-tick interest update, invoked from the movement packet handler
-    /// at ~30-60 Hz.
+    /// Per-tick interest update, driven by the session runtime's deadline
+    /// timer while the scene is active.
     ///
     /// # Streaming model (post 4th-pass: bulk-spawn elimination)
     ///
@@ -1190,15 +1190,15 @@ impl SceneManager {
     pub fn update_visible_entities(
         &mut self,
         pos: (f32, f32, f32),
+        now: u64,
         assets: &BeyondAssets,
         entities: &mut EntityManager,
     ) -> (Option<ScObjectEnterView>, Option<ScObjectLeaveView>) {
         const RESPAWN_COOLDOWN_MS: u64 = 60_000;
         const CLEANUP_INTERVAL_MS: u64 = 5_000;
 
-        let now = common::time::now_ms();
-
         self.interest.update_velocity(pos, now);
+        self.interest.refill_spawn_credits(now);
         let zones_due = self.interest.zones_due(now);
         if self.interest.due_mask() == 0 {
             return (None, None);
@@ -1377,7 +1377,7 @@ impl SceneManager {
             None => self.candidates_buf.extend(0..spawns.len()),
         }
 
-        let mut budget = bucket.spawn_budget();
+        let mut budget = self.interest.spawn_credits(bucket);
 
         for &idx in &self.candidates_buf {
             let Some(enemy) = spawns.get(idx) else {
@@ -1437,6 +1437,7 @@ impl SceneManager {
                 belong_level_script_id: enemy.base.belong_level_script_id,
             });
             self.interest.ghost_in(logic_id, zone, bucket, now);
+            self.interest.consume_spawn_credit(bucket);
             budget -= 1;
 
             if tracing::enabled!(tracing::Level::TRACE) {
@@ -1500,7 +1501,7 @@ impl SceneManager {
             None => self.candidates_buf.extend(0..spawns.len()),
         }
 
-        let mut budget = bucket.spawn_budget();
+        let mut budget = self.interest.spawn_credits(bucket);
 
         for &idx in &self.candidates_buf {
             let Some(interactive) = spawns.get(idx) else {
@@ -1555,6 +1556,7 @@ impl SceneManager {
                 belong_level_script_id: interactive.base.belong_level_script_id,
             });
             self.interest.ghost_in(logic_id, zone, bucket, now);
+            self.interest.consume_spawn_credit(bucket);
             budget -= 1;
 
             if tracing::enabled!(tracing::Level::TRACE) {
@@ -1623,7 +1625,7 @@ impl SceneManager {
             None => self.candidates_buf.extend(0..spawns.len()),
         }
 
-        let mut budget = bucket.spawn_budget();
+        let mut budget = self.interest.spawn_credits(bucket);
 
         for &idx in &self.candidates_buf {
             let Some(npc) = spawns.get(idx) else {
@@ -1664,6 +1666,7 @@ impl SceneManager {
                 belong_level_script_id: npc.base.belong_level_script_id,
             });
             self.interest.ghost_in(logic_id, zone, bucket, now);
+            self.interest.consume_spawn_credit(bucket);
             budget -= 1;
 
             if tracing::enabled!(tracing::Level::TRACE) {
@@ -1771,6 +1774,11 @@ impl SceneManager {
 
     pub fn is_in_scene(&self) -> bool {
         self.loading_state == SceneLoadingState::Active
+    }
+
+    /// Absolute timestamp of the next interest pass, for the session timer.
+    pub fn interest_deadline_ms(&self) -> u64 {
+        self.interest.next_deadline_ms()
     }
 
     pub fn set_checkpoint(&mut self, checkpoint: CheckpointInfo) {
@@ -2649,7 +2657,7 @@ mod tests {
         let now = common::time::now_ms();
         mgr.interest
             .ghost_in(1001, ReplicationZone::Immediate, StreamBucket::Enemy, now);
-        mgr.on_entity_killed(1001);
+        mgr.on_entity_killed(1001, now);
         assert!(mgr.dead_entities.contains_key(&1001));
         assert!(!mgr.interest.is_ghosted_in(1001));
     }

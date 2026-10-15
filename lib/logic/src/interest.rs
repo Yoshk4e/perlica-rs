@@ -133,6 +133,10 @@ pub const ENEMY_SPAWN_BUDGET_PER_TICK: usize = 6;
 pub const INTERACTIVE_SPAWN_BUDGET_PER_TICK: usize = 8;
 pub const NPC_SPAWN_BUDGET_PER_TICK: usize = 4;
 
+/// Spawn credits refill once per elapsed window and cap at one window's
+/// budget so a late wake cannot accumulate a burst.
+pub const SPAWN_CREDIT_WINDOW_MS: u64 = 16;
+
 /// Hard ceiling on the *concurrent* ghosted-in count per kind.  Once the
 /// limit is hit, additional candidates are deferred until the player walks
 /// away from existing spawns and they ghost out.  The ceilings are
@@ -348,6 +352,8 @@ pub enum StreamBucket {
 impl StreamBucket {
     pub const COUNT: usize = 3;
 
+    pub const ALL: [Self; Self::COUNT] = [Self::Enemy, Self::Interactive, Self::Npc];
+
     #[inline]
     pub fn index(self) -> usize {
         self as usize
@@ -479,6 +485,10 @@ pub struct InterestManager {
     live_count: [usize; StreamBucket::COUNT],
     /// When each zone last ran its spatial check.
     zone_last_check: [u64; 4],
+    /// Spawn admission credits per bucket, refilled by elapsed clock windows.
+    spawn_credits: [usize; StreamBucket::COUNT],
+    /// Start of the window the credit accounting is anchored to.
+    credit_epoch_ms: Option<u64>,
     /// Cached result of the last `zones_due` call, used by helpers that
     /// need to know which zones are currently active without re-running the
     /// scheduler (which mutates `zone_last_check`).
@@ -499,6 +509,8 @@ impl Default for InterestManager {
             entries: FastMap::default(),
             live_count: [0; StreamBucket::COUNT],
             zone_last_check: [0u64; 4],
+            spawn_credits: [0; StreamBucket::COUNT],
+            credit_epoch_ms: None,
             last_due_mask: 0,
             last_pos: (f32::MAX, f32::MAX, f32::MAX),
             last_pos_ms: 0,
@@ -518,6 +530,8 @@ impl InterestManager {
         self.entries.clear();
         self.live_count = [0; StreamBucket::COUNT];
         self.zone_last_check = [0u64; 4];
+        self.spawn_credits = [0; StreamBucket::COUNT];
+        self.credit_epoch_ms = None;
         self.last_due_mask = 0;
         self.last_pos = (f32::MAX, f32::MAX, f32::MAX);
         self.last_pos_ms = 0;
@@ -567,6 +581,48 @@ impl InterestManager {
         }
         self.last_due_mask = mask;
         due
+    }
+
+    /// Absolute timestamp of the earliest zone check deadline.
+    pub fn next_deadline_ms(&self) -> u64 {
+        (0..4).fold(u64::MAX, |acc, i| {
+            acc.min(self.zone_last_check[i].saturating_add(ZONE_TICK_MS[i]))
+        })
+    }
+
+    /// Refill spawn credits for every window elapsed since the accounting
+    /// was anchored.  A late wake grants one window's budget, not more.
+    pub fn refill_spawn_credits(&mut self, now_ms: u64) {
+        let Some(epoch) = self.credit_epoch_ms else {
+            self.credit_epoch_ms = Some(now_ms);
+            self.reset_spawn_credits();
+            return;
+        };
+        let windows = now_ms.saturating_sub(epoch) / SPAWN_CREDIT_WINDOW_MS;
+        if windows == 0 {
+            return;
+        }
+        self.credit_epoch_ms = Some(epoch + windows * SPAWN_CREDIT_WINDOW_MS);
+        self.reset_spawn_credits();
+    }
+
+    fn reset_spawn_credits(&mut self) {
+        for (i, bucket) in StreamBucket::ALL.into_iter().enumerate() {
+            self.spawn_credits[i] = bucket.spawn_budget();
+        }
+    }
+
+    /// Remaining spawn credits for a bucket in the current window.
+    #[inline]
+    pub fn spawn_credits(&self, bucket: StreamBucket) -> usize {
+        self.spawn_credits[bucket.index()]
+    }
+
+    /// Spend one spawn credit, saturating at zero.
+    #[inline]
+    pub fn consume_spawn_credit(&mut self, bucket: StreamBucket) {
+        let slot = &mut self.spawn_credits[bucket.index()];
+        *slot = slot.saturating_sub(1);
     }
 
     /// `true` if the given zone was flagged due in the most recent
@@ -1362,5 +1418,56 @@ mod tests {
         assert_ne!(a.finish(), b.finish());
         assert_ne!(a.finish(), c.finish());
         assert_ne!(b.finish(), c.finish());
+    }
+
+    #[test]
+    fn spawn_credits_refill_per_window_not_per_call() {
+        let mut mgr = InterestManager::new();
+        mgr.refill_spawn_credits(1000);
+        assert_eq!(
+            mgr.spawn_credits(StreamBucket::Enemy),
+            ENEMY_SPAWN_BUDGET_PER_TICK
+        );
+        mgr.consume_spawn_credit(StreamBucket::Enemy);
+        // Same window, no refill.
+        mgr.refill_spawn_credits(1010);
+        assert_eq!(
+            mgr.spawn_credits(StreamBucket::Enemy),
+            ENEMY_SPAWN_BUDGET_PER_TICK - 1
+        );
+        // Next window restores exactly one budget.
+        mgr.refill_spawn_credits(1016);
+        assert_eq!(
+            mgr.spawn_credits(StreamBucket::Enemy),
+            ENEMY_SPAWN_BUDGET_PER_TICK
+        );
+        mgr.consume_spawn_credit(StreamBucket::Enemy);
+        // A late wake still grants one budget, not a backlog.
+        mgr.refill_spawn_credits(5016);
+        assert_eq!(
+            mgr.spawn_credits(StreamBucket::Enemy),
+            ENEMY_SPAWN_BUDGET_PER_TICK
+        );
+    }
+
+    #[test]
+    fn consume_spawn_credit_saturates() {
+        let mut mgr = InterestManager::new();
+        mgr.refill_spawn_credits(1000);
+        for _ in 0..(NPC_SPAWN_BUDGET_PER_TICK + 2) {
+            mgr.consume_spawn_credit(StreamBucket::Npc);
+        }
+        assert_eq!(mgr.spawn_credits(StreamBucket::Npc), 0);
+    }
+
+    #[test]
+    fn next_deadline_tracks_zone_ticks() {
+        let mut mgr = InterestManager::new();
+        assert_eq!(mgr.next_deadline_ms(), ZONE_TICK_MS[0]);
+        let due = mgr.zones_due(1000);
+        assert_eq!(due, [true, true, true, true]);
+        assert_eq!(mgr.next_deadline_ms(), 1000 + ZONE_TICK_MS[0]);
+        let _ = mgr.zones_due(1020);
+        assert_eq!(mgr.next_deadline_ms(), 1020 + ZONE_TICK_MS[0]);
     }
 }
