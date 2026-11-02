@@ -21,6 +21,9 @@ pub fn spawn_dynamic_monster(
 ) -> (ScSceneCreateEntity, SceneMonster) {
     use perlica_logic::entity::{EntityKind, SceneEntity};
 
+    ctx.player
+        .scene
+        .reserve_level_entity_ids(ctx.assets, &mut ctx.player.entities);
     let id = ctx.player.entities.next_monster_id();
 
     ctx.player.entities.insert(SceneEntity {
@@ -54,10 +57,7 @@ pub fn spawn_dynamic_monster(
 
 /// Registers client-spawned entities server-side and echoes back `ScSceneCreateEntity`.
 ///
-/// The client may suggest an ID in `info.id`, but the server shouldn't
-/// trust it. If the requested ID is already in use, is zero, or falls
-/// in the character-object-ID range (< 1000), the server allocates a
-/// fresh ID from `EntityManager::next_monster_id()`.
+/// IDs reserved by level data or already in use receive a fresh runtime ID.
 pub async fn on_cs_scene_create_entity(
     ctx: &mut NetContext<'_>,
     req: CsSceneCreateEntity,
@@ -69,14 +69,13 @@ pub async fn on_cs_scene_create_entity(
 
     // Track the actual IDs assigned so we can echo the first one back.
     let mut assigned_ids: Vec<u64> = Vec::with_capacity(req.entity_infos.len());
+    ctx.player
+        .scene
+        .reserve_level_entity_ids(ctx.assets, &mut ctx.player.entities);
 
     for info in &req.entity_infos {
-        // Character object IDs are 1-based and typically small,
-        // monster IDs start at 1000. We never allow the client to pick
-        // an ID that collides with an existing entity or falls in the
-        // character-ID range.
         let needs_server_id = info.id == 0
-            || info.id < 1000 // character-ID range, reserved
+            || info.id < ctx.player.entities.peek_next_monster_id()
             || ctx.player.entities.contains(info.id); // already in use
 
         let assigned_id = if needs_server_id {
@@ -121,26 +120,55 @@ pub async fn on_cs_scene_destroy_entity(ctx: &mut NetContext<'_>, req: CsSceneDe
         req.scene_name, req.id_list, req.reason
     );
 
+    if req.scene_name != ctx.player.scene.current_scene {
+        warn!(
+            "Ignored entity destruction for a different scene: {}",
+            req.scene_name
+        );
+        return;
+    }
+    let reason = match req.reason {
+        0 => EntityDestroyReason::Immediately,
+        1 => EntityDestroyReason::Dead,
+        _ => {
+            warn!("Ignored unknown entity destruction reason: {}", req.reason);
+            return;
+        }
+    };
+    let mut destroyed = std::collections::HashSet::new();
     for id in req.id_list {
-        if let Some(removed) = ctx.player.entities.remove(id) {
-            // Only enemies record a respawn cooldown.  Interactives /
-            // NPCs just need their interest entry cleared.
-            if removed.is_enemy() {
+        let removed = ctx.player.entities.remove(id);
+        if let Some(removed) = &removed {
+            if removed.is_enemy() && reason == EntityDestroyReason::Dead {
                 ctx.player
                     .scene
-                    .on_entity_killed(removed.level_logic_id, ctx.now_ms);
+                    .on_entity_killed(removed.id, removed.level_logic_id, ctx.now_ms);
             } else {
-                // Non-enemy: skip the dead_entities cooldown but still
-                // flush the interest entry so the cap stays accurate.
-                ctx.player.scene.on_entity_despawned(removed.level_logic_id);
+                ctx.player.scene.on_entity_despawned(removed.id);
             }
         }
-
-        let msg = ctx
-            .player
-            .scene
-            .destroy_entity(id, EntityDestroyReason::Dead);
-
+        if reason == EntityDestroyReason::Dead
+            && removed.as_ref().is_none_or(Classified::is_interactive)
+        {
+            for linked in ctx.player.scene.destroy_interactive(id, ctx.assets) {
+                ctx.player.entities.remove(linked);
+                destroyed.insert(linked);
+            }
+        }
+        destroyed.insert(id);
+    }
+    if let Err(e) = ctx
+        .db
+        .persist_scene_progress(&ctx.player.uid, &mut ctx.player.scene.progress)
+        .await
+    {
+        warn!(
+            "Failed to persist destroyed interactives: uid={}, error={e}",
+            ctx.player.uid
+        );
+    }
+    for id in destroyed {
+        let msg = ctx.player.scene.destroy_entity(id, reason);
         let _ = ctx.notify(msg).await;
     }
 }

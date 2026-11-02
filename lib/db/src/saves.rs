@@ -1,4 +1,4 @@
-﻿use crate::error::{DbError, Result};
+use crate::error::{DbError, Result};
 use crate::persistable::Persistable;
 use crate::subsystems::{bitsets, char_bag, guides, mail, missions, player_root, scene, wallet};
 use perlica_logic::bitset::BitsetManager;
@@ -6,7 +6,7 @@ use perlica_logic::character::char_bag::CharBag;
 use perlica_logic::mail::MailManager;
 use perlica_logic::mission::{GuideManager, MissionManager};
 use perlica_logic::player::WorldState;
-use perlica_logic::scene::{CheckpointInfo, RevivalMode};
+use perlica_logic::scene::{CheckpointInfo, RevivalMode, SceneProgress};
 use perlica_logic::wallet::WalletState;
 use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions, SqliteSynchronous};
 use sqlx::{Sqlite, SqlitePool, Transaction};
@@ -15,6 +15,10 @@ use std::str::FromStr;
 use tracing::{debug, info};
 
 pub static MIGRATOR: sqlx::migrate::Migrator = sqlx::migrate!("./migrations");
+
+#[cfg(test)]
+#[path = "scene_progress_tests.rs"]
+mod scene_progress_tests;
 
 pub struct PlayerRecord {
     pub char_bag: CharBag,
@@ -26,6 +30,7 @@ pub struct PlayerRecord {
     pub guides: GuideManager,
     pub mail: MailManager,
     pub wallet: WalletState,
+    pub scene_progress: SceneProgress,
 }
 
 pub struct PlayerRecordRef<'a> {
@@ -158,6 +163,7 @@ impl PlayerDb {
         mail.set_next_id(root.mail_next_id);
 
         let wallet = wallet::load(&self.pool, uid).await?;
+        let scene_progress = scene::load_progress(&self.pool, uid).await?;
 
         let world = WorldState {
             role_level: root.role_level,
@@ -197,6 +203,7 @@ impl PlayerDb {
             guides,
             mail,
             wallet,
+            scene_progress,
         }))
     }
 
@@ -269,6 +276,22 @@ impl Persistable for CharBag {
 }
 
 impl PlayerDb {
+    pub async fn persist_scene_progress(
+        &self,
+        uid: &str,
+        progress: &mut SceneProgress,
+    ) -> Result<()> {
+        if !progress.has_pending_changes() {
+            return Ok(());
+        }
+        let mut tx = self.pool.begin().await?;
+        Self::ensure_player_row(&mut tx, uid).await?;
+        scene::write_progress(&mut tx, uid, progress).await?;
+        tx.commit().await?;
+        progress.mark_saved();
+        Ok(())
+    }
+
     /// Preferred persistence entry point for `CharBag`.
     ///
     /// Uses the per-depot `PendingChanges` trackers to only re-upsert

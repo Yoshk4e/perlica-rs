@@ -1,6 +1,7 @@
 use crate::net::NetContext;
 use perlica_logic::movement::MovementManager;
 use perlica_logic::traits::{Positioned3D, SyncWriteBack};
+use perlica_logic::transform::FiniteVec3;
 use perlica_proto::{Code, CsMoveObjectMove, ScMoveObjectMove};
 
 /// Maximum distance (world units) a player may move in a single packet.
@@ -36,7 +37,7 @@ pub async fn on_cs_move_object_move(
         if info.objid == leader_objid {
             if let Some(motion) = &info.motion_info {
                 if let Some(pos) = &motion.position {
-                    if !pos.x.is_finite() || !pos.y.is_finite() || !pos.z.is_finite() {
+                    let Ok(position) = FiniteVec3::try_new(pos.x, pos.y, pos.z) else {
                         tracing::warn!(
                             "Rejected non-finite position: uid={}, x={}, y={}, z={}",
                             ctx.player.uid,
@@ -50,12 +51,12 @@ pub async fn on_cs_move_object_move(
                         )
                         .await;
                         break;
-                    }
+                    };
 
                     let old = ctx.player.movement.position();
-                    let dx = pos.x - old.0;
-                    let dy = pos.y - old.1;
-                    let dz = pos.z - old.2;
+                    let dx = position.x() - old.0;
+                    let dy = position.y() - old.1;
+                    let dz = position.z() - old.2;
                     let dist_sq = dx * dx + dy * dy + dz * dz;
 
                     if dist_sq > MAX_MOVE_DELTA_SQ {
@@ -68,18 +69,20 @@ pub async fn on_cs_move_object_move(
                             old.0,
                             old.1,
                             old.2,
-                            pos.x,
-                            pos.y,
-                            pos.z,
+                            position.x(),
+                            position.y(),
+                            position.z(),
                         );
                         break;
                     }
 
-                    ctx.player.movement.update_position(pos.x, pos.y, pos.z);
+                    ctx.player
+                        .movement
+                        .update_position(position.x(), position.y(), position.z());
                 }
 
                 if let Some(rot) = &motion.rotation {
-                    if !rot.x.is_finite() || !rot.y.is_finite() || !rot.z.is_finite() {
+                    let Ok(rotation) = FiniteVec3::try_new(rot.x, rot.y, rot.z) else {
                         tracing::warn!(
                             "Rejected non-finite rotation: uid={}, x={}, y={}, z={}",
                             ctx.player.uid,
@@ -93,9 +96,11 @@ pub async fn on_cs_move_object_move(
                         )
                         .await;
                         break;
-                    }
+                    };
 
-                    ctx.player.movement.update_rotation(rot.x, rot.y, rot.z);
+                    ctx.player
+                        .movement
+                        .update_rotation(rotation.x(), rotation.y(), rotation.z());
                 }
 
                 ctx.player.movement.write_back_into(&mut ctx.player.world);

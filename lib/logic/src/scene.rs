@@ -17,6 +17,12 @@ use perlica_proto::{
 };
 use std::collections::{HashMap, HashSet};
 
+mod progress;
+pub use progress::SceneProgress;
+
+#[cfg(test)]
+mod streaming_tests;
+
 #[repr(i32)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SelfInfoReason {
@@ -148,6 +154,7 @@ pub struct SceneManager {
     pub checkpoint: Option<CheckpointInfo>,
     pub current_revival_mode: RevivalMode,
     pub level_scripts: LevelScriptManager,
+    pub progress: SceneProgress,
     /// Maps level_logic_id to the timestamp (ms) when it was killed.
     pub dead_entities: std::collections::HashMap<u64, u64>,
     /// Spatial acceleration structure, rebuilt on each scene transition.
@@ -174,6 +181,7 @@ impl Default for SceneManager {
             checkpoint: None,
             current_revival_mode: RevivalMode::Default,
             level_scripts: LevelScriptManager::default(),
+            progress: SceneProgress::default(),
             dead_entities: std::collections::HashMap::new(),
             scene_cache: None,
             interest: InterestManager::new(),
@@ -493,27 +501,12 @@ impl SceneManager {
         assets: &BeyondAssets,
         entities: &mut EntityManager,
     ) -> (ScEnterSceneNotify, ScLeaveSceneNotify) {
-        entities.clear();
-        self.dead_entities.clear();
-
-        // Drop the spatial cache and interest state for the old scene immediately;
-        // both will be rebuilt for the new scene in `finish_scene_load`.
-        self.scene_cache = None;
-        self.interest.clear();
-        self.last_check_pos = (f32::MAX, f32::MAX, f32::MAX);
-        self.last_check_ms = 0;
-        self.last_cleanup_ms = 0;
-
         let leave_notify = ScLeaveSceneNotify {
-            role_id: 1, //TODO: figure out why and where is this even used
+            role_id: 1,
             scene_name: self.current_scene.clone(),
             scene_id: self.scene_id,
         };
-
-        self.current_scene = new_scene.to_string();
-        self.scene_id = assets.str_id_num.get_scene_id(new_scene).unwrap_or(0);
-        self.loading_state = SceneLoadingState::Loading;
-        self.level_scripts.reset_scene(new_scene, assets);
+        self.reset_for_scene(new_scene, assets, entities);
 
         let enter_notify = ScEnterSceneNotify {
             role_id: 1,
@@ -524,6 +517,26 @@ impl SceneManager {
         (enter_notify, leave_notify)
     }
 
+    pub fn reset_for_scene(
+        &mut self,
+        new_scene: &str,
+        assets: &BeyondAssets,
+        entities: &mut EntityManager,
+    ) {
+        entities.clear();
+        self.dead_entities.clear();
+        self.scene_cache = None;
+        self.interest.clear();
+        self.last_check_pos = (f32::MAX, f32::MAX, f32::MAX);
+        self.last_check_ms = 0;
+        self.last_cleanup_ms = 0;
+
+        self.current_scene = new_scene.to_string();
+        self.scene_id = assets.str_id_num.get_scene_id(new_scene).unwrap_or(0);
+        self.loading_state = SceneLoadingState::Loading;
+        self.level_scripts.reset_scene(new_scene, assets);
+    }
+
     pub fn finish_scene_load(
         &mut self,
         char_bag: &CharBag,
@@ -532,6 +545,8 @@ impl SceneManager {
         entities: &mut EntityManager,
         now: u64,
     ) -> (ScObjectEnterView, ScSelfSceneInfo) {
+        entities.clear();
+        self.interest.clear();
         self.loading_state = SceneLoadingState::Active;
 
         self.scene_id = assets
@@ -540,7 +555,9 @@ impl SceneManager {
             .unwrap_or(0);
         self.level_scripts.sync_scene(&self.current_scene, assets);
 
-        self.scene_cache = Some(SceneCache::build(&self.current_scene, assets));
+        if self.scene_cache.is_none() {
+            self.scene_cache = Some(SceneCache::build(&self.current_scene, assets));
+        }
 
         // Scene-load no longer dumps every interactive / NPC up-front.
         // Empirically the bulk-spawn (often hundreds of objects in one
@@ -556,7 +573,7 @@ impl SceneManager {
         // scene) so the cost is negligible.
         let char_list = self.pack_scene_chars(char_bag, movement);
         let monster_list: Vec<SceneMonster> = Vec::new();
-        let interactive_list = pack_resident_interactives(&self.current_scene, assets);
+        let interactive_list = self.resident_interactives(assets);
         let npc_list: Vec<SceneNpc> = Vec::new();
 
         // Mirror the residents into the EntityManager + InterestManager
@@ -749,7 +766,7 @@ impl SceneManager {
         // notify churn, but we don't double-install them server-side.
         let char_list = self.pack_scene_chars(char_bag, movement);
         let monster_list: Vec<SceneMonster> = Vec::new();
-        let interactive_list = pack_resident_interactives(&self.current_scene, assets);
+        let interactive_list = self.resident_interactives(assets);
         let npc_list: Vec<SceneNpc> = Vec::new();
 
         tracing::info!(
@@ -1136,26 +1153,86 @@ impl SceneManager {
         }
     }
 
-    // Called by the kill-monster network handler.  Atomically:
-    //   1. records the kill in `dead_entities` (respawn cooldown), and
-    //   2. removes the entity's interest entry so its slot is freed in
-    //      the bucket's `live_count`.
-    //
-    // Without this the interest map and `live_count` desynchronise from
-    // the `EntityManager` for up to 500 ms (one Background tick) after a
-    // kill, wasting concurrent-cap slots on phantom entries and
-    // occasionally producing something like monster disappearing mid combat
-    // symptom when the cap rejects the next ghost-in refresh.
-    pub fn on_entity_killed(&mut self, level_logic_id: u64, now: u64) {
-        self.dead_entities.insert(level_logic_id, now);
-        self.interest.ghost_out(level_logic_id);
+    fn resident_interactives(&self, assets: &BeyondAssets) -> Vec<SceneInteractive> {
+        pack_resident_interactives(&self.current_scene, assets)
+            .into_iter()
+            .filter(|i| !self.progress.is_destroyed(&self.current_scene, i.origin_id))
+            .map(|mut i| {
+                if let Some(props) = self.get_interactive_properties(i.origin_id) {
+                    i.properties = props;
+                }
+                i
+            })
+            .collect()
     }
 
-    // Like `on_entity_killed` but without the respawn-cooldown record.
-    // Used for non-enemy entities (interactives, NPCs) that the client
-    // reports destroyed.  Only the interest counter is cleaned up.
-    pub fn on_entity_despawned(&mut self, level_logic_id: u64) {
-        self.interest.ghost_out(level_logic_id);
+    pub fn on_entity_killed(&mut self, entity_id: u64, level_logic_id: u64, now: u64) {
+        if entity_id == level_logic_id {
+            self.dead_entities.insert(level_logic_id, now);
+        }
+        self.interest.ghost_out(entity_id);
+    }
+
+    pub fn on_entity_despawned(&mut self, entity_id: u64) {
+        self.interest.ghost_out(entity_id);
+    }
+
+    pub fn destroy_interactive(&mut self, id: u64, assets: &BeyondAssets) -> Vec<u64> {
+        let spawns = assets.level_data.interactives(&self.current_scene);
+        let Some(interactive) = spawns.iter().find(|i| i.base.level_logic_id == id) else {
+            return Vec::new();
+        };
+        let mut destroyed = vec![id];
+        if interactive.base.template_id == "int_mud_core" {
+            for prop in &interactive.properties {
+                if prop.key != "target_list" {
+                    continue;
+                }
+                for target in lv_property_to_dynamic_param(prop).value_int_list {
+                    let Ok(target) = u64::try_from(target) else {
+                        continue;
+                    };
+                    if spawns
+                        .iter()
+                        .any(|i| i.base.level_logic_id == target && i.base.template_id == "int_mud")
+                        && !destroyed.contains(&target)
+                    {
+                        destroyed.push(target);
+                    }
+                }
+            }
+        }
+        for &id in &destroyed {
+            self.progress.destroy_interactive(&self.current_scene, id);
+            self.interest.ghost_out(id);
+        }
+        destroyed
+    }
+
+    pub fn reserve_level_entity_ids(&self, assets: &BeyondAssets, entities: &mut EntityManager) {
+        let scene = &self.current_scene;
+        let max_id = assets
+            .level_data
+            .enemies(scene)
+            .iter()
+            .map(|e| e.base.level_logic_id)
+            .chain(
+                assets
+                    .level_data
+                    .interactives(scene)
+                    .iter()
+                    .map(|e| e.base.level_logic_id),
+            )
+            .chain(
+                assets
+                    .level_data
+                    .npcs(scene)
+                    .iter()
+                    .map(|e| e.base.level_logic_id),
+            )
+            .max()
+            .unwrap_or(999);
+        entities.bump_next_monster_id_to(max_id.saturating_add(1));
     }
 
     /// Per-tick interest update, driven by the session runtime's deadline
@@ -1167,8 +1244,8 @@ impl SceneManager {
     ///
     /// | Bucket        | Max zone   | Spawns/tick | Concurrent cap |
     /// |---------------|-----------|-------------|----------------|
-    /// | Enemy         | Distant   |    6        |     48         |
-    /// | Interactive   | Combat    |    8        |     32         |
+    /// | Enemy         | Distant   |    6        |     64         |
+    /// | Interactive   | Combat    |    8        |     None       |
     /// | NPC           | Combat    |    4        |     16         |
     ///
     /// confirmed by playtesting, is that the client's
@@ -1197,6 +1274,9 @@ impl SceneManager {
         const RESPAWN_COOLDOWN_MS: u64 = 60_000;
         const CLEANUP_INTERVAL_MS: u64 = 5_000;
 
+        if self.loading_state != SceneLoadingState::Active {
+            return (None, None);
+        }
         self.interest.update_velocity(pos, now);
         self.interest.refill_spawn_credits(now);
         let zones_due = self.interest.zones_due(now);
@@ -1377,6 +1457,14 @@ impl SceneManager {
             None => self.candidates_buf.extend(0..spawns.len()),
         }
 
+        self.candidates_buf.sort_unstable_by(|&a, &b| {
+            spawns[a]
+                .base
+                .position
+                .distance_sq_to(&pos)
+                .total_cmp(&spawns[b].base.position.distance_sq_to(&pos))
+        });
+
         let mut budget = self.interest.spawn_credits(bucket);
 
         for &idx in &self.candidates_buf {
@@ -1407,9 +1495,8 @@ impl SceneManager {
             if budget == 0 {
                 continue;
             }
-            // Concurrent cap reached, stop entirely for this bucket.
             if self.interest.at_capacity(bucket) {
-                break;
+                continue;
             }
 
             if self.dead_entities.contains_key(&logic_id) {
@@ -1501,6 +1588,14 @@ impl SceneManager {
             None => self.candidates_buf.extend(0..spawns.len()),
         }
 
+        self.candidates_buf.sort_unstable_by(|&a, &b| {
+            spawns[a]
+                .base
+                .position
+                .distance_sq_to(&pos)
+                .total_cmp(&spawns[b].base.position.distance_sq_to(&pos))
+        });
+
         let mut budget = self.interest.spawn_credits(bucket);
 
         for &idx in &self.candidates_buf {
@@ -1517,7 +1612,11 @@ impl SceneManager {
                 },
                 |c| c.resident_ids.contains(&interactive.base.level_logic_id),
             );
-            if is_resident {
+            if is_resident
+                || self
+                    .progress
+                    .is_destroyed(&self.current_scene, interactive.base.level_logic_id)
+            {
                 continue;
             }
 
@@ -1542,7 +1641,7 @@ impl SceneManager {
                 continue;
             }
             if self.interest.at_capacity(bucket) {
-                break;
+                continue;
             }
 
             entities.insert(SceneEntity {
@@ -1625,6 +1724,14 @@ impl SceneManager {
             None => self.candidates_buf.extend(0..spawns.len()),
         }
 
+        self.candidates_buf.sort_unstable_by(|&a, &b| {
+            spawns[a]
+                .base
+                .position
+                .distance_sq_to(&pos)
+                .total_cmp(&spawns[b].base.position.distance_sq_to(&pos))
+        });
+
         let mut budget = self.interest.spawn_credits(bucket);
 
         for &idx in &self.candidates_buf {
@@ -1652,7 +1759,7 @@ impl SceneManager {
                 continue;
             }
             if self.interest.at_capacity(bucket) {
-                break;
+                continue;
             }
 
             entities.insert(SceneEntity {
@@ -2657,7 +2764,7 @@ mod tests {
         let now = common::time::now_ms();
         mgr.interest
             .ghost_in(1001, ReplicationZone::Immediate, StreamBucket::Enemy, now);
-        mgr.on_entity_killed(1001, now);
+        mgr.on_entity_killed(1001, 1001, now);
         assert!(mgr.dead_entities.contains_key(&1001));
         assert!(!mgr.interest.is_ghosted_in(1001));
     }

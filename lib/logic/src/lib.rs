@@ -14,9 +14,11 @@ pub mod mail;
 pub mod mission;
 pub mod movement;
 pub mod player;
+pub mod quantity;
 pub mod scene;
 pub mod spatial;
 pub mod traits;
+pub mod transform;
 pub mod wallet;
 
 pub use error::{LogicError, Result};

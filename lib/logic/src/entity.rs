@@ -40,9 +40,13 @@ impl EntityManager {
 
     // Monster IDs start at 1000 so they don't collide with character IDs (which start at 1).
     pub fn next_monster_id(&mut self) -> u64 {
-        let id = 1000 + self.next_monster_id;
-        self.next_monster_id += 1;
-        id
+        loop {
+            let id = 1000 + self.next_monster_id;
+            self.next_monster_id += 1;
+            if !self.entities.contains_key(&id) {
+                return id;
+            }
+        }
     }
 
     /// Read-only view of the next monster id this manager would hand out

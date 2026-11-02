@@ -111,7 +111,7 @@ pub async fn push_factory(ctx: &mut NetContext<'_>) -> bool {
             scene = %scene_name,
             "no FactoryMapTable entry at level 1, skipping factory push"
         );
-        return false;
+        return true;
     };
 
     // Compute hub grid position
@@ -138,7 +138,7 @@ pub async fn push_factory(ctx: &mut NetContext<'_>) -> bool {
             scene = %scene_name,
             "no levelRegionData entry for scene, skipping factory push"
         );
-        return false;
+        return true;
     };
 
     // This generates the inventory node (node ID = 1) and hub node

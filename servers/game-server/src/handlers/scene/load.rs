@@ -3,7 +3,7 @@
 use crate::net::NetContext;
 use perlica_db::Persistable;
 use perlica_logic::traits::Positioned3D;
-use perlica_proto::{CsSceneLoadFinish, ScEnterSceneNotify, ScSelfSceneInfo, Vector};
+use perlica_proto::{Code, CsSceneLoadFinish, ScEnterSceneNotify, ScSelfSceneInfo, Vector};
 use tracing::{debug, error, info};
 
 /// Pushes `ScEnterSceneNotify` during login before the client has finished loading.
@@ -33,6 +33,14 @@ pub async fn on_scene_load_finish(
     ctx: &mut NetContext<'_>,
     req: CsSceneLoadFinish,
 ) -> ScSelfSceneInfo {
+    if req.scene_name != ctx.player.scene.current_scene {
+        ctx.send_error(
+            Code::ErrSceneNameNotExist,
+            "scene load does not match the current scene",
+        )
+        .await;
+        return ScSelfSceneInfo::default();
+    }
     info!("Scene load finished: {}", req.scene_name);
 
     ctx.player.world.last_scene.clone_from(&req.scene_name);

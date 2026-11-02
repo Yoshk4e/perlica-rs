@@ -42,6 +42,7 @@ pub async fn on_login(ctx: &mut NetContext<'_>, req: CsLogin) -> ScLogin {
             ctx.player.bitsets = record.bitsets;
             ctx.player.scene.checkpoint = record.checkpoint;
             ctx.player.scene.current_revival_mode = record.revival_mode;
+            ctx.player.scene.progress = record.scene_progress;
             ctx.player.missions = record.missions;
             ctx.player.guides = record.guides;
             ctx.player.mail = record.mail;
@@ -229,6 +230,7 @@ pub(crate) async fn run_login_sequence(ctx: &mut NetContext<'_>) {
                 "Login sequence failed: uid={}, phase={:?}",
                 ctx.player.uid, phase
             );
+            break;
         }
     }
 }

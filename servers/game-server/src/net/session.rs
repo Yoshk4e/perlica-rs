@@ -235,6 +235,9 @@ async fn logic_loop(
             }
 
             _ = persist_timer.tick() => {
+                if registered && let Err(e) = ctx.db.persist_scene_progress(&player.uid, &mut player.scene.progress).await {
+                    warn!("Periodic scene progress flush failed: UID={}, Error={e}", player.uid);
+                }
                 if registered && player.char_bag.has_pending_changes()
                     && let Err(e) = ctx
                         .db
@@ -276,6 +279,16 @@ async fn logic_loop(
     };
 
     if registered {
+        if let Err(e) = ctx
+            .db
+            .persist_scene_progress(&player.uid, &mut player.scene.progress)
+            .await
+        {
+            error!(
+                "Scene progress flush failed on disconnect: UID={}, Error={e}",
+                player.uid
+            );
+        }
         player.movement.write_back_into(&mut player.world);
 
         if let Err(e) = player.world.persist(&player.uid, ctx.db).await {

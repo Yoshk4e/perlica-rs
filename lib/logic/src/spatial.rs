@@ -69,8 +69,14 @@ impl SpatialGrid {
         // occupied.  With a reasonable cell_size the result is small.
         let mut result = Vec::new();
         for dx in -steps..=steps {
+            let Some(cell_x) = base_x.checked_add(dx) else {
+                continue;
+            };
             for dz in -steps..=steps {
-                if let Some(indices) = self.cells.get(&(base_x + dx, base_z + dz)) {
+                let Some(cell_z) = base_z.checked_add(dz) else {
+                    continue;
+                };
+                if let Some(indices) = self.cells.get(&(cell_x, cell_z)) {
                     result.extend_from_slice(indices);
                 }
             }
@@ -132,6 +138,19 @@ mod tests {
         let hits = grid.query_radius_indices(0.0, 0.0, 100.0);
         assert!(hits.contains(&0));
         assert!(!hits.contains(&1));
+    }
+
+    #[test]
+    fn extreme_finite_positions_do_not_overflow_cell_coordinates() {
+        let grid = SpatialGrid::build([(0.0, 0.0)].into_iter(), 50.0);
+        assert!(
+            grid.query_radius_indices(f32::MAX, f32::MAX, 150.0)
+                .is_empty()
+        );
+        assert!(
+            grid.query_radius_indices(f32::MIN, f32::MIN, 150.0)
+                .is_empty()
+        );
     }
 
     #[test]

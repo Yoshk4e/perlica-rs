@@ -14,12 +14,12 @@ use perlica_logic::{
     wallet::WalletState,
 };
 use perlica_proto::{
-    CsHead, CsLogin, CsMoveObjectMove, CsPing, CsSceneKillMonster, CsSceneLoadFinish, MotionInfo,
-    MoveObjectMoveInfo, NetMessage, ScEnterSceneNotify, ScLogin, ScMoveObjectMove,
-    ScObjectEnterView, ScObjectLeaveView, ScPing, ScSceneDestroyEntity, ScSelfSceneInfo, Vector,
-    prost::Message,
+    CsHead, CsLogin, CsMoveObjectMove, CsPing, CsSceneDestroyEntity, CsSceneKillMonster,
+    CsSceneLoadFinish, CsSceneTeleport, MotionInfo, MoveObjectMoveInfo, NetMessage,
+    ScEnterSceneNotify, ScLogin, ScMoveObjectMove, ScObjectEnterView, ScObjectLeaveView, ScPing,
+    ScSceneDestroyEntity, ScSceneTeleport, ScSelfSceneInfo, Vector, prost::Message,
 };
-use std::collections::HashSet;
+use std::collections::{HashSet, VecDeque};
 use std::sync::OnceLock;
 use std::time::Duration;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
@@ -140,6 +140,7 @@ fn take_frame(buf: &mut Vec<u8>) -> Option<(i32, Vec<u8>)> {
 struct EnterBatch {
     monsters: Vec<u64>,
     interactives: usize,
+    interactive_ids: Vec<u64>,
     npcs: usize,
 }
 
@@ -155,6 +156,11 @@ fn enter_batch(body: &[u8]) -> EnterBatch {
             .filter_map(|m| m.common_info.as_ref().map(|c| c.id))
             .collect(),
         interactives: detail.interactive_list.len(),
+        interactive_ids: detail
+            .interactive_list
+            .iter()
+            .map(|i| i.origin_id)
+            .collect(),
         npcs: detail.npc_list.len(),
     }
 }
@@ -179,6 +185,7 @@ fn move_packet(step: f32) -> CsMoveObjectMove {
 struct Harness {
     client: TcpStream,
     pending: Vec<u8>,
+    queued: VecDeque<(i32, Vec<u8>)>,
     seq: u64,
     _server: tokio::task::JoinHandle<()>,
 }
@@ -186,6 +193,10 @@ struct Harness {
 impl Harness {
     async fn connect(tag: &str) -> (Self, String) {
         let (db, uid) = seed_player(tag).await;
+        (Self::connect_existing(db).await, uid)
+    }
+
+    async fn connect_existing(db: &'static PlayerDb) -> Self {
         let listener = TcpListener::bind("127.0.0.1:0").await.expect("bind");
         let addr = listener.local_addr().expect("local addr");
         let server = tokio::spawn(async move {
@@ -194,15 +205,13 @@ impl Harness {
             }
         });
         let client = TcpStream::connect(addr).await.expect("connect");
-        (
-            Self {
-                client,
-                pending: Vec::new(),
-                seq: 0,
-                _server: server,
-            },
-            uid,
-        )
+        Self {
+            client,
+            pending: Vec::new(),
+            queued: VecDeque::new(),
+            seq: 0,
+            _server: server,
+        }
     }
 
     async fn send<T: NetMessage + Message>(&mut self, message: &T) {
@@ -226,8 +235,12 @@ impl Harness {
     }
 
     async fn load_scene(&mut self) -> Vec<EnterBatch> {
+        self.load_scene_named(SCENE).await
+    }
+
+    async fn load_scene_named(&mut self, scene: &str) -> Vec<EnterBatch> {
         self.send(&CsSceneLoadFinish {
-            scene_name: SCENE.to_string(),
+            scene_name: scene.to_string(),
         })
         .await;
         self.drain_until(ScSelfSceneInfo::CMD_ID).await
@@ -238,17 +251,15 @@ impl Harness {
     async fn drain_until(&mut self, cmd_id: i32) -> Vec<EnterBatch> {
         let started = std::time::Instant::now();
         let mut enters = Vec::new();
-        let mut seen = false;
         loop {
-            for (id, body) in self.read_available() {
+            let mut available = self.read_available().into_iter();
+            while let Some((id, body)) = available.next() {
                 if id == cmd_id {
-                    seen = true;
+                    self.queued.extend(available);
+                    return enters;
                 } else if id == ScObjectEnterView::CMD_ID {
                     enters.push(enter_batch(&body));
                 }
-            }
-            if seen {
-                return enters;
             }
             assert!(
                 started.elapsed() < DB_WATCHDOG,
@@ -283,6 +294,9 @@ impl Harness {
     }
 
     async fn next_frame(&mut self) -> (i32, Vec<u8>) {
+        if let Some(frame) = self.queued.pop_front() {
+            return frame;
+        }
         loop {
             if let Some(frame) = take_frame(&mut self.pending) {
                 return frame;
@@ -304,7 +318,7 @@ impl Harness {
                 Err(e) => panic!("try_read failed: {e}"),
             }
         }
-        let mut frames = Vec::new();
+        let mut frames: Vec<_> = self.queued.drain(..).collect();
         while let Some(frame) = take_frame(&mut self.pending) {
             frames.push(frame);
         }
@@ -335,6 +349,71 @@ impl Harness {
             tokio::task::yield_now().await;
         }
         frames
+    }
+}
+
+#[tokio::test(start_paused = true)]
+async fn mud_destruction_persists_across_reconnect_and_transient_despawn_does_not() {
+    let (db, uid) = seed_player("mud").await;
+    let mut h = Harness::connect_existing(db).await;
+    h.login(&uid).await;
+    h.load_scene().await;
+    h.send(&CsSceneTeleport {
+        scene_name: "map01_lv002".to_owned(),
+        position: Some(Vector {
+            x: 286.5032,
+            y: 36.5,
+            z: 140.00998,
+        }),
+        ..Default::default()
+    })
+    .await;
+    h.drain_until(ScSceneTeleport::CMD_ID).await;
+    let stale = h.load_scene_named("map01_lv001").await;
+    assert!(stale.is_empty(), "a stale load must not start streaming");
+    let initial = h.load_scene_named("map01_lv002").await;
+    assert!(initial.iter().any(|b| b.interactive_ids.contains(&1065)));
+
+    h.send(&CsSceneDestroyEntity {
+        scene_name: "map01_lv002".to_owned(),
+        id_list: vec![1065],
+        reason: 0,
+    })
+    .await;
+    h.drain_until(ScSceneDestroyEntity::CMD_ID).await;
+    advance(Duration::from_millis(50)).await;
+    let frames = h.drain_rounds(256).await;
+    assert!(
+        frames
+            .iter()
+            .any(|(id, body)| *id == ScObjectEnterView::CMD_ID
+                && enter_batch(body).interactive_ids.contains(&1065))
+    );
+
+    h.send(&CsSceneDestroyEntity {
+        scene_name: "map01_lv002".to_owned(),
+        id_list: vec![1065],
+        reason: 1,
+    })
+    .await;
+    h.drain_until(ScSceneDestroyEntity::CMD_ID).await;
+    let mut reconnected = Harness::connect_existing(db).await;
+    reconnected.login(&uid).await;
+    let batches = reconnected.load_scene_named("map01_lv002").await;
+    assert!(
+        batches
+            .iter()
+            .all(|b| !b.interactive_ids.contains(&1065) && !b.interactive_ids.contains(&1063))
+    );
+    advance(Duration::from_secs(65)).await;
+    let frames = reconnected.drain_rounds(256).await;
+    for (id, body) in frames {
+        if id == ScObjectEnterView::CMD_ID {
+            let batch = enter_batch(&body);
+            assert!(
+                !batch.interactive_ids.contains(&1065) && !batch.interactive_ids.contains(&1063)
+            );
+        }
     }
 }
 

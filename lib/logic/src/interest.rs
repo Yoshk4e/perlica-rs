@@ -137,16 +137,8 @@ pub const NPC_SPAWN_BUDGET_PER_TICK: usize = 4;
 /// budget so a late wake cannot accumulate a burst.
 pub const SPAWN_CREDIT_WINDOW_MS: u64 = 16;
 
-/// Hard ceiling on the *concurrent* ghosted-in count per kind.  Once the
-/// limit is hit, additional candidates are deferred until the player walks
-/// away from existing spawns and they ghost out.  The ceilings are
-/// deliberately tight, based on my findings fewer entities always render better.
-///
-/// The interactive cap must comfortably exceed the resident count or the
-/// streamer will refuse to add any *streamed* interactives once residents
-/// are installed.
+/// Concurrent limits for enemies and NPCs. Interactives use radius and spawn budgets.
 pub const ENEMY_CONCURRENT_CAP: usize = 64;
-pub const INTERACTIVE_CONCURRENT_CAP: usize = 80;
 pub const NPC_CONCURRENT_CAP: usize = 16;
 
 /// Minimum milliseconds between spatial checks for each zone.
@@ -361,11 +353,11 @@ impl StreamBucket {
 
     /// Concurrent ghosted-in cap for this bucket.
     #[inline]
-    pub fn concurrent_cap(self) -> usize {
+    pub fn concurrent_cap(self) -> Option<usize> {
         match self {
-            Self::Enemy => ENEMY_CONCURRENT_CAP,
-            Self::Interactive => INTERACTIVE_CONCURRENT_CAP,
-            Self::Npc => NPC_CONCURRENT_CAP,
+            Self::Enemy => Some(ENEMY_CONCURRENT_CAP),
+            Self::Interactive => None,
+            Self::Npc => Some(NPC_CONCURRENT_CAP),
         }
     }
 
@@ -720,10 +712,7 @@ impl InterestManager {
     /// Register a newly ghosted-in entity that must remain resident for the
     /// rest of the scene (TPs, blockages).
     ///
-    /// Always-resident entries are still counted toward their bucket's
-    /// concurrent cap (so the cap remains a hard upper bound on memory
-    /// usage), but they are exempt from the leave-radius and orphan-sweep
-    /// passes, only `clear()` removes them.
+    /// Residents count as live but are exempt from distance-based eviction.
     #[inline]
     pub fn ghost_in_resident(
         &mut self,
@@ -802,7 +791,9 @@ impl InterestManager {
     /// `at_capacity` holds.
     #[inline]
     pub fn at_capacity(&self, bucket: StreamBucket) -> bool {
-        self.live_count[bucket.index()] >= bucket.concurrent_cap()
+        bucket
+            .concurrent_cap()
+            .is_some_and(|cap| self.live_count[bucket.index()] >= cap)
     }
 
     /// Returns `true` if the entity should be **retained** despite its

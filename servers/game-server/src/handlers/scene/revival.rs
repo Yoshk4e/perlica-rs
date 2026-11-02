@@ -40,7 +40,7 @@ pub async fn on_cs_scene_kill_monster(ctx: &mut NetContext<'_>, req: CsSceneKill
     {
         ctx.player
             .scene
-            .on_entity_killed(entity.level_logic_id, ctx.now_ms);
+            .on_entity_killed(entity.id, entity.level_logic_id, ctx.now_ms);
     }
 
     let msg = ctx
